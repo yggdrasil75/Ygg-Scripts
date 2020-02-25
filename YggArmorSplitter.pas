@@ -37,6 +37,8 @@ begin
 	remove(GroupBySignature(patch, 'OTFT'));
 	remove(GroupBySignature(patch, 'LVLI'));
 	remove(GroupBySignature(patch, 'CONT'));
+	RaceList := TStringList;
+	RaceList.DelimitedText := 'Argonian,Orc,Khajiit,Mer';
 	AddMessage('---Making Armor reasonably different---');
 	GatherArmo;
 	Copier;
@@ -97,8 +99,8 @@ end;
 
 procedure Copier;
 var
-	i, j, a: integer;
-	CurrentArgonianFemale, CurrentArgonianMale, CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, CurrentRecord, Currentmale, CurrentmaleArma: IInterface;
+	i, j, a, foobar: integer;
+	CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentRecord, Currentmale, CurrentmaleArma, TempRecord: IInterface;
 	LVLIAll, NewItem: IInterface;
 	TempList: TStringList;
 begin
@@ -109,39 +111,35 @@ begin
 			CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetElementEditValues(CurrentFemale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' Female');
 			SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'Female');
+			
+			for foobar := 0 to RaceList.Count - 1 do
+			begin
+				TempRecord := wbCopyElementToFile(CurrentFemale, Patch, true, true);
+				SetEditorID(TempRecord, EditorID(CurrentFemale) + RaceList.String[foobar]);
+				SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentFemale, 'Full - Name') + ' ' + RaceList.String[foobar]);
+				TempList.AddObject(EditorID(TempRecord), TempRecord);
+			end;
 			CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetElementEditValues(Currentmale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' male');
 			SetEditorID(Currentmale, EditorID(CurrentRecord) + 'male');
-			CurrentKhajiitFemale := wbCopyElementToFile(CurrentFemale, Patch, true, true);
-			CurrentKhajiitMale := wbCopyElementToFile(CurrentMale, Patch, true, true);
-			CurrentOrcFemale := wbCopyElementToFile(CurrentFemale, Patch, true, true);
-			CurrentOrcMale := wbCopyElementToFile(CurrentMale, Patch, true, true);
-			CurrentArgonianFemale := wbCopyElementToFile(CurrentFemale, Patch, true, true);
-			CurrentArgonianMale := wbCopyElementToFile(CurrentMale, Patch, true, true);
-			SetEditorID(CurrentArgonianFemale, EditorID(CurrentFemale) + 'Argonian');
-			SetEditorID(CurrentArgonianMale, EditorID(CurrentMale) + 'Argonian');
-			SetElementEditValues(CurrentArgonianFemale, 'Full - Name', GetElementEditValues(CurrentFemale, 'Full - Name') + ' Argonian');
-			SetElementEditValues(CurrentArgonianMale, 'Full - Name', GetElementEditValues(CurrentMale, 'Full - Name') + ' Argonian');
-			SetEditorID(CurrentOrcFemale, EditorID(CurrentFemale) + 'Orc');
-			SetEditorID(CurrentOrcMale, EditorID(CurrentMale) + 'Orc');
-			SetElementEditValues(CurrentOrcFemale, 'Full - Name', GetElementEditValues(CurrentFemale, 'Full - Name') + ' Orc');
-			SetElementEditValues(CurrentOrcMale, 'Full - Name', GetElementEditValues(CurrentMale, 'Full - Name') + ' Orc');
-			SetEditorID(CurrentKhajiitFemale, EditorID(CurrentFemale) + 'Khajiit');
-			SetEditorID(CurrentKhajiitMale, EditorID(CurrentMale) + 'Khajiit');
-			SetElementEditValues(CurrentKhajiitFemale, 'Full - Name', GetElementEditValues(CurrentFemale, 'Full - Name') + ' Khajiit');
-			SetElementEditValues(CurrentKhajiitMale, 'Full - Name', GetElementEditValues(CurrentMale, 'Full - Name') + ' Khajiit');
-		if assigned(ElementByPath(CurrentRecord, 'Male world model\MOD2')) AND assigned(ElementByPath(CurrentRecord, 'Female world model\MOD4')) then
-		begin
-			SetElementEditValues(CurrentFemale, 'Male world model\MOD2', GetElementEditValues(CurrentFemale, 'Female world model\MOD4'));
-			SetElementEditValues(Currentmale, 'Female world model\MOD4', GetElementEditValues(Currentmale, 'Male world model\MOD2'));
-		end;
+			for foobar := 0 to RaceList.Count - 1 do
+			begin
+				TempRecord := wbCopyElementToFile(Currentmale, Patch, true, true);
+				SetEditorID(TempRecord, EditorID(Currentmale) + RaceList.String[foobar]);
+				SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(Currentmale, 'Full - Name') + ' ' + RaceList.String[foobar]);
+				TempList.AddObject(EditorID(TempRecord), TempRecord);
+			end;
+			
 		for j := ElementCount(ElementByPath(CurrentRecord, 'Armature')) - 1 downto 0 do
 		begin
 			CurrentArma := WinningOverride(LinksTo(ElementByIndex(ElementByPath(CurrentRecord, 'Armature'), j)));
 			CurrentFemaleArma := wbCopyElementToFile(CurrentArma, Patch, true, true);
 			CurrentMaleArma := wbCopyElementToFile(CurrentArma, Patch, true, true);
+			SetElementEditValues(CurrentFemale, 'Male world model\MOD2', GetElementEditValues(CurrentFemale, 'Female world model\MOD4'));
+			SetElementEditValues(Currentmale, 'Female world model\MOD4', GetElementEditValues(Currentmale, 'Male world model\MOD2'));
 			SetEditorID(CurrentFemaleArma, EditorID(CurrentArma) + 'Female');
 			SetEditorID(CurrentMaleArma, EditorID(CurrentArma) + 'male');
+			
 			if assigned(ElementByPath(CurrentArma, 'Male world model\MOD2')) AND assigned(ElementByPath(CurrentArma, 'Female world model\MOD3')) then
 			begin
 				SetElementEditValues(CurrentFemaleArma, 'Male world model\MOD2', GetElementEditValues(CurrentFemaleArma, 'Female world model\MOD3'));
@@ -152,64 +150,29 @@ begin
 				SetElementEditValues(CurrentFemaleArma, 'Male 1st Person\MOD4', GetElementEditValues(CurrentFemaleArma, 'Female 1st Person\MOD5'));
 				SetElementEditValues(CurrentmaleArma, 'Female 1st Person\MOD5', GetElementEditValues(CurrentmaleArma, 'Male 1st Person\MOD4'));
 			end;
+			
 			SetEditValue(ElementByIndex(ElementByPath(CurrentFemale, 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
 			SetEditValue(ElementByIndex(ElementByPath(CurrentMale, 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
-			if pos('Human', getRaces(CurrentArma)) > 0 then continue;
-			if pos('OrcRace', getRaces(CurrentArma)) > 0 then
+			for foobar := 0 to RaceList.Count - 1 do
 			begin
-				for a := ElementCount(ElementByPath(CurrentOrcFemale, 'Armature')) - 1 downto 1 do
+				if RaceList.String[foobar] = getRaces(CurrentArma) then
 				begin
-					remove(ElementByIndex(ElementByPath(CurrentOrcFemale, 'Armature'), a));
+					for a := ElementCount(ElementByPath(ObjectToElement(TempList.Objects[foobar]), 'Armature')) - 1 downto 1 do
+					begin
+						remove(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar]), 'Armature'), a));
+					end;
+					for a := ElementCount(ElementByPath(ObjectToElement(TempList.Objects[foobar+4]), 'Armature')) - 1 downto 1 do
+					begin
+						remove(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar+4]), 'Armature'), a));
+					end;
+					SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar]), 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
+					SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar+4]), 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
 				end;
-				for a := ElementCount(ElementByPath(CurrentOrcMale, 'Armature')) - 1 downto 1 do
-				begin
-					remove(ElementByIndex(ElementByPath(CurrentOrcMale, 'Armature'), a));
-				end;
-				SetEditValue(ElementByIndex(ElementByPath(CurrentOrcFemale, 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
-				SetEditValue(ElementByIndex(ElementByPath(CurrentOrcMale, 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
 			end;
-			if pos('KhajiitRace', getRaces(CurrentArma)) > 0 then
-			begin
-				for a := ElementCount(ElementByPath(CurrentKhajiitFemale, 'Armature')) - 1 downto 1 do
-				begin
-					remove(ElementByIndex(ElementByPath(CurrentKhajiitFemale, 'Armature'), a));
-				end;
-				for a := ElementCount(ElementByPath(CurrentKhajiitMale, 'Armature')) - 1 downto 1 do
-				begin
-					remove(ElementByIndex(ElementByPath(CurrentKhajiitMale, 'Armature'), a));
-				end;
-				SetEditValue(ElementByIndex(ElementByPath(CurrentKhajiitFemale, 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
-				SetEditValue(ElementByIndex(ElementByPath(CurrentKhajiitMale, 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
-			end;
-			if pos('ArgonianRace', getRaces(CurrentArma)) > 0 then
-			begin
-				for a := ElementCount(ElementByPath(CurrentArgonianFemale, 'Armature')) - 1 downto 1 do
-				begin
-					remove(ElementByIndex(ElementByPath(CurrentArgonianFemale, 'Armature'), a));
-				end;
-				for a := ElementCount(ElementByPath(CurrentArgonianMale, 'Armature')) - 1 downto 1 do
-				begin
-					remove(ElementByIndex(ElementByPath(CurrentArgonianMale, 'Armature'), a));
-				end;
-				SetEditValue(ElementByIndex(ElementByPath(CurrentArgonianFemale, 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
-				SetEditValue(ElementByIndex(ElementByPath(CurrentArgonianMale, 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
-			end;
-			
 		end;
 		
 		
-		LVLIAll := AddLVLIALL(CurrentArgonianFemale, CurrentArgonianMale, CurrentFemale, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, Currentmale);
-		
-		TempList := TStringList.Create;
-		TempList.AddObject(EditorID(CurrentRecord), CurrentRecord);
-		TempList.AddObject(EditorID(CurrentFemale), CurrentFemale);
-		TempList.AddObject(EditorID(CurrentMale), CurrentMale);
-		TempList.AddObject(EditorID(CurrentArgonianFemale), CurrentArgonianFemale);
-		TempList.AddObject(EditorID(CurrentKhajiitFemale), CurrentKhajiitFemale);
-		TempList.AddObject(EditorID(CurrentArgonianMale), CurrentArgonianMale);
-		TempList.AddObject(EditorID(CurrentKhajiitMale), CurrentKhajiitMale);
-		TempList.AddObject(EditorID(CurrentOrcFemale), CurrentOrcFemale);
-		TempList.AddObject(EditorID(CurrentOrcMale), CurrentOrcMale);
+		LVLIAll := AddLVLIALL(ObjectToElement(TempList.Objects[0]),ObjectToElement(TempList.Objects[1]),ObjectToElement(TempList.Objects[2]),ObjectToElement(TempList.Objects[3]),ObjectToElement(TempList.Objects[4]),ObjectToElement(TempList.Objects[5]),ObjectToElement(TempList.Objects[6]),ObjectToElement(TempList.Objects[7]));
 		
 		TempList.AddObject(EditorID(LVLIAll), LVLIAll);
 		ArmoListList.AddObject(EditorID(CurrentRecord), Templist);
@@ -226,13 +189,13 @@ begin
 	for i := elementCount(AdditionalRaces) - 1 downto 0 do
 	begin
 		CurrentEDID := EditorID(linksto(elementByIndex(AdditionalRaces, i)));
-		if CurrentEDID = 'OrcRace' then result := 'OrcRace'
-		else if CurrentEDID = 'OrcRaceVampire' then result := 'OrcRace'
-		else if CurrentEDID = 'KhajiitRace' then result := 'KhajiitRace'
-		else if CurrentEDID = 'KhajiitRaceVampire' then result := 'KhajiitRace'
-		else if CurrentEDID = 'ArgonianRace' then result := 'ArgonianRace'
-		else if CurrentEDID = 'ArgonianRaceVampire' then result := 'ArgonianRace'
-		else result := 'Human';
+		if CurrentEDID = 'OrcRace' then result := 'Orc'
+		else if CurrentEDID = 'OrcRaceVampire' then result := 'Orc'
+		else if CurrentEDID = 'KhajiitRace' then result := 'Khajiit'
+		else if CurrentEDID = 'KhajiitRaceVampire' then result := 'Khajiit'
+		else if CurrentEDID = 'ArgonianRace' then result := 'Argonian'
+		else if CurrentEDID = 'ArgonianRaceVampire' then result := 'Argonian'
+		else result := 'Mer';
 	end;
 end;
 
