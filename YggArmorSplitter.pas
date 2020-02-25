@@ -5,7 +5,7 @@ Uses YggFunctions;
 
 var
 	Patch, itemRecord: IInterface;
-	RaceList, ArmoList, LVLIList, COBJList, CONTList, NPC_List, LVLIListList, COBJListList, CONTListList, NPC_ListList, ArmoListList, OTFTList, OTFTListList: TStringList;
+	RaceList, ArmoList, LVLIList, COBJList, CONTList, NPC_List, LVLIListList, ArmoListList, OTFTList, OTFTListList: TStringList;
 
 // runs on script start
 function Initialize: integer;
@@ -29,6 +29,7 @@ begin
 	finally EndUpdate(Patch);
 	end;
 	Randomize;
+	CleanPlugin;
 	remove(GroupBySignature(patch, 'ARMO'));
 	remove(GroupBySignature(patch, 'ARMA'));
 	remove(GroupBySignature(patch, 'NPC_'));
@@ -45,6 +46,14 @@ begin
 	OTFTHandler;
 	CONTHandler;
 	NPC_Handler;
+end;
+
+procedure CleanPlugin;
+var
+	a: integer;
+begin
+	for a := 2 to elementCount(Patch) do 
+	remove(ElementByIndex(Patch, a));
 end;
 
 // runs in the end
@@ -189,7 +198,7 @@ begin
 		end;
 		
 		
-		LVLIAll := AddLVLIALL(CurrentArgonianFemale, CurrentArgonianMale, CurrentFemale, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentMale, CurrentOrcFemale, CurrentOrcMale, Currentmale);
+		LVLIAll := AddLVLIALL(CurrentArgonianFemale, CurrentArgonianMale, CurrentFemale, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, Currentmale);
 		
 		TempList := TStringList.Create;
 		TempList.AddObject(EditorID(CurrentRecord), CurrentRecord);
@@ -334,6 +343,8 @@ begin
 end;
 
 function AddLVLIALL(a,b,c,d,e,f,g,h: IInterface): IInterface;
+var
+	LVLIAll, NewItem: IInterface;
 begin
 	LVLIAll := CreateRecord('LVLI');
 	SetEditorID(LVLIAll, EditorID(CurrentRecord) + 'LVLIAll');
@@ -341,14 +352,14 @@ begin
 	
 	NewItem := ElementAssign(ElementByPath(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
 	NewItem := ElementAssign(ElementByPath(NewItem, 'Leveled List Entry'), HighInteger, nil, false);
-	AddLVLIItem(a);
-	AddLVLIItem(b);
-	AddLVLIItem(c);
-	AddLVLIItem(d);
-	AddLVLIItem(e);
-	AddLVLIItem(f);
-	AddLVLIItem(g);
-	AddLVLIItem(h);
+	AddLVLIItem(LVLIAll, a);
+	AddLVLIItem(LVLIAll, b);
+	AddLVLIItem(LVLIAll, c);
+	AddLVLIItem(LVLIAll, d);
+	AddLVLIItem(LVLIAll, e);
+	AddLVLIItem(LVLIAll, f);
+	AddLVLIItem(LVLIAll, g);
+	AddLVLIItem(LVLIAll, h);
 	
 end;
 
@@ -358,7 +369,6 @@ begin
 	CopierCOBJ;
 	AddMessage('COBJ');
 	COBJList.free;
-	COBJListList.free;
 end;
 
 procedure GatherCOBJ;
@@ -398,7 +408,6 @@ var
 	LVLIAll, NewItem: IInterface;
 	Item, Items, entries, ref, lvlo, CurrenGroup: IInterface;
 begin
-	COBJListList := TStringList.Create;
 	for i := COBJList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(COBJList.Objects[i]), Patch, false, true);
@@ -532,7 +541,6 @@ begin
 	CopierCONT;
 	AddMessage('CONT');
 	CONTList.Free;
-	CONTListList.Free;
 end;
 
 procedure GatherCONT;
@@ -581,7 +589,6 @@ var
 	CurrentArgonianFemale, CurrentArgonianMale, CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, CurrentRecord, Currentmale, CurrentmaleArma: IInterface;
 	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa, Items, Item: IInterface;
 begin
-	CONTListList := TStringList.Create;
 	for i := CONTList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(CONTList.Objects[i]), Patch, false, true);
@@ -621,7 +628,6 @@ begin
 	CopierNPC_;
 	AddMessage('NPC_');
 	NPC_List.free;
-	NPC_ListList.free;
 end;
 
 procedure GatherNPC_;
@@ -662,7 +668,6 @@ var
 	CurrentArgonianFemale, CurrentArgonianMale, CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, CurrentRecord, Currentmale, CurrentmaleArma: IInterface;
 	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa, Item, Items: IInterface;
 begin
-	NPC_ListList := TStringList.Create;
 	for i := NPC_List.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(NPC_List.Objects[i]), Patch, false, true);
@@ -716,6 +721,9 @@ begin
 end;
 
 function GetStuff(ref, out cafa, out ckfa, out cama, out ckma, out cofa, out coma, out cfa, out cma: IInterface; sig: string): Boolean;
+var
+	TempList: TStringList;
+	a: integer;
 begin
 	if sig = 'OTFT' then begin
 		if OTFTListList.IndexOf(EditorID(LinksTo(ref))) < 0 then result := false;

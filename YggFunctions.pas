@@ -347,9 +347,11 @@ begin
 	end;
 end;
 
-function AddLVLIItem(a: IInterface): IInterface;
+function AddLVLIItem(LVLI, a: IInterface): IInterface;
+var
+	NewItem: IInterface;
 begin
-	NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
+	NewItem := ElementAssign(ElementByName(LVLI, 'Leveled List Entries'), HighInteger, nil, false);
 	SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(a),8));
 	SetElementEditValues(newItem, 'LVLO\Level', '1');
 	SetElementEditValues(newItem, 'LVLO\Count', '1');
