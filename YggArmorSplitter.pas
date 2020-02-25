@@ -111,7 +111,7 @@ begin
 			CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetElementEditValues(CurrentFemale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' Female');
 			SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'Female');
-			
+			TempList.AddObject(EditorID(CurrentFemale), CurrentFemale);
 			for foobar := 1 to RaceList.Count - 1 do
 			begin
 				TempRecord := wbCopyElementToFile(CurrentFemale, Patch, true, true);
@@ -122,6 +122,7 @@ begin
 			CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetElementEditValues(Currentmale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' male');
 			SetEditorID(Currentmale, EditorID(CurrentRecord) + 'male');
+			TempList.AddObject(EditorID(Currentmale), Currentmale);
 			for foobar := 1 to RaceList.Count - 1 do
 			begin
 				TempRecord := wbCopyElementToFile(Currentmale, Patch, true, true);
