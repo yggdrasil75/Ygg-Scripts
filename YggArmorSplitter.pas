@@ -188,45 +188,8 @@ begin
 			
 		end;
 		
-		LVLIAll := CreateRecord('LVLI');
-		SetEditorID(LVLIAll, EditorID(CurrentRecord) + 'LVLIAll');
-		ElementAssign(LVLIAll, HighInteger, nil, false);
 		
-		NewItem := ElementAssign(ElementByPath(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		NewItem := ElementAssign(ElementByPath(NewItem, 'Leveled List Entry'), HighInteger, nil, false);
-
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentArgonianFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentKhajiitFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentArgonianMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentKhajiitMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentOrcFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentOrcMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
+		LVLIAll := AddLVLIALL(CurrentArgonianFemale, CurrentArgonianMale, CurrentFemale, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentMale, CurrentOrcFemale, CurrentOrcMale, Currentmale);
 		
 		TempList := TStringList.Create;
 		TempList.AddObject(EditorID(CurrentRecord), CurrentRecord);
@@ -365,47 +328,7 @@ begin
 				SetElementEditValues(CurrentOrcMale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(coma),8));
 			end;
 		end;
-		//nonspecific
-		
-		LVLIAll := CreateRecord('LVLI');
-		SetEditorID(LVLIAll, EditorID(CurrentRecord) + 'LVLIAll');
-		ElementAssign(LVLIAll, HighInteger, nil, false);
-		
-		NewItem := ElementAssign(ElementByPath(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		NewItem := ElementAssign(ElementByPath(NewItem, 'Leveled List Entry'), HighInteger, nil, false);
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentArgonianFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentKhajiitFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentArgonianMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentKhajiitMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentOrcFemale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
-		SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(CurrentOrcMale),8));
-		SetElementEditValues(newItem, 'LVLO\Level', '1');
-		SetElementEditValues(newItem, 'LVLO\Count', '1');
-		
+		LVLIAll := AddLVLIALL(CurrentArgonianFemale, CurrentArgonianMale, CurrentFemale, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentMale, CurrentOrcFemale, CurrentOrcMale, Currentmale);
 		
 		TempList := TStringList.Create;
 		TempList.AddObject(EditorID(CurrentRecord), CurrentRecord);
@@ -421,6 +344,25 @@ begin
 		TempList.AddObject(EditorID(LVLIAll), LVLIAll);
 		LVLIListList.AddObject(EditorID(CurrentRecord), Templist);
 	end;
+end;
+
+function AddLVLIALL(a,b,c,d,e,f,g,h: IInterface): IInterface;
+begin
+	LVLIAll := CreateRecord('LVLI');
+	SetEditorID(LVLIAll, EditorID(CurrentRecord) + 'LVLIAll');
+	ElementAssign(LVLIAll, HighInteger, nil, false);
+	
+	NewItem := ElementAssign(ElementByPath(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
+	NewItem := ElementAssign(ElementByPath(NewItem, 'Leveled List Entry'), HighInteger, nil, false);
+	AddLVLIItem(a);
+	AddLVLIItem(b);
+	AddLVLIItem(c);
+	AddLVLIItem(d);
+	AddLVLIItem(e);
+	AddLVLIItem(f);
+	AddLVLIItem(g);
+	AddLVLIItem(h);
+	
 end;
 
 Procedure COBJHandler;

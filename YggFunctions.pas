@@ -347,6 +347,15 @@ begin
 	end;
 end;
 
+function AddLVLIItem(a: IInterface): IInterface;
+begin
+	NewItem := ElementAssign(ElementByName(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
+	SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(GetLoadOrderFormID(a),8));
+	SetElementEditValues(newItem, 'LVLO\Level', '1');
+	SetElementEditValues(newItem, 'LVLO\Count', '1');
+	result := NewItem
+end;
+
 function AddAllMaster: integer;
 var
 	f: integer;
