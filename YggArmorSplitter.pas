@@ -38,7 +38,7 @@ begin
 	remove(GroupBySignature(patch, 'LVLI'));
 	remove(GroupBySignature(patch, 'CONT'));
 	RaceList := TStringList;
-	RaceList.DelimitedText := 'Argonian,Orc,Khajiit,Mer';
+	RaceList.DelimitedText := 'Mer,Argonian,Orc,Khajiit';
 	AddMessage('---Making Armor reasonably different---');
 	GatherArmo;
 	Copier;
@@ -112,7 +112,7 @@ begin
 			SetElementEditValues(CurrentFemale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' Female');
 			SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'Female');
 			
-			for foobar := 0 to RaceList.Count - 1 do
+			for foobar := 1 to RaceList.Count - 1 do
 			begin
 				TempRecord := wbCopyElementToFile(CurrentFemale, Patch, true, true);
 				SetEditorID(TempRecord, EditorID(CurrentFemale) + RaceList.String[foobar]);
@@ -122,7 +122,7 @@ begin
 			CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetElementEditValues(Currentmale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' male');
 			SetEditorID(Currentmale, EditorID(CurrentRecord) + 'male');
-			for foobar := 0 to RaceList.Count - 1 do
+			for foobar := 1 to RaceList.Count - 1 do
 			begin
 				TempRecord := wbCopyElementToFile(Currentmale, Patch, true, true);
 				SetEditorID(TempRecord, EditorID(Currentmale) + RaceList.String[foobar]);
@@ -256,6 +256,29 @@ begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(LVLIList.Objects[i]), Patch, false, true);
 		CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 		CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+		
+		CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+		SetElementEditValues(CurrentFemale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' Female');
+		SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'Female');
+		
+		for foobar := 0 to RaceList.Count - 1 do
+		begin
+			TempRecord := wbCopyElementToFile(CurrentFemale, Patch, true, true);
+			SetEditorID(TempRecord, EditorID(CurrentFemale) + RaceList.String[foobar]);
+			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentFemale, 'Full - Name') + ' ' + RaceList.String[foobar]);
+			TempList.AddObject(EditorID(TempRecord), TempRecord);
+		end;
+		CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+		SetElementEditValues(Currentmale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' male');
+		SetEditorID(Currentmale, EditorID(CurrentRecord) + 'male');
+		for foobar := 0 to RaceList.Count - 1 do
+		begin
+			TempRecord := wbCopyElementToFile(Currentmale, Patch, true, true);
+			SetEditorID(TempRecord, EditorID(Currentmale) + RaceList.String[foobar]);
+			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(Currentmale, 'Full - Name') + ' ' + RaceList.String[foobar]);
+			TempList.AddObject(EditorID(TempRecord), TempRecord);
+		end;
+		
 		CurrentArgonianFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 		CurrentArgonianMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 		CurrentKhajiitFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
