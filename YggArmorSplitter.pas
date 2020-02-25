@@ -822,99 +822,54 @@ begin
 			end;
 		end;
 		ref := ElementByPath(CurrentRecord, 'DOFT');
-		if OTFTListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
-		templist := OTFTListList.Objects[OTFTListList.IndexOf(EditorID(LinksTo(ref)))];
-		for a := templist.count - 1 downto 0 do
-		begin
-			if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
-		end;
-		if Race = 'Khajiit' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckfa),8));
-		if Race = 'Orc' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cofa),8));
-		if Race = 'Mer' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cfa),8));
-		if Race = 'Argonian' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cafa),8));
-		if Race = 'Khajiit' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckma),8));
-		if Race = 'Orc' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(coma),8));
-		if Race = 'Mer' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cma),8));
-		if Race = 'Argonian' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cama),8));
+		ReplaceFixed(ref, 'OTFT');
 		
 		ref := ElementByPath(CurrentRecord, 'SOFT');
-		if OTFTListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
-		templist := OTFTListList.Objects[OTFTListList.IndexOf(EditorID(LinksTo(ref)))];
-		for a := templist.count - 1 downto 0 do
-		begin
-			if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
-		end;
-		if Race = 'Khajiit' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckfa),8));
-		if Race = 'Orc' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cofa),8));
-		if Race = 'Mer' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cfa),8));
-		if Race = 'Argonian' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cafa),8));
-		if Race = 'Khajiit' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckma),8));
-		if Race = 'Orc' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(coma),8));
-		if Race = 'Mer' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cma),8));
-		if Race = 'Argonian' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cama),8));
+		ReplaceFixed(ref, 'OTFT');
 		
 		ref := ElementByPath(CurrentRecord, 'WNAM');
-		if ArmoListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
-		templist := ArmoListList.Objects[ArmoListList.IndexOf(EditorID(LinksTo(ref)))];
-		for a := templist.count - 1 downto 0 do
-		begin
-			if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
-		end;
-		if Race = 'Khajiit' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckfa),8));
-		if Race = 'Orc' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cofa),8));
-		if Race = 'Mer' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cfa),8));
-		if Race = 'Argonian' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cafa),8));
-		if Race = 'Khajiit' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckma),8));
-		if Race = 'Orc' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(coma),8));
-		if Race = 'Mer' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cma),8));
-		if Race = 'Argonian' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cama),8));
+		ReplaceFixed(ref, 'ARMO');
 		
 		ref := ElementByPath(CurrentRecord, 'INAM');
-		if LVLIListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
-		templist := LVLIListList.Objects[LVLIListList.IndexOf(EditorID(LinksTo(ref)))];
-		for a := templist.count - 1 downto 0 do
-		begin
-			if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
-			else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
-		end;
-		if Race = 'Khajiit' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckfa),8));
-		if Race = 'Orc' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cofa),8));
-		if Race = 'Mer' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cfa),8));
-		if Race = 'Argonian' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cafa),8));
-		if Race = 'Khajiit' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckma),8));
-		if Race = 'Orc' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(coma),8));
-		if Race = 'Mer' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cma),8));
-		if Race = 'Argonian' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cama),8));
+		ReplaceFixed(ref, 'LVLI');
 	end;
 end;
 
+procedure ReplaceFixed(ref: IInterface, Sig: String);
+var
+	a: integer
+	cfa,cafa,cma,cama,ckfa,ckma,coma,cofa: IInterface;
+begin
+	if sig = 'OTFT' then begin
+		if OTFTListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
+		templist := OTFTListList.Objects[OTFTListList.IndexOf(EditorID(LinksTo(ref)))];
+	end else if sig = 'ARMO' then begin
+		if ArmoListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
+		templist := ArmoListList.Objects[ArmoListList.IndexOf(EditorID(LinksTo(ref)))];
+	end else if sig = 'LVLI' then begin
+		if LVLIListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
+		templist := LVLIListList.Objects[LVLIListList.IndexOf(EditorID(LinksTo(ref)))];
+	end;
+	for a := templist.count - 1 downto 0 do
+	begin
+		if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
+	end;
+	if Race = 'Khajiit' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckfa),8));
+	if Race = 'Orc' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cofa),8));
+	if Race = 'Mer' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cfa),8));
+	if Race = 'Argonian' AND Gender = true then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cafa),8));
+	if Race = 'Khajiit' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(ckma),8));
+	if Race = 'Orc' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(coma),8));
+	if Race = 'Mer' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cma),8));
+	if Race = 'Argonian' AND Gender = false then SetEditValue(ref, IntToHex(GetLoadOrderFormID(cama),8));
+end;
 
 procedure CleanDuplicates;
 begin
