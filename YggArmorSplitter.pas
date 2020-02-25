@@ -527,54 +527,47 @@ begin
 			Item := ElementByIndex(Items, k);
 			if Signature(LinksTo(Item)) = 'ARMO' then 
 			begin
-				if ArmoListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
-				templist := ArmoListList.Objects[ArmoListList.IndexOf(EditorID(LinksTo(ref)))];
-				for a := templist.count - 1 downto 0 do
-				begin
-					if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
-				end;
-				SetEditValue(ElementByIndex(ElementByName(CurrentFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cfa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cma),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentArgonianFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cafa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(ckfa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentArgonianMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cama),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(ckma),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentOrcFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cofa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentOrcMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(coma),8));
+				ReplaceDynamic(CurrentRecord, 'ARMO', 'INAM', k);
 			end else if Signature(LinksTo(Item)) = 'LVLI' then
 			begin
-				if LVLIListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
-				templist := LVLIListList.Objects[LVLIListList.IndexOf(EditorID(LinksTo(ref)))];
-				for a := templist.count - 1 downto 0 do
-				begin
-					if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
-					else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
-				end;
-				SetEditValue(ElementByIndex(ElementByName(CurrentFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cfa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cma),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentArgonianFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cafa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(ckfa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentArgonianMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cama),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(ckma),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentOrcFemale, 'INAM'), k), IntToHex(GetLoadOrderFormID(cofa),8));
-				SetEditValue(ElementByIndex(ElementByName(CurrentOrcMale, 'INAM'), k), IntToHex(GetLoadOrderFormID(coma),8));
+				ReplaceDynamic(CurrentRecord, 'LVLI', 'INAM', k);
 			end;
 		end;
 		
 	end;
+end;
+
+procedure ReplaceDynamic(ref: IInterface; sig, Path: string; loop:integer);
+begin
+	if sig = 'OTFT' then begin
+		if OTFTListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
+		templist := OTFTListList.Objects[OTFTListList.IndexOf(EditorID(LinksTo(ref)))];
+	end else if sig = 'ARMO' then begin
+		if ArmoListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
+		templist := ArmoListList.Objects[ArmoListList.IndexOf(EditorID(LinksTo(ref)))];
+	end else if sig = 'LVLI' then begin
+		if LVLIListList.IndexOf(EditorID(LinksTo(ref))) < 0 then continue;
+		templist := LVLIListList.Objects[LVLIListList.IndexOf(EditorID(LinksTo(ref)))];
+	end;
+	for a := templist.count - 1 downto 0 do
+	begin
+		if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
+	end;
+	SetEditValue(ElementByIndex(ElementByName(CurrentFemale, path), loop), IntToHex(GetLoadOrderFormID(cfa),8));
+	SetEditValue(ElementByIndex(ElementByName(CurrentMale, path), loop), IntToHex(GetLoadOrderFormID(cma),8));
+	SetEditValue(ElementByIndex(ElementByName(CurrentArgonianFemale, path), loop), IntToHex(GetLoadOrderFormID(cafa),8));
+	SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitFemale, path), loop), IntToHex(GetLoadOrderFormID(ckfa),8));
+	SetEditValue(ElementByIndex(ElementByName(CurrentArgonianMale, path), loop), IntToHex(GetLoadOrderFormID(cama),8));
+	SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitMale, path), loop), IntToHex(GetLoadOrderFormID(ckma),8));
+	SetEditValue(ElementByIndex(ElementByName(CurrentOrcFemale, path), loop), IntToHex(GetLoadOrderFormID(cofa),8));
+	SetEditValue(ElementByIndex(ElementByName(CurrentOrcMale, path), loop), IntToHex(GetLoadOrderFormID(coma),8));
 end;
 
 Procedure CONTHandler;
@@ -636,22 +629,6 @@ begin
 	for i := CONTList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(CONTList.Objects[i]), Patch, false, true);
-		CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentArgonianFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentArgonianMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'FemaleMer');
-		SetEditorID(CurrentMale, EditorID(CurrentRecord) + 'MaleMer');
-		SetEditorID(CurrentArgonianFemale, EditorID(CurrentRecord) + 'FemaleArgonian');
-		SetEditorID(CurrentArgonianMale, EditorID(CurrentRecord) + 'maleArgonian');
-		SetEditorID(CurrentKhajiitFemale, EditorID(CurrentRecord) + 'FemaleKhajiit');
-		SetEditorID(CurrentKhajiitMale, EditorID(CurrentRecord) + 'maleKhajiit');
-		SetEditorID(CurrentOrcFemale, EditorID(CurrentRecord) + 'FemaleOrc');
-		SetEditorID(CurrentOrcMale, EditorID(CurrentRecord) + 'maleOrc');
 		
 		Items := ElementByName(CurrentRecord, 'Items');
 		for k := 0 to Pred(ElementCount(Items)) do
@@ -735,11 +712,7 @@ begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(NPC_List.Objects[i]), Patch, false, true);
 		if Assigned(ElementByPath(CurrentRecord, 'ACBS\Flags\Female')) then Gender := true //true is female, false is male to simplify
 		else Gender := false;
-		if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Imperial') > 0 then Race := 'Mer'
-		else if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Breton') > 0 then Race := 'Mer'
-		else if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Elf') > 0 then Race := 'Mer'
-		else if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Nord') > 0 then Race := 'Mer'
-		else if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Khajiit') > 0 then Race := 'Khajiit'
+		if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Khajiit') > 0 then Race := 'Khajiit'
 		else if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Argonian') > 0 then Race := 'Argonian'
 		else if pos(GetElementEditValues(CurrentRecord, 'RNAM'), 'Orc') > 0 then Race := 'Orc'
 		else Race := 'Mer';
