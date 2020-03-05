@@ -37,8 +37,8 @@ begin
 	remove(GroupBySignature(patch, 'OTFT'));
 	remove(GroupBySignature(patch, 'LVLI'));
 	remove(GroupBySignature(patch, 'CONT'));
-	RaceList := TStringList;
-	RaceList.DelimitedText := 'Mer,Argonian,Orc,Khajiit';
+	RaceList := TStringList.create;
+	RaceList.DelimitedText := 'Male_Mer,Female_Mer,Male_Argonian,Female_Argonian,Male_Orc,Female_Orc,Male_Khajiit,Female_Khajiit';
 	AddMessage('---Making Armor reasonably different---');
 	GatherArmo;
 	Copier;
@@ -108,32 +108,21 @@ begin
 	for i := ArmoList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(ArmoList.Objects[i]), Patch, false, true);
-			CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-			SetElementEditValues(CurrentFemale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' Female');
-			SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'Female');
-			TempList.AddObject(EditorID(CurrentFemale), CurrentFemale);
-			for foobar := 1 to RaceList.Count - 1 do
-			begin
-				TempRecord := wbCopyElementToFile(CurrentFemale, Patch, true, true);
-				SetEditorID(TempRecord, EditorID(CurrentFemale) + RaceList.String[foobar]);
-				SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentFemale, 'Full - Name') + ' ' + RaceList.String[foobar]);
-				TempList.AddObject(EditorID(TempRecord), TempRecord);
-			end;
-			CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-			SetElementEditValues(Currentmale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' male');
-			SetEditorID(Currentmale, EditorID(CurrentRecord) + 'male');
-			TempList.AddObject(EditorID(Currentmale), Currentmale);
-			for foobar := 1 to RaceList.Count - 1 do
-			begin
-				TempRecord := wbCopyElementToFile(Currentmale, Patch, true, true);
-				SetEditorID(TempRecord, EditorID(Currentmale) + RaceList.String[foobar]);
-				SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(Currentmale, 'Full - Name') + ' ' + RaceList.String[foobar]);
-				TempList.AddObject(EditorID(TempRecord), TempRecord);
-			end;
-			
+		
+		for foobar := 1 to RaceList.Count - 1 do
+		begin
+			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.String[foobar]);
+			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.String[foobar]);
+			TempList.AddObject(EditorID(TempRecord), TempRecord);
+		end;
+		
 		for j := ElementCount(ElementByPath(CurrentRecord, 'Armature')) - 1 downto 0 do
 		begin
 			CurrentArma := WinningOverride(LinksTo(ElementByIndex(ElementByPath(CurrentRecord, 'Armature'), j)));
+			
+			
+			
 			CurrentFemaleArma := wbCopyElementToFile(CurrentArma, Patch, true, true);
 			CurrentMaleArma := wbCopyElementToFile(CurrentArma, Patch, true, true);
 			SetElementEditValues(CurrentFemale, 'Male world model\MOD2', GetElementEditValues(CurrentFemale, 'Female world model\MOD4'));
