@@ -100,7 +100,7 @@ end;
 procedure Copier;
 var
 	i, j, a, foobar: integer;
-	CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentRecord, Currentmale, CurrentmaleArma, TempRecord: IInterface;
+	CurrentArma, CurrentGroup, CurrentRecord, TempRecord, CurrentMaleArma, CurrentFemaleArma: IInterface;
 	LVLIAll, NewItem: IInterface;
 	TempList: TStringList;
 begin
@@ -121,44 +121,24 @@ begin
 		begin
 			CurrentArma := WinningOverride(LinksTo(ElementByIndex(ElementByPath(CurrentRecord, 'Armature'), j)));
 			
-			
-			
 			CurrentFemaleArma := wbCopyElementToFile(CurrentArma, Patch, true, true);
 			CurrentMaleArma := wbCopyElementToFile(CurrentArma, Patch, true, true);
+			SetElementEditValues(CurrentFemaleArma, 'Male world model\MOD2', GetElementEditValues(CurrentFemaleArma, 'Female world model\MOD3'));
+			SetElementEditValues(CurrentmaleArma, 'Female world model\MOD3', GetElementEditValues(CurrentmaleArma, 'Male world model\MOD2'));
+			SetElementEditValues(CurrentFemaleArma, 'Male 1st Person\MOD4', GetElementEditValues(CurrentFemaleArma, 'Female 1st Person\MOD5'));
+			SetElementEditValues(CurrentmaleArma, 'Female 1st Person\MOD5', GetElementEditValues(CurrentmaleArma, 'Male 1st Person\MOD4'));
 			SetElementEditValues(CurrentFemale, 'Male world model\MOD2', GetElementEditValues(CurrentFemale, 'Female world model\MOD4'));
 			SetElementEditValues(Currentmale, 'Female world model\MOD4', GetElementEditValues(Currentmale, 'Male world model\MOD2'));
 			SetEditorID(CurrentFemaleArma, EditorID(CurrentArma) + 'Female');
 			SetEditorID(CurrentMaleArma, EditorID(CurrentArma) + 'male');
+			{
+			for a := ElementCount(ElementByPath(CurrentRecord, 'Armature')) - 1 downto 1 do
+			begin
+				remove(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar]), 'Armature'), a));
+			end;
+			}
+			GetRaces(CurrentArma, CurrentFemaleArma, CurrentMaleArma, TempList,j);
 			
-			if assigned(ElementByPath(CurrentArma, 'Male world model\MOD2')) AND assigned(ElementByPath(CurrentArma, 'Female world model\MOD3')) then
-			begin
-				SetElementEditValues(CurrentFemaleArma, 'Male world model\MOD2', GetElementEditValues(CurrentFemaleArma, 'Female world model\MOD3'));
-				SetElementEditValues(CurrentmaleArma, 'Female world model\MOD3', GetElementEditValues(CurrentmaleArma, 'Male world model\MOD2'));
-			end;
-			if assigned(ElementByPath(CurrentArma, 'Male 1st Person\MOD4')) AND assigned(ElementByPath(CurrentArma, 'Female 1st Person\MOD5')) then
-			begin
-				SetElementEditValues(CurrentFemaleArma, 'Male 1st Person\MOD4', GetElementEditValues(CurrentFemaleArma, 'Female 1st Person\MOD5'));
-				SetElementEditValues(CurrentmaleArma, 'Female 1st Person\MOD5', GetElementEditValues(CurrentmaleArma, 'Male 1st Person\MOD4'));
-			end;
-			
-			SetEditValue(ElementByIndex(ElementByPath(CurrentFemale, 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
-			SetEditValue(ElementByIndex(ElementByPath(CurrentMale, 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
-			for foobar := 0 to RaceList.Count - 1 do
-			begin
-				if RaceList.String[foobar] = getRaces(CurrentArma) then
-				begin
-					for a := ElementCount(ElementByPath(ObjectToElement(TempList.Objects[foobar]), 'Armature')) - 1 downto 1 do
-					begin
-						remove(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar]), 'Armature'), a));
-					end;
-					for a := ElementCount(ElementByPath(ObjectToElement(TempList.Objects[foobar+4]), 'Armature')) - 1 downto 1 do
-					begin
-						remove(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar+4]), 'Armature'), a));
-					end;
-					SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar]), 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
-					SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.Objects[foobar+4]), 'Armature'), 1), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
-				end;
-			end;
 		end;
 		
 		
@@ -169,7 +149,7 @@ begin
 	end;
 end;
 
-function getRaces(arma: IInterface): string;
+procedure getRaces(arma,CurrentFemaleArma,CurrentMaleArma: IInterface; out TempList: TStringList; j: integer);
 var
 	CurrentEDID: String;
 	AdditionalRaces: IInterface;
@@ -179,13 +159,22 @@ begin
 	for i := elementCount(AdditionalRaces) - 1 downto 0 do
 	begin
 		CurrentEDID := EditorID(linksto(elementByIndex(AdditionalRaces, i)));
-		if CurrentEDID = 'OrcRace' then result := 'Orc'
-		else if CurrentEDID = 'OrcRaceVampire' then result := 'Orc'
-		else if CurrentEDID = 'KhajiitRace' then result := 'Khajiit'
-		else if CurrentEDID = 'KhajiitRaceVampire' then result := 'Khajiit'
-		else if CurrentEDID = 'ArgonianRace' then result := 'Argonian'
-		else if CurrentEDID = 'ArgonianRaceVampire' then result := 'Argonian'
-		else result := 'Mer';
+		if ContainsText('Orc', CurrentEDID) then
+		begin
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[4]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[5]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
+		end else if ContainsText('Khajiit', CurrentEDID) then 
+		begin
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[6]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[7]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
+		end else if ContainsText('Argonian', CurrentEDID) then begin
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[2]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[3]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
+		end else
+		begin
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[0]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentMaleArma),8));
+			SetEditValue(ElementByIndex(ElementByPath(ObjectToElement(TempList.objects[1]), 'Armature'), j), IntToHex(GetLoadOrderFormID(CurrentFemaleArma),8));
+		end;
 	end;
 end;
 
@@ -713,14 +702,14 @@ begin
 	end;
 	for a := templist.count - 1 downto 0 do
 	begin
-		if pos(templist.strings[a], 'FemaleArgonian') > 0 then cafa := ObjectToElement(templist.objects[a])
-		else if pos(templist.strings[a], 'FemaleKhajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
-		else if pos(templist.strings[a], 'maleArgonian') > 0 then cama := ObjectToElement(templist.objects[a])
-		else if pos(templist.strings[a], 'maleKhajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
-		else if pos(templist.strings[a], 'FemaleOrc') > 0 then cofa := ObjectToElement(templist.objects[a])
-		else if pos(templist.strings[a], 'maleOrc') > 0 then coma := ObjectToElement(templist.objects[a])
+		if pos(templist.strings[a], 'Female_Argonian') > 0 then cafa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'Female_Khajiit') > 0 then ckfa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'Male_Argonian') > 0 then cama := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'Male_Khajiit') > 0 then ckma := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'Female_Orc') > 0 then cofa := ObjectToElement(templist.objects[a])
+		else if pos(templist.strings[a], 'Male_Orc') > 0 then coma := ObjectToElement(templist.objects[a])
 		else if pos(templist.strings[a], 'Female') > 0 then cfa := ObjectToElement(templist.objects[a])
-		else if pos(templist.strings[a], 'male') > 0 then cma := ObjectToElement(templist.objects[a]);
+		else if pos(templist.strings[a], 'Male') > 0 then cma := ObjectToElement(templist.objects[a]);
 	end;
 	result := true;
 end;
