@@ -107,6 +107,7 @@ begin
 	armoListList := TStringList.Create;
 	for i := ArmoList.Count - 1 downto 0 do
 	begin
+		Templist := TStringlist.Create;
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(ArmoList.Objects[i]), Patch, false, true);
 		
 		for foobar := 1 to RaceList.Count - 1 do
