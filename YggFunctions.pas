@@ -353,7 +353,7 @@ end;
 
 function AddLVLIItem(LVLI, a: IInterface): IInterface;
 var
-	NewItem,e,group,dstRec: IInterface;
+	NewItem,e,group,dstRec,dstFile: IInterface;
 	b: boolean;
 begin
 	
