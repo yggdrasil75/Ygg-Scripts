@@ -405,22 +405,14 @@ begin
 	for i := OTFTList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(OTFTList.Objects[i]), Patch, false, true);
-		CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentArgonianFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentArgonianMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'FemaleMer');
-		SetEditorID(CurrentMale, EditorID(CurrentRecord) + 'MaleMer');
-		SetEditorID(CurrentArgonianFemale, EditorID(CurrentRecord) + 'FemaleArgonian');
-		SetEditorID(CurrentArgonianMale, EditorID(CurrentRecord) + 'maleArgonian');
-		SetEditorID(CurrentKhajiitFemale, EditorID(CurrentRecord) + 'FemaleKhajiit');
-		SetEditorID(CurrentKhajiitMale, EditorID(CurrentRecord) + 'maleKhajiit');
-		SetEditorID(CurrentOrcFemale, EditorID(CurrentRecord) + 'FemaleOrc');
-		SetEditorID(CurrentOrcMale, EditorID(CurrentRecord) + 'maleOrc');
+		
+		for foobar := 0 to RaceList.Count - 1 do
+		begin
+			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
+			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
+			TempList.AddObject(EditorID(TempRecord), TempRecord);
+		end;
 		
 		Items := ElementByName(CurrentRecord, 'INAM');
 		for k := 0 to Pred(ElementCount(Items)) do
@@ -428,7 +420,7 @@ begin
 			Item := ElementByIndex(Items, k);
 			if Signature(LinksTo(Item)) = 'ARMO' then 
 			begin
-				ReplaceDynamic(CurrentRecord, 'ARMO', 'INAM', k);
+				ReplaceDynamic(CurrentRecord, 'ARMO', 'INAM', k, templist);
 			end else if Signature(LinksTo(Item)) = 'LVLI' then
 			begin
 				ReplaceDynamic(CurrentRecord, 'LVLI', 'INAM', k);
@@ -438,17 +430,17 @@ begin
 	end;
 end;
 
-procedure ReplaceDynamic(ref: IInterface; sig, Path: string; loop:integer);
+procedure ReplaceDynamic(ref: IInterface; sig, Path: string; loop:integer, templist: TStringList);
 begin
 	if not GetStuff(ref,cafa,ckfa,cama,ckma,cofa,coma,cfa,cma, sig) then exit;
-	SetEditValue(ElementByIndex(ElementByName(CurrentFemale, path), loop), IntToHex(GetLoadOrderFormID(cfa),8));
-	SetEditValue(ElementByIndex(ElementByName(CurrentMale, path), loop), IntToHex(GetLoadOrderFormID(cma),8));
-	SetEditValue(ElementByIndex(ElementByName(CurrentArgonianFemale, path), loop), IntToHex(GetLoadOrderFormID(cafa),8));
-	SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitFemale, path), loop), IntToHex(GetLoadOrderFormID(ckfa),8));
-	SetEditValue(ElementByIndex(ElementByName(CurrentArgonianMale, path), loop), IntToHex(GetLoadOrderFormID(cama),8));
-	SetEditValue(ElementByIndex(ElementByName(CurrentKhajiitMale, path), loop), IntToHex(GetLoadOrderFormID(ckma),8));
-	SetEditValue(ElementByIndex(ElementByName(CurrentOrcFemale, path), loop), IntToHex(GetLoadOrderFormID(cofa),8));
-	SetEditValue(ElementByIndex(ElementByName(CurrentOrcMale, path), loop), IntToHex(GetLoadOrderFormID(coma),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[1]), path), loop), IntToHex(GetLoadOrderFormID(cfa),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[0]), path), loop), IntToHex(GetLoadOrderFormID(cma),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[3]), path), loop), IntToHex(GetLoadOrderFormID(cafa),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[7]), path), loop), IntToHex(GetLoadOrderFormID(ckfa),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[2]), path), loop), IntToHex(GetLoadOrderFormID(cama),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[6]), path), loop), IntToHex(GetLoadOrderFormID(ckma),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[5]), path), loop), IntToHex(GetLoadOrderFormID(cofa),8));
+	SetEditValue(ElementByIndex(ElementByName(ObjectToElement(TempList.Objects[4]), path), loop), IntToHex(GetLoadOrderFormID(coma),8));
 end;
 
 Procedure CONTHandler;
