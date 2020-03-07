@@ -238,7 +238,8 @@ begin
 		
 		for foobar := 0 to RaceList.Count - 1 do
 		begin
-			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+			TempRecord := ElementAssign(Patch, HighInteger, CurrentRecord, false);
+			//TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
 			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
 			TempList.AddObject(EditorID(TempRecord), TempRecord);
