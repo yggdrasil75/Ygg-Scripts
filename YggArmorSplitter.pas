@@ -326,7 +326,7 @@ procedure CopierCOBJ;
 var
 	i, j, a, k: integer;
 	TempList: TStringList;
-	CurrentArgonianFemale, CurrentArgonianMale, CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, CurrentRecord, Currentmale, CurrentmaleArma: IInterface;
+	CurrentGroup, CurrentRecord: IInterface;
 	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa: IInterface;
 	LVLIAll, NewItem: IInterface;
 	Item, Items, entries, ref, lvlo, CurrenGroup: IInterface;
@@ -574,7 +574,7 @@ var
 	TempList: TStringList;
 	Race: string;
 	CurrentGroup, CurrentRecord: IInterface;
-	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa, Item, Items: IInterface;
+	Item, Items: IInterface;
 begin
 	for i := NPC_List.Count - 1 downto 0 do
 	begin

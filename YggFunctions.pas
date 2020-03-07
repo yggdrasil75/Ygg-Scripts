@@ -255,10 +255,10 @@ begin
 		// update counter subrecord
 		if num <> ElementCount(lst) then 
 		begin
-			  num := ElementCount(lst);
-			  // set new value or remove subrecord if list is empty (like CK does)
-			  if num > 0 then SetElementNativeValues(rec, countname, num)
-			  else RemoveElement(rec, countname);
+			num := ElementCount(lst);
+			// set new value or remove subrecord if list is empty (like CK does)
+			if num > 0 then SetElementNativeValues(rec, countname, num)
+			else RemoveElement(rec, countname);
 		end;
 	end;
 end;
@@ -355,6 +355,28 @@ function AddLVLIItem(LVLI, a: IInterface): IInterface;
 var
 	NewItem: IInterface;
 begin
+	
+	group := GroupBySignature(dstFile, 'LVLI');
+	if not Assigned(group) then
+	begin
+		group := Add(dstFile, 'LVLI', true);
+		dstRec := Add(group, 'LVLI', true);
+	end;
+	
+	a := ElementByPath(dstRec, 'Leveled List Entries');
+	if not Assigned(a) then begin
+		a := Add(dstRec, 'Leveled List Entries', true);
+		b := true;
+	end;
+	for i := 0 to slForms.Count - 1 do begin
+		e := ElementAssign(a, HighInteger, nil, false);
+		SetElementEditValues(e,  'LVLO\Reference', slForms[i]);
+		if ('LVLI' = 'LVLI') then
+			SetElementEditValues(e, 'LVLO\Count', '1');
+	end;
+	if b then RemoveByIndex(a, 0, true);
+  
+	
 	NewItem := ElementAssign(ElementByName(LVLI, 'Leveled List Entries'), HighInteger, nil, false);
 	SetElementEditValues(newItem, 'LVLO\Reference', IntToHex(FormID(a),8));
 	SetElementEditValues(newItem, 'LVLO\Level', '1');
