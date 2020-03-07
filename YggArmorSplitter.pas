@@ -638,6 +638,7 @@ function GetStuff(ref, out cafa, out ckfa, out cama, out ckma, out cofa, out com
 var
 	TempList: TStringList;
 	a: integer;
+	tempEDID: string;
 begin
 	tempEDID := tempEDID;
 	if sig = 'OTFT' then begin
