@@ -353,7 +353,8 @@ end;
 
 function AddLVLIItem(LVLI, a: IInterface): IInterface;
 var
-	NewItem: IInterface;
+	NewItem,e,group,dstRec: IInterface;
+	b: boolean;
 begin
 	
 	group := GroupBySignature(dstFile, 'LVLI');
@@ -368,12 +369,9 @@ begin
 		a := Add(dstRec, 'Leveled List Entries', true);
 		b := true;
 	end;
-	for i := 0 to slForms.Count - 1 do begin
-		e := ElementAssign(a, HighInteger, nil, false);
-		SetElementEditValues(e,  'LVLO\Reference', slForms[i]);
-		if ('LVLI' = 'LVLI') then
-			SetElementEditValues(e, 'LVLO\Count', '1');
-	end;
+	e := ElementAssign(a, HighInteger, nil, false);
+		SetElementEditValues(e,  'LVLO\Reference', a);
+	if ('LVLI' = 'LVLI') then SetElementEditValues(e, 'LVLO\Count', '1');
 	if b then RemoveByIndex(a, 0, true);
   
 	
