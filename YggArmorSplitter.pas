@@ -116,6 +116,8 @@ begin
 			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
 			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
 			TempList.AddObject(EditorID(TempRecord), TempRecord);
+			if odd(foobar) then SetElementEditValues(Templist.Objects[foobar], 'Male world model\MOD2', GetElementEditValues(Templist.objects[foobar], 'Female world model\MOD4'));
+			if not odd(foobar) then SetElementEditValues(Templist.Objects[foobar], 'Female world model\MOD4', GetElementEditValues(Templist.objects[foobar], 'Male world model\MOD2'));
 		end;
 		
 		for j := ElementCount(ElementByPath(CurrentRecord, 'Armature')) - 1 downto 0 do
@@ -128,8 +130,6 @@ begin
 			SetElementEditValues(CurrentmaleArma, 'Female world model\MOD3', GetElementEditValues(CurrentmaleArma, 'Male world model\MOD2'));
 			SetElementEditValues(CurrentFemaleArma, 'Male 1st Person\MOD4', GetElementEditValues(CurrentFemaleArma, 'Female 1st Person\MOD5'));
 			SetElementEditValues(CurrentmaleArma, 'Female 1st Person\MOD5', GetElementEditValues(CurrentmaleArma, 'Male 1st Person\MOD4'));
-			SetElementEditValues(CurrentFemale, 'Male world model\MOD2', GetElementEditValues(CurrentFemale, 'Female world model\MOD4'));
-			SetElementEditValues(Currentmale, 'Female world model\MOD4', GetElementEditValues(Currentmale, 'Male world model\MOD2'));
 			SetEditorID(CurrentFemaleArma, EditorID(CurrentArma) + 'Female');
 			SetEditorID(CurrentMaleArma, EditorID(CurrentArma) + 'male');
 			{
