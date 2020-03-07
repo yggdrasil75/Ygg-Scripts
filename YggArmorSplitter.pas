@@ -494,7 +494,7 @@ var
 	lvlo, ref: IInterface;
 	NPC_ainsArmo: boolean;
 	TempList: TStringList;
-	CurrentArgonianFemale, CurrentArgonianMale, CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, CurrentRecord, Currentmale, CurrentmaleArma: IInterface;
+	CurrentGroup, CurrentRecord: IInterface;
 	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa, Items, Item: IInterface;
 begin
 	for i := CONTList.Count - 1 downto 0 do
@@ -573,7 +573,7 @@ var
 	Gender, NPC_ainsArmo: boolean;
 	TempList: TStringList;
 	Race: string;
-	CurrentArgonianFemale, CurrentArgonianMale, CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, CurrentRecord, Currentmale, CurrentmaleArma: IInterface;
+	CurrentGroup, CurrentRecord: IInterface;
 	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa, Item, Items: IInterface;
 begin
 	for i := NPC_List.Count - 1 downto 0 do
