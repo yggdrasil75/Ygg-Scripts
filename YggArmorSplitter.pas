@@ -274,7 +274,7 @@ var
 	foobar: integer;
 begin
 	LVLIAll := CreateRecord('LVLI');
-	SetEditorID(LVLIAll, EditorID(CurrentRecord) + 'LVLIAll');
+	SetEditorID(LVLIAll, EditorID(ObjectToElement(aTempList.Objects[0])) + 'LVLIAll');
 	ElementAssign(LVLIAll, HighInteger, nil, false);
 	
 	NewItem := ElementAssign(ElementByPath(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
