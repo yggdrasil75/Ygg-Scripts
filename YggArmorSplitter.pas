@@ -143,7 +143,7 @@ begin
 		end;
 		
 		
-		LVLIAll := AddLVLIALL(ObjectToElement(TempList.Objects[0]),ObjectToElement(TempList.Objects[1]),ObjectToElement(TempList.Objects[2]),ObjectToElement(TempList.Objects[3]),ObjectToElement(TempList.Objects[4]),ObjectToElement(TempList.Objects[5]),ObjectToElement(TempList.Objects[6]),ObjectToElement(TempList.Objects[7]));
+		LVLIAll := AddLVLIALL(TempList);
 		
 		TempList.AddObject(EditorID(LVLIAll), LVLIAll);
 		ArmoListList.AddObject(EditorID(CurrentRecord), Templist);
@@ -223,9 +223,9 @@ end;
 
 procedure CopierLVLI;
 var
-	i, j, a,k: integer;
+	i, j, a,k,foobar: integer;
 	LVLIAll, NewItem: IInterface;
-	CurrentArgonianFemale, CurrentArgonianMale, CurrentArma, CurrentFemale, CurrentFemaleArma, CurrentGroup, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentOrcFemale, CurrentOrcMale, CurrentRecord, Currentmale, CurrentmaleArma: IInterface;
+	CurrentGroup, CurrentRecord, TempRecord: IInterface;
 	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa: IInterface;
 	TempList: TStringList;
 	Item, Items, entries, ref, lvlo, CurrenGroup: IInterface;
@@ -234,45 +234,15 @@ begin
 	for i := LVLIList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(LVLIList.Objects[i]), Patch, false, true);
-		CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		
-		CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		SetElementEditValues(CurrentFemale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' Female');
-		SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'Female');
+		TempList := TStringList.Create;
 		
 		for foobar := 0 to RaceList.Count - 1 do
 		begin
-			TempRecord := wbCopyElementToFile(CurrentFemale, Patch, true, true);
-			SetEditorID(TempRecord, EditorID(CurrentFemale) + RaceList.Strings[foobar]);
-			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentFemale, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
+			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
+			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
 			TempList.AddObject(EditorID(TempRecord), TempRecord);
 		end;
-		CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		SetElementEditValues(Currentmale, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' male');
-		SetEditorID(Currentmale, EditorID(CurrentRecord) + 'male');
-		for foobar := 0 to RaceList.Count - 1 do
-		begin
-			TempRecord := wbCopyElementToFile(Currentmale, Patch, true, true);
-			SetEditorID(TempRecord, EditorID(Currentmale) + RaceList.Strings[foobar]);
-			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(Currentmale, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
-			TempList.AddObject(EditorID(TempRecord), TempRecord);
-		end;
-		
-		CurrentArgonianFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentArgonianMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'FemaleMer');
-		SetEditorID(CurrentMale, EditorID(CurrentRecord) + 'MaleMer');
-		SetEditorID(CurrentArgonianFemale, EditorID(CurrentRecord) + 'FemaleArgonian');
-		SetEditorID(CurrentArgonianMale, EditorID(CurrentRecord) + 'maleArgonian');
-		SetEditorID(CurrentKhajiitFemale, EditorID(CurrentRecord) + 'FemaleKhajiit');
-		SetEditorID(CurrentKhajiitMale, EditorID(CurrentRecord) + 'maleKhajiit');
-		SetEditorID(CurrentOrcFemale, EditorID(CurrentRecord) + 'FemaleOrc');
-		SetEditorID(CurrentOrcMale, EditorID(CurrentRecord) + 'maleOrc');
 		
 		entries := ElementByName(CurrentRecord, 'Leveled List Entries');
 		for k := 0 to Pred(ElementCount(entries)) do
@@ -290,27 +260,18 @@ begin
 			SetElementEditValues(CurrentOrcFemale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cofa),8));
 			SetElementEditValues(CurrentOrcMale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(coma),8));
 		end;
-		LVLIAll := AddLVLIALL(CurrentArgonianFemale, CurrentArgonianMale, CurrentFemale, CurrentKhajiitFemale, CurrentKhajiitMale, CurrentMale, CurrentOrcFemale, CurrentOrcMale, Currentmale);
 		
-		TempList := TStringList.Create;
-		TempList.AddObject(EditorID(CurrentRecord), CurrentRecord);
-		TempList.AddObject(EditorID(CurrentFemale), CurrentFemale);
-		TempList.AddObject(EditorID(CurrentMale), CurrentMale);
-		TempList.AddObject(EditorID(CurrentArgonianFemale), CurrentArgonianFemale);
-		TempList.AddObject(EditorID(CurrentKhajiitFemale), CurrentKhajiitFemale);
-		TempList.AddObject(EditorID(CurrentArgonianMale), CurrentArgonianMale);
-		TempList.AddObject(EditorID(CurrentKhajiitMale), CurrentKhajiitMale);
-		TempList.AddObject(EditorID(CurrentOrcFemale), CurrentOrcFemale);
-		TempList.AddObject(EditorID(CurrentOrcMale), CurrentOrcMale);
+		LVLIAll := AddLVLIALL(TempList);
 		
 		TempList.AddObject(EditorID(LVLIAll), LVLIAll);
 		LVLIListList.AddObject(EditorID(CurrentRecord), Templist);
 	end;
 end;
 
-function AddLVLIALL(a,b,c,d,e,f,g,h: IInterface): IInterface;
+function AddLVLIALL(aTempList: TStringList): IInterface;
 var
 	LVLIAll, NewItem: IInterface;
+	foobar: integer;
 begin
 	LVLIAll := CreateRecord('LVLI');
 	SetEditorID(LVLIAll, EditorID(CurrentRecord) + 'LVLIAll');
@@ -318,15 +279,11 @@ begin
 	
 	NewItem := ElementAssign(ElementByPath(LVLIAll, 'Leveled List Entries'), HighInteger, nil, false);
 	NewItem := ElementAssign(ElementByPath(NewItem, 'Leveled List Entry'), HighInteger, nil, false);
-	AddLVLIItem(LVLIAll, a);
-	AddLVLIItem(LVLIAll, b);
-	AddLVLIItem(LVLIAll, c);
-	AddLVLIItem(LVLIAll, d);
-	AddLVLIItem(LVLIAll, e);
-	AddLVLIItem(LVLIAll, f);
-	AddLVLIItem(LVLIAll, g);
-	AddLVLIItem(LVLIAll, h);
-	
+	for foobar := aTempList.count - 1 downto 0 do
+	begin
+	AddLVLIItem(LVLIAll, ObjectToElement(aTempList.objects[foobar]));
+	end;
+	result := LVLIAll;
 end;
 
 Procedure COBJHandler;
