@@ -639,15 +639,16 @@ var
 	TempList: TStringList;
 	a: integer;
 begin
+	tempEDID := tempEDID;
 	if sig = 'OTFT' then begin
-		if OTFTListList.IndexOf(EditorID(LinksTo(ref))) < 0 then result := false;
-		templist := OTFTListList.Objects[OTFTListList.IndexOf(EditorID(LinksTo(ref)))];
+		if OTFTListList.IndexOf(tempEDID) < 0 or OTFTListList.IndexOf(TempEDID) > OTFTListList.count - 1 then result := false;
+		templist := OTFTListList.Objects[OTFTListList.IndexOf(tempEDID)];
 	end else if sig = 'ARMO' then begin
-		if ArmoListList.IndexOf(EditorID(LinksTo(ref))) < 0 then result := false;
-		templist := ArmoListList.Objects[ArmoListList.IndexOf(EditorID(LinksTo(ref)))];
+		if ArmoListList.IndexOf(tempEDID) < 0 or ArmoListList.IndexOf(TempEDID) > ArmoListList.count - 1 then result := false;
+		templist := ArmoListList.Objects[ArmoListList.IndexOf(tempEDID)];
 	end else if sig = 'LVLI' then begin
-		if LVLIListList.IndexOf(EditorID(LinksTo(ref))) < 0 then result := false;
-		templist := LVLIListList.Objects[LVLIListList.IndexOf(EditorID(LinksTo(ref)))];
+		if LVLIListList.IndexOf(tempEDID) < 0 or LVLIListList.IndexOf(TempEDID) > LVLIListList.count - 1 then result := false;
+		templist := LVLIListList.Objects[LVLIListList.IndexOf(tempEDID)];
 	end;
 	for a := templist.count - 1 downto 0 do
 	begin
