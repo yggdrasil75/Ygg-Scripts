@@ -642,15 +642,24 @@ var
 begin
 	tempEDID := EditorID(LinksTo(ref));
 	if sig = 'OTFT' then begin
-		if OTFTListList.IndexOf(tempEDID) < 0 then result := false;
+		if OTFTListList.IndexOf(tempEDID) < 0 then begin
+		result := false;
+		exit;
+		end;
 		AddMessage(IntToStr(OTFTListList.IndexOf(tempEDID)));
 		templist := OTFTListList.Objects[OTFTListList.IndexOf(tempEDID)];
 	end else if sig = 'ARMO' then begin
-		if ArmoListList.IndexOf(tempEDID) < 0 then result := false;
+		if ArmoListList.IndexOf(tempEDID) < 0 then begin
+		result := false;
+		exit;
+		end;
 		AddMessage(IntToStr(ArmoListList.IndexOf(tempEDID)));
 		templist := ArmoListList.Objects[ArmoListList.IndexOf(tempEDID)];
 	end else if sig = 'LVLI' then begin
-		if LVLIListList.IndexOf(tempEDID) < 0 then result := false;
+		if LVLIListList.IndexOf(tempEDID) < 0 then begin
+		result := false;
+		exit;
+		end;
 		AddMessage(IntToStr(LVLIListList.IndexOf(tempEDID)));
 		templist := LVLIListList.Objects[LVLIListList.IndexOf(tempEDID)];
 	end;
