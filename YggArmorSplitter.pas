@@ -335,31 +335,24 @@ begin
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(COBJList.Objects[i]), Patch, false, true);
 		if not GetStuff(LinksTo(ElementByPath(CurrentRecord, 'CNAM')),cafa,ckfa,cama,ckma,cofa,coma,cfa,cma, 'ARMO') then continue;
-		CurrentFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentArgonianFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentArgonianMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentKhajiitMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcFemale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		CurrentOrcMale := wbCopyElementToFile(CurrentRecord, Patch, true, true);
-		SetEditorID(CurrentFemale, EditorID(CurrentRecord) + 'FemaleMer');
-		SetEditorID(CurrentMale, EditorID(CurrentRecord) + 'MaleMer');
-		SetEditorID(CurrentArgonianFemale, EditorID(CurrentRecord) + 'FemaleArgonian');
-		SetEditorID(CurrentArgonianMale, EditorID(CurrentRecord) + 'maleArgonian');
-		SetEditorID(CurrentKhajiitFemale, EditorID(CurrentRecord) + 'FemaleKhajiit');
-		SetEditorID(CurrentKhajiitMale, EditorID(CurrentRecord) + 'maleKhajiit');
-		SetEditorID(CurrentOrcFemale, EditorID(CurrentRecord) + 'FemaleOrc');
-		SetEditorID(CurrentOrcMale, EditorID(CurrentRecord) + 'maleOrc');
 		
-		SetEditValue(ElementByPath(CurrentFemale, 'CNAM'), IntToHex(GetLoadOrderFormID(cfa),8));
-		SetEditValue(ElementByPath(CurrentMale, 'CNAM'), IntToHex(GetLoadOrderFormID(cma),8));
-		SetEditValue(ElementByPath(CurrentArgonianFemale, 'CNAM'), IntToHex(GetLoadOrderFormID(cafa),8));
-		SetEditValue(ElementByPath(CurrentKhajiitFemale, 'CNAM'), IntToHex(GetLoadOrderFormID(ckfa),8));
-		SetEditValue(ElementByPath(CurrentArgonianMale, 'CNAM'), IntToHex(GetLoadOrderFormID(cama),8));
-		SetEditValue(ElementByPath(CurrentKhajiitMale, 'CNAM'), IntToHex(GetLoadOrderFormID(ckma),8));
-		SetEditValue(ElementByPath(CurrentOrcFemale, 'CNAM'), IntToHex(GetLoadOrderFormID(cofa),8));
-		SetEditValue(ElementByPath(CurrentOrcMale, 'CNAM'), IntToHex(GetLoadOrderFormID(coma),8));
+		for foobar := 0 to RaceList.Count - 1 do
+		begin
+			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
+			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
+			TempList.AddObject(EditorID(TempRecord), TempRecord);
+			
+		end;
+		
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[1]), 'CNAM'), IntToHex(GetLoadOrderFormID(cfa),8));
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[0]), 'CNAM'), IntToHex(GetLoadOrderFormID(cma),8));
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[3]), 'CNAM'), IntToHex(GetLoadOrderFormID(cafa),8));
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[7]), 'CNAM'), IntToHex(GetLoadOrderFormID(ckfa),8));
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[2]), 'CNAM'), IntToHex(GetLoadOrderFormID(cama),8));
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[6]), 'CNAM'), IntToHex(GetLoadOrderFormID(ckma),8));
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[5]), 'CNAM'), IntToHex(GetLoadOrderFormID(cofa),8));
+		SetEditValue(ElementByPath(ObjectToElement(TempList.Objects[4]), 'CNAM'), IntToHex(GetLoadOrderFormID(coma),8));
 		SetIsDeleted(CurrentRecord, true);
 	end;
 end;
