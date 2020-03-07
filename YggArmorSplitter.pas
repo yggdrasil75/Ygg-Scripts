@@ -91,6 +91,7 @@ begin
 			if IntToStr(GetElementNativeValues(CurrentRecord, 'DATA\Flags\Non-Playable')) < 0 then continue;
 			if pos('skin', EditorID(CurrentRecord)) > 0 then continue;
 			if pos('Skin', EditorID(CurrentRecord)) > 0 then continue;
+			if GetElementEditValues(CurrentRecord, 'ETYP') = 'Shield [EQUP:000141E8]' then continue;
 			if ISWinningOverride(CurrentRecord) then 
 			ArmoList.AddObject(EditorID(CurrentRecord), CurrentRecord);
 		end;
@@ -116,8 +117,8 @@ begin
 			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
 			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
 			TempList.AddObject(EditorID(TempRecord), TempRecord);
-			if odd(foobar) then SetElementEditValues(Templist.Objects[foobar], 'Male world model\MOD2', GetElementEditValues(Templist.objects[foobar], 'Female world model\MOD4'));
-			if not odd(foobar) then SetElementEditValues(Templist.Objects[foobar], 'Female world model\MOD4', GetElementEditValues(Templist.objects[foobar], 'Male world model\MOD2'));
+			if odd(foobar) and assigned(ElementByPath(TempRecord,'Female world model\MOD4')) then SetElementEditValues(Templist.Objects[foobar], 'Male world model\MOD2', GetElementEditValues(Templist.objects[foobar], 'Female world model\MOD4'));
+			if not odd(foobar) and assigned(ElementByPath(TempRecord,'Male world model\MOD2')) then SetElementEditValues(Templist.Objects[foobar], 'Female world model\MOD4', GetElementEditValues(Templist.objects[foobar], 'Male world model\MOD2'));
 		end;
 		
 		for j := ElementCount(ElementByPath(CurrentRecord, 'Armature')) - 1 downto 0 do
@@ -234,12 +235,14 @@ begin
 	for i := LVLIList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(LVLIList.Objects[i]), Patch, false, true);
+		AddMessage(FullPath(CurrentRecord));
 		TempList := TStringList.Create;
 		
 		for foobar := 0 to RaceList.Count - 1 do
 		begin
-			TempRecord := ElementAssign(Patch, HighInteger, CurrentRecord, false);
-			//TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+			AddMessage(FullPath(TempRecord));
+			//TempRecord := ElementAssign(Patch, LowInteger, CurrentRecord, false);
+			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
 			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
 			TempList.AddObject(EditorID(TempRecord), TempRecord);
@@ -252,14 +255,16 @@ begin
 			ref := ElementByName(lvlo, 'Reference');
 			
 			if not GetStuff(ref,cafa,ckfa,cama,ckma,cofa,coma,cfa,cma, 'ARMO') then continue;
-			SetElementEditValues(ObjectToElement(TempList.Objects[1]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cfa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[0]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cma),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[3]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cafa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[7]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(ckfa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[2]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cama),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[6]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(ckma),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[5]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cofa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[4]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(coma),8));
+			AddMessage('Assigned? = ' + IfThen(Assigned(ElementByPath(ObjectToElement(TempList.Objects[3]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO')), 'True', 'False'));
+			AddMessage('257 = ' + FullPath(ObjectToElement(TempList.Objects[3])));
+			SetElementEditValues(ObjectToElement(TempList.Objects[1]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cfa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[0]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cma),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[3]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cafa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[7]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(ckfa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[2]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cama),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[6]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(ckma),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[5]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cofa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[4]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(coma),8));
 		end;
 		
 		LVLIAll := AddLVLIALL(TempList);
