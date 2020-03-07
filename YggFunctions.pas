@@ -1,7 +1,5 @@
 unit YggFunctions;
 
-uses Sysutils;
-
 var
 	Patch: IInterface;
 	CurrentRecord: IInterface;
@@ -200,6 +198,12 @@ begin
 		addmessage('there is a typo in a edid');
 	end;
 	result := temp;
+end;
+
+function odd(iInput: Integer): boolean;
+begin
+	if ((iInput mod 2) == 0) then result := false
+	else result := true;
 end;
 
 // creates new record inside provided file

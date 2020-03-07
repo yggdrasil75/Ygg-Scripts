@@ -110,7 +110,7 @@ begin
 		Templist := TStringlist.Create;
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(ArmoList.Objects[i]), Patch, false, true);
 		
-		for foobar := 1 to RaceList.Count - 1 do
+		for foobar := 0 to RaceList.Count - 1 do
 		begin
 			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
