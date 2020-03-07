@@ -251,14 +251,14 @@ begin
 			ref := ElementByName(lvlo, 'Reference');
 			
 			if not GetStuff(ref,cafa,ckfa,cama,ckma,cofa,coma,cfa,cma, 'ARMO') then continue;
-			SetElementEditValues(CurrentFemale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cfa),8));
-			SetElementEditValues(CurrentMale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cma),8));
-			SetElementEditValues(CurrentArgonianFemale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cafa),8));
-			SetElementEditValues(CurrentKhajiitFemale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(ckfa),8));
-			SetElementEditValues(CurrentArgonianMale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cama),8));
-			SetElementEditValues(CurrentKhajiitMale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(ckma),8));
-			SetElementEditValues(CurrentOrcFemale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cofa),8));
-			SetElementEditValues(CurrentOrcMale, 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(coma),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[1]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cfa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[0]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cma),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[3]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cafa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[7]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(ckfa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[2]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cama),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[6]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(ckma),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[5]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(cofa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[4]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO', IntToHex(GetLoadOrderFormID(coma),8));
 		end;
 		
 		LVLIAll := AddLVLIALL(TempList);
