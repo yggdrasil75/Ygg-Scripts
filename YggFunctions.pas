@@ -1,6 +1,7 @@
 unit YggFunctions;
 
 var
+	C_FName: string;
 	Patch: IInterface;
 	CurrentRecord: IInterface;
 	TimeBegin: TDateTime;
@@ -462,6 +463,9 @@ begin
 	YggLogCurrentMessages := TStringList.Create;
 	//Rewrite(YggLog);
 	//writeln(YggLog, who);
+	temp := ScriptsPath + 'Ygg\log' + FormatDateTime('f',TimeBegin) + '.log';
+	temp := ReplaceStr(temp, ':', ' ');
+	C_FName := ReplaceStr(temp, '\', ' ');
 end;
 
 function TimeBtwn(Start, Stop: TDateTime): string;
@@ -544,12 +548,8 @@ end;
 procedure LogMessage(level: integer; LogItem: string);
 var
 	currenttime: TDateTime;
-	C_FName: string;
 	temp: String;
 begin
-	temp := ScriptsPath + 'Ygg\log' + FormatDateTime('f',TimeBegin) + '.log';
-	temp := ReplaceStr(temp, ':', ' ');
-	C_FName := ReplaceStr(temp, '\', ' ');
 	currenttime := Time;
 	if level = 0 then
 	begin
