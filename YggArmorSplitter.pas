@@ -15,6 +15,8 @@ var
 begin
 	Patch := SelectPatch('YGG_ArmorSplit.esp');
 	PassFile(Patch);
+	beginLog('Leveled List start');
+	PassTime(Time);
 	BeginUpdate(Patch);
 	try
 		AddmasterBySignature('ARMO');
@@ -91,9 +93,30 @@ begin
 			if IntToStr(GetElementNativeValues(CurrentRecord, 'DATA\Flags\Non-Playable')) < 0 then continue;
 			if pos('skin', EditorID(CurrentRecord)) > 0 then continue;
 			if pos('Skin', EditorID(CurrentRecord)) > 0 then continue;
+			if HasKeyword(CurrentRecord,'Variant') then continue;
+			if HasKeyword(CurrentRecord,'Varied') then continue;
 			if GetElementEditValues(CurrentRecord, 'ETYP') = 'Shield [EQUP:000141E8]' then continue;
 			if ISWinningOverride(CurrentRecord) then 
 			ArmoList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+		end;
+	end;
+end;
+
+function hasKeyword(CR: IInterface; keywordEditorID: string): boolean;
+var
+  tmpKeywordsCollection: IInterface;
+  i: integer;
+begin
+	Result := false;
+	// get all keyword entries of provided record
+	tmpKeywordsCollection := ElementByPath(CR, 'KWDA');
+	// loop through each
+	for i := 0 to ElementCount(tmpKeywordsCollection) - 1 do
+	begin
+		if GetElementEditValues(LinksTo(ElementByIndex(tmpKeywordsCollection, i)), 'EDID') = keywordEditorID then
+		begin
+			Result := true;
+			Break;
 		end;
 	end;
 end;

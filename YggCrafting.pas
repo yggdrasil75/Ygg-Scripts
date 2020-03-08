@@ -126,7 +126,7 @@ begin
 		//addmessage('checkpoint winning');
 		exit;
 	end;
-	{if hasKeyword('noCraft') then 
+	{if hasKeyword(CurrentRecord, 'noCraft') then 
 	begin
 		//addmessage('checkpoint nocraft');
 		exit;
@@ -149,8 +149,8 @@ begin
 
 	if IntToStr(GetElementNativeValues(itemRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then exit;
 	if IntToStr(GetElementNativeValues(itemRecord, 'DATA\Flags\Non-Playable')) < 0 then exit;
-	if hasKeyword('Dummy') then exit;
-	if hasKeyword('noCraft') then exit;
+	if hasKeyword(CurrentRecord, 'Dummy') then exit;
+	if hasKeyword(CurrentRecord, 'noCraft') then exit;
 	if recordSignature = 'ARMO' then makeCraftable;
 	if recordSignature = 'WEAP' then MakeCraftable;
 	if recordSignature = 'AMMO' then MakeCraftable;
@@ -213,7 +213,7 @@ begin
 	// get reference to required items list inside recipe
 	recipeItems := ElementByPath(recipeCraft, 'items');
 	// trying to figure out propper requirements amount  
-	if hasKeyword('ArmorHeavy') then 
+	if hasKeyword(CurrentRecord, 'ArmorHeavy') then 
 	begin //if it is heavy armor, base the amount of materials on the weight
 		amountOfMainComponent := MaterialAmountHeavy(amountOfMainComponent, amountOfAdditionalComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
 		amountOfAdditionalComponent := ceil(2);
@@ -222,7 +222,7 @@ begin
 		begin
 			MatByKYWD(EditorID(LinksTo(ElementByIndex(Keywords, ki))), RecipeItems, AmountOfMainComponent);
 		end;
-	end else if hasKeyword('ArmorLight') then 
+	end else if hasKeyword(CurrentRecord, 'ArmorLight') then 
 	begin //Light armor is based on rating
 		amountOfMainComponent := floor(StrToFloat(GetElementEditValues(itemRecord, 'DNAM - Armor Rating')) * 0.2);
 		amountOfAdditionalComponent := floor(amountOfMainComponent / 3);
@@ -236,7 +236,7 @@ begin
 		begin
 			MatByKYWD(EditorID(LinksTo(ElementByIndex(Keywords, ki))), RecipeItems, AmountOfMainComponent);
 		end;
-	end else if hasKeyword('ArmorClothing') then 
+	end else if hasKeyword(CurrentRecord, 'ArmorClothing') then 
 	begin
 	//uses -1.4ln(x/10)+10 for value to get amount 
 		AddMessage(Name(itemRecord) + ' is Clothing');
@@ -277,7 +277,7 @@ begin
 		
 		Clothing(amountOfMainComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
 	
-	end else if hasKeyword('ArmorJewelry') then
+	end else if hasKeyword(CurrentRecord, 'ArmorJewelry') then
 	begin 
 		AddMessage(Name(itemRecord) + ' is Jewelry');
 		if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 42 then 
@@ -314,7 +314,7 @@ begin
 		end;
 	end;
 		
-	if hasKeyword('Tailored') or hasKeyword('ExtraMaterialCloth') then
+	if hasKeyword(CurrentRecord, 'Tailored') or hasKeyword(CurrentRecord, 'ExtraMaterialCloth') then
 	begin
 		Clothing(amountOfAdditionalComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
 	end;
@@ -326,7 +326,7 @@ begin
 	// add reference to the workbench keyword
 	Workbench(amountOfMainComponent, amountOfAdditionalComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
 	
-	if hasKeyword('ArmorMaterialJeweled') then
+	if hasKeyword(CurrentRecord, 'ArmorMaterialJeweled') then
 		jeweled(amountOfMainComponent, amountOfAdditionalComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
 	
 	if Assigned(FileByName('Art Of Magicka Ygg Edition.esp')) then
@@ -361,7 +361,7 @@ var
 	temp: Double;
 begin
 	temp := StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight'));
-	if hasKeyword('ArmorCuirass') then
+	if hasKeyword(CurrentRecord, 'ArmorCuirass') then
 	begin
 		amountOfMainComponent := floor(temp * 0.3);
 		if amountOfMainComponent < 10 then amountOfMainComponent := 10;
@@ -371,7 +371,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorBoots') then
+	end else if hasKeyword(CurrentRecord, 'ArmorBoots') then
 	begin
 		amountOfMainComponent := ceil(temp * 0.7);
 		if amountOfMainComponent < 3 then amountOfMainComponent := 3;
@@ -381,7 +381,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorGauntlets') then
+	end else if hasKeyword(CurrentRecord, 'ArmorGauntlets') then
 	begin
 		amountOfMainComponent := floor(temp * 0.7);
 		if amountOfMainComponent < 4 then amountOfMainComponent := 4;
@@ -391,7 +391,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorHelmet') then
+	end else if hasKeyword(CurrentRecord, 'ArmorHelmet') then
 	begin
 		amountOfMainComponent := ceil(temp * 0.3);
 		if amountOfMainComponent < 2 then amountOfMainComponent := 2;
@@ -401,7 +401,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorPants') then
+	end else if hasKeyword(CurrentRecord, 'ArmorPants') then
 	begin
 		amountOfMainComponent := floor(temp * 0.7);
 		if amountOfMainComponent < 3 then amountOfMainComponent := 3;
@@ -411,13 +411,13 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorUnderwear') then
+	end else if hasKeyword(CurrentRecord, 'ArmorUnderwear') then
 	begin
 		amountOfMainComponent := 1;
-	end else if hasKeyword('ArmorUnderwearTop') then
+	end else if hasKeyword(CurrentRecord, 'ArmorUnderwearTop') then
 	begin
 		amountOfMainComponent := 2;
-	end else if hasKeyword('ArmorShirt') then
+	end else if hasKeyword(CurrentRecord, 'ArmorShirt') then
 	begin
 		amountOfMainComponent := floor(temp * 0.7);
 		if amountOfMainComponent < 3 then amountOfMainComponent := 3;
@@ -446,7 +446,7 @@ var
 	temp: double;
 begin
 	temp := StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight'));
-	if hasKeyword('ArmorCuirass') then
+	if hasKeyword(CurrentRecord, 'ArmorCuirass') then
 	begin
 		amountOfMainComponent := floor(temp * 0.3);
 		if amountOfMainComponent < 10 then amountOfMainComponent := 10;
@@ -456,7 +456,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorBoots') then
+	end else if hasKeyword(CurrentRecord, 'ArmorBoots') then
 	begin
 		amountOfMainComponent := ceil(temp * 0.7);
 		if amountOfMainComponent < 3 then amountOfMainComponent := 3;
@@ -466,7 +466,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorGauntlets') then
+	end else if hasKeyword(CurrentRecord, 'ArmorGauntlets') then
 	begin
 		amountOfMainComponent := floor(temp * 0.7);
 		if amountOfMainComponent < 4 then amountOfMainComponent := 4;
@@ -476,7 +476,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorHelmet') then
+	end else if hasKeyword(CurrentRecord, 'ArmorHelmet') then
 	begin
 		amountOfMainComponent := ceil(temp * 0.3);
 		if amountOfMainComponent < 2 then amountOfMainComponent := 2;
@@ -486,7 +486,7 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorPants') then
+	end else if hasKeyword(CurrentRecord, 'ArmorPants') then
 	begin
 		amountOfMainComponent := floor(temp * 0.7);
 		if amountOfMainComponent < 3 then amountOfMainComponent := 3;
@@ -496,13 +496,13 @@ begin
 		if amountOfAdditionalComponent > 3 then amountOfAdditionalComponent := 3;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
 		addItem(recipeItems, getRecordByFormID('0005ACE4'), amountOfAdditionalComponent); // IngotIron
-	end else if hasKeyword('ArmorUnderwear') then
+	end else if hasKeyword(CurrentRecord, 'ArmorUnderwear') then
 	begin
 		amountOfMainComponent := 1;
-	end else if hasKeyword('ArmorUnderwearTop') then
+	end else if hasKeyword(CurrentRecord, 'ArmorUnderwearTop') then
 	begin
 		amountOfMainComponent := 2;
-	end else if hasKeyword('ArmorShirt') then
+	end else if hasKeyword(CurrentRecord, 'ArmorShirt') then
 	begin
 		amountOfMainComponent := floor(temp * 0.7);
 		if amountOfMainComponent < 3 then amountOfMainComponent := 3;
@@ -530,7 +530,7 @@ function Workbench(amountOfMainComponent, amountOfAdditionalComponent: integer; 
 begin
 	if Assigned(FileByName('Tailoring Workbench.esp')) then
 	begin
-		if hasKeyword('ArmorClothing') then
+		if hasKeyword(CurrentRecord, 'ArmorClothing') then
 		begin
 			SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(MainRecordByEditorID(GroupBySignature(FileByName('Tailoring Workbench.esp'), 'KYWD'),'CraftingTailoring')));
 		end else
@@ -561,95 +561,95 @@ begin
 	end else 
 	begin
 		ccount := ceil(count/amountOfMainComponent);
-		if hasKeyword('ClothColorBlack') then
+		if hasKeyword(CurrentRecord, 'ClothColorBlack') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenBLACK'), ccount); // black linens
 		end;
-		if hasKeyword('ClothColorBlue') then
+		if hasKeyword(CurrentRecord, 'ClothColorBlue') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenBLUE'), ccount); // blue linens
 		end;
-		if hasKeyword('ClothColorGreen') then
+		if hasKeyword(CurrentRecord, 'ClothColorGreen') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenGREEN'), ccount); // green linens
 		end;
-		if hasKeyword('ClothColorGray') or hasKeyword('ClothColorGrey') then
+		if hasKeyword(CurrentRecord, 'ClothColorGray') or hasKeyword(CurrentRecord, 'ClothColorGrey') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenGREY'), ccount); // gray linens
 		end;
-		if hasKeyword('ClothColorOrange') then
+		if hasKeyword(CurrentRecord, 'ClothColorOrange') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenORANGE'), ccount); // orange linens
 		end;
-		if hasKeyword('ClothColorPink') then
+		if hasKeyword(CurrentRecord, 'ClothColorPink') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenPINK'), ccount); // pink linens
 		end;
-		if hasKeyword('ClothColorPurple') then
+		if hasKeyword(CurrentRecord, 'ClothColorPurple') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenPURPLE'), ccount); // purple linens
 		end;
-		if hasKeyword('ClothColorYellow') then
+		if hasKeyword(CurrentRecord, 'ClothColorYellow') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenYELLOW'), ccount); // yellow linens
 		end;
-		if hasKeyword('ClothColorRed') then
+		if hasKeyword(CurrentRecord, 'ClothColorRed') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenRED'), ccount); // red linens
 		end;
-		if hasKeyword('ClothColorWhite') then
+		if hasKeyword(CurrentRecord, 'ClothColorWhite') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenWHITE'), ccount); // white linens
 		end;
-		if hasKeyword('ClothColorLightBlue') then
+		if hasKeyword(CurrentRecord, 'ClothColorLightBlue') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenLIGHTBlue'), ccount); // light blue linens
 		end;
-		if hasKeyword('AOMGhost') then
+		if hasKeyword(CurrentRecord, 'AOMGhost') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenGHOST'), ccount); // ghost (see through) linens
 		end;
-		if hasKeyword('ArmorMaterialLace') then
+		if hasKeyword(CurrentRecord, 'ArmorMaterialLace') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenELEGANT'), ccount); // elegant linens (lace)
 		end;
-		if hasKeyword('ClothColorLavender') then
+		if hasKeyword(CurrentRecord, 'ClothColorLavender') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenLavender'), ccount); // lavender linens
 		end;
-		if hasKeyword('ClothColorBrown') then
+		if hasKeyword(CurrentRecord, 'ClothColorBrown') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenBrown'), ccount); // Brown linens
 		end;
-		if hasKeyword('ClothColorBurgundy') then
+		if hasKeyword(CurrentRecord, 'ClothColorBurgundy') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenBurgundy'), ccount); // Burgundy linens
 		end;
-		if hasKeyword('ClothColorDarkGray') then
+		if hasKeyword(CurrentRecord, 'ClothColorDarkGray') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenDarkGray'), ccount); // Dark Gray linens
 		end;
-		if hasKeyword('ClothColorEmerald') then
+		if hasKeyword(CurrentRecord, 'ClothColorEmerald') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenEmerald'), ccount); // Emerald linens
 		end;
-		if hasKeyword('ClothColorForestGreen') then
+		if hasKeyword(CurrentRecord, 'ClothColorForestGreen') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenForestGreen'), ccount); // Forest Green linens
 		end;
-		if hasKeyword('ClothColorLightGray') then
+		if hasKeyword(CurrentRecord, 'ClothColorLightGray') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenLightGray'), ccount); // Light Gray linens
 		end;
-		if hasKeyword('ClothColorMediumGray') then
+		if hasKeyword(CurrentRecord, 'ClothColorMediumGray') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenMediumGray'), ccount); // Medium Gray linens
 		end;
-		if hasKeyword('ClothColorMintGreen') then
+		if hasKeyword(CurrentRecord, 'ClothColorMintGreen') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenMintGreen'), ccount); // Mint Green linens
 		end;
-		if hasKeyword('ClothColorTeal') then
+		if hasKeyword(CurrentRecord, 'ClothColorTeal') then
 		begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenTeal'), ccount); // Teal linens
 		end;
@@ -659,47 +659,47 @@ end;
 
 function Dyed(amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
 begin
-	if hasKeyword('DyeColorBlack') then
+	if hasKeyword(CurrentRecord, 'DyeColorBlack') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentBLK'), amountOfAdditionalComponent); // black pigments
 	end;
-	if hasKeyword('DyeColorBlue') then
+	if hasKeyword(CurrentRecord, 'DyeColorBlue') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentBLU'), amountOfAdditionalComponent); // blue pigments
 	end;
-	if hasKeyword('DyeColorGreen') then
+	if hasKeyword(CurrentRecord, 'DyeColorGreen') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentGRN'), amountOfAdditionalComponent); // green pigments
 	end;
-	if hasKeyword('DyeColorGray') or hasKeyword('DyeColorGrey') then
+	if hasKeyword(CurrentRecord, 'DyeColorGray') or hasKeyword(CurrentRecord, 'DyeColorGrey') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentBLKGRY'), amountOfAdditionalComponent); // gray pigments
 	end;
-	if hasKeyword('DyeColorOrange') then
+	if hasKeyword(CurrentRecord, 'DyeColorOrange') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentORN'), amountOfAdditionalComponent); // orange pigments
 	end;
-	if hasKeyword('DyeColorPink') then
+	if hasKeyword(CurrentRecord, 'DyeColorPink') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentPNK'), amountOfAdditionalComponent); // pink pigments
 	end;
-	if hasKeyword('DyeColorPurple') then
+	if hasKeyword(CurrentRecord, 'DyeColorPurple') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentPUR'), amountOfAdditionalComponent); // purple pigments
 	end;
-	if hasKeyword('DyeColorYellow') then
+	if hasKeyword(CurrentRecord, 'DyeColorYellow') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentYEL'), amountOfAdditionalComponent); // yellow pigments
 	end;
-	if hasKeyword('DyeColorRed') then
+	if hasKeyword(CurrentRecord, 'DyeColorRed') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentRED'), amountOfAdditionalComponent); // red pigments
 	end;
-	if hasKeyword('DyeColorWhite') then
+	if hasKeyword(CurrentRecord, 'DyeColorWhite') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentWHT'), amountOfAdditionalComponent); // white pigments
 	end;
-	if hasKeyword('DyeColorLightBlue') then
+	if hasKeyword(CurrentRecord, 'DyeColorLightBlue') then
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentBLUlite'), amountOfAdditionalComponent); // light blue pigments
 	end;
@@ -709,13 +709,13 @@ end;
 function Jeweled(amountOfMainComponent, amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
 begin
 	AddMessage('jeweled stuff');
-	if hasKeyword('TGCMLGemstones') then
+	if hasKeyword(CurrentRecord, 'TGCMLGemstones') then
 	begin
 		//AddMasterIfMissing(GetFile(itemRecord), 'thegemstonecollector.esp');
-		if hasKeyword('GemColorBlack') then
+		if hasKeyword(CurrentRecord, 'GemColorBlack') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGemCut291OpalBlack'), 1); // Cut Opal
 				AddMessage('Cut Opal was added, change if you want');
@@ -728,10 +728,10 @@ begin
 				AddMessage('Onyx, black moonstone, black marble, and black opal were added, change if you want');
 			end;
 		end;	
-		if hasKeyword('GemColorBlue') then
+		if hasKeyword(CurrentRecord, 'GemColorBlue') then
 		AddMessage(Name(recipeCraft) + ' has Blue gemstones from TGCML adding master if missing');
 		begin
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGemCut055QuartzBlue'), 1); // Cut Opal
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGemCut211MoonstoneBlueSheen'), 1); // Cut Opal
@@ -753,10 +753,10 @@ begin
 				AddMessage('Blue Coral, Blue Quartz, Blue lace Agate, Blue Chalcedony, Blue Sapphire, Blue Topaz, Blue Obsidian, Blue Zircon, Blue Moonstone, Blue amber, Blue Garnet, and Blue Goldstone were added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorGreen') then
+		if hasKeyword(CurrentRecord, 'GemColorGreen') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has Green gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGem401EmeraldTrapiche'), 1); // Cut Opal
 				AddMessage('Cut Opal was added, change if you want');
@@ -770,10 +770,10 @@ begin
 				AddMessage('Onyx was added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorGrey') or hasKeyword('GemColorGray') then
+		if hasKeyword(CurrentRecord, 'GemColorGrey') or hasKeyword(CurrentRecord, 'GemColorGray') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGem506MoonstoneStar'), 1); // Cut Opal
 				AddMessage('Cut Opal was added, change if you want');
@@ -783,10 +783,10 @@ begin
 				AddMessage('Onyx was added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorOrange') then
+		if hasKeyword(CurrentRecord, 'GemColorOrange') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGemCut198TopazImperial'), 1); // Cut Opal
 				AddMessage('Cut Opal was added, change if you want');
@@ -798,10 +798,10 @@ begin
 				AddMessage('Onyx was added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorPink') then
+		if hasKeyword(CurrentRecord, 'GemColorPink') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGemCut021QuartzRose'), 1); // Cut Opal
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGem507QuartzRoseStar'), 1); // Cut Opal
@@ -815,10 +815,10 @@ begin
 				AddMessage('Onyx was added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorPurple') then
+		if hasKeyword(CurrentRecord, 'GemColorPurple') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'GemAmethystFlawless'), 1); // Cut Opal
 				AddMessage('Cut Opal was added, change if you want');
@@ -829,10 +829,10 @@ begin
 				AddMessage('Onyx was added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorRed') then
+		if hasKeyword(CurrentRecord, 'GemColorRed') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGem402RubyTrapiche'), 1); // Cut Opal
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGem501RubyStar'), 1); // Cut Opal
@@ -846,10 +846,10 @@ begin
 				AddMessage('Onyx was added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorWhite') then
+		if hasKeyword(CurrentRecord, 'GemColorWhite') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'GemDiamondFlawless'), 1); // Cut Opal
 				AddMessage('Cut Opal was added, change if you want');
@@ -862,10 +862,10 @@ begin
 				AddMessage('Onyx was added, change if you want');
 			end;
 		end;
-		if hasKeyword('GemColorYellow') then
+		if hasKeyword(CurrentRecord, 'GemColorYellow') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGem503ChrysoberylStar'), 1); // Cut Opal
 				addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('thegemstonecollector.esp'), 'MISC'),'TGSCGemCut175Citrine'), 1); // Cut Opal
@@ -881,13 +881,13 @@ begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
 	end else
 	begin
-		if hasKeyword('GemColorBlack') then
+		if hasKeyword(CurrentRecord, 'GemColorBlack') then
 		begin
 			AddMessage('the game has a copper and onyx circlet, good luck finding the onyx');
 		end;
-		if hasKeyword('GemColorBlue') then
+		if hasKeyword(CurrentRecord, 'GemColorBlue') then
 		begin
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, getRecordByFormID('00068523'), 1);
 				end else
@@ -895,9 +895,9 @@ begin
 				addItem(recipeitems, getRecordByFormID('00063B44'), 1);
 			end;
 		end;
-		if hasKeyword('GemColorGreen') then
+		if hasKeyword(CurrentRecord, 'GemColorGreen') then
 		begin
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, getRecordByFormID('00068520'), 1);
 			end else
@@ -905,21 +905,21 @@ begin
 				addItem(recipeitems, getRecordByFormID('00063B42'), 1);
 			end;
 		end;
-			if hasKeyword('GemColorGrey') then
+			if hasKeyword(CurrentRecord, 'GemColorGrey') then
 			begin
 				AddMessage('the game has a copper and onyx circlet, good luck finding the onyx');
 			end;
-			if hasKeyword('GemColorOrange') then
+			if hasKeyword(CurrentRecord, 'GemColorOrange') then
 			begin
 				AddMessage('Maybe Ruby, but then it duplicates.');
 			end;
-			if hasKeyword('GemColorPink') then
+			if hasKeyword(CurrentRecord, 'GemColorPink') then
 			begin
 				AddMessage('Would Coral Work? there is a coral claw, but no coral gemstone.');
 			end;
-			if hasKeyword('GemColorPurple') then
+			if hasKeyword(CurrentRecord, 'GemColorPurple') then
 			begin
-				if hasKeyword('JewelryExpensive') then
+				if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 				begin
 					addItem(recipeitems, getRecordByFormID('0006851E'), 1);
 				end else
@@ -927,9 +927,9 @@ begin
 					addItem(recipeitems, getRecordByFormID('00063B46'), 1);
 				end;
 			end;
-			if hasKeyword('GemColorRed') then
+			if hasKeyword(CurrentRecord, 'GemColorRed') then
 			begin
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 				begin
 				addItem(recipeitems, getRecordByFormID('00068522'), 1);
 				addItem(recipeitems, getRecordByFormID('00068521'), 1);
@@ -939,9 +939,9 @@ begin
 				addItem(recipeitems, getRecordByFormID('00063B45'), 1);
 			end;
 		end;
-		if hasKeyword('GemColorWhite') then
+		if hasKeyword(CurrentRecord, 'GemColorWhite') then
 		begin
-			if hasKeyword('JewelryExpensive') then
+			if hasKeyword(CurrentRecord, 'JewelryExpensive') then
 			begin
 				addItem(recipeitems, getRecordByFormID('0006851F'), 1);
 			end else
@@ -950,7 +950,7 @@ begin
 			end;
 		end;
 	end;
-	if hasKeyword('GemColorYellow') then
+	if hasKeyword(CurrentRecord, 'GemColorYellow') then
 	begin
 		AddMessage('Maybe I should just use gold?');
 	end;
@@ -964,18 +964,18 @@ end;
 
 function isDyed: boolean;
 begin
-	if hasKeyword('dyeColorBlack') then result := true;
-	if hasKeyword('dyeColorBlue') then result := true;
-	if hasKeyword('dyeColorGray') then result := true;
-	if hasKeyword('dyeColorGreen') then result := true;
-	if hasKeyword('dyeColorGrey') then result := true;
-	if hasKeyword('dyeColorLightBlue') then result := true;
-	if hasKeyword('dyeColorOrange') then result := true;
-	if hasKeyword('dyeColorPink') then result := true;
-	if hasKeyword('dyeColorPurple') then result := true;
-	if hasKeyword('dyeColorRed') then result := true;
-	if hasKeyword('dyeColorWhite') then result := true;
-	if hasKeyword('dyeColorYellow') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorBlack') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorBlue') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorGray') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorGreen') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorGrey') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorLightBlue') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorOrange') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorPink') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorPurple') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorRed') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorWhite') then result := true;
+	if hasKeyword(CurrentRecord, 'dyeColorYellow') then result := true;
 end;
 
 function ClothSplitCount(ComponentAmount: IInterface): integer;
@@ -984,95 +984,95 @@ var
 begin
 	count := 0;
 
-	if hasKeyword('ClothColorBlack') then
+	if hasKeyword(CurrentRecord, 'ClothColorBlack') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorBlue') then
+	if hasKeyword(CurrentRecord, 'ClothColorBlue') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorGreen') then
+	if hasKeyword(CurrentRecord, 'ClothColorGreen') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorGray') or hasKeyword('ClothColorGrey') then
+	if hasKeyword(CurrentRecord, 'ClothColorGray') or hasKeyword(CurrentRecord, 'ClothColorGrey') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorOrange') then
+	if hasKeyword(CurrentRecord, 'ClothColorOrange') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorPink') then
+	if hasKeyword(CurrentRecord, 'ClothColorPink') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorPurple') then
+	if hasKeyword(CurrentRecord, 'ClothColorPurple') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorYellow') then
+	if hasKeyword(CurrentRecord, 'ClothColorYellow') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorRed') then
+	if hasKeyword(CurrentRecord, 'ClothColorRed') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorWhite') then
+	if hasKeyword(CurrentRecord, 'ClothColorWhite') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorLightBlue') then
+	if hasKeyword(CurrentRecord, 'ClothColorLightBlue') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('AOMGhost') then
+	if hasKeyword(CurrentRecord, 'AOMGhost') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ArmorMaterialLace') then
+	if hasKeyword(CurrentRecord, 'ArmorMaterialLace') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorLavender') then
+	if hasKeyword(CurrentRecord, 'ClothColorLavender') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorBurgundy') then
+	if hasKeyword(CurrentRecord, 'ClothColorBurgundy') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorBrown') then
+	if hasKeyword(CurrentRecord, 'ClothColorBrown') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorTeal') then
+	if hasKeyword(CurrentRecord, 'ClothColorTeal') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorLightGray') then
+	if hasKeyword(CurrentRecord, 'ClothColorLightGray') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorMediumGray') then
+	if hasKeyword(CurrentRecord, 'ClothColorMediumGray') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorDarkGray') then
+	if hasKeyword(CurrentRecord, 'ClothColorDarkGray') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorMintGreen') then
+	if hasKeyword(CurrentRecord, 'ClothColorMintGreen') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorForestGreen') then
+	if hasKeyword(CurrentRecord, 'ClothColorForestGreen') then
 	begin
 		count := count + 1;
 	end;
-	if hasKeyword('ClothColorEmerald') then
+	if hasKeyword(CurrentRecord, 'ClothColorEmerald') then
 	begin
 		count := count + 1;
 	end;

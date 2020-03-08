@@ -8,8 +8,6 @@ var
 	DebugLevel: integer;
 	YggLogCurrentMessages: TStringList;
 	
-const
-	C_FName = ScriptsPath + 'Ygg.Log';
 
 function PassFile(PatchToBe: IInterface): integer;
 begin
@@ -145,7 +143,7 @@ begin
   end;
 end;
 
-// checks the provided keyword inside record
+{// checks the provided keyword inside record
 function hasKeyword(keywordEditorID: string): boolean;
 var
   tmpKeywordsCollection: IInterface;
@@ -154,6 +152,25 @@ begin
 	Result := false;
 	// get all keyword entries of provided record
 	tmpKeywordsCollection := ElementByPath(CurrentRecord, 'KWDA');
+	// loop through each
+	for i := 0 to ElementCount(tmpKeywordsCollection) - 1 do
+	begin
+		if GetElementEditValues(LinksTo(ElementByIndex(tmpKeywordsCollection, i)), 'EDID') = keywordEditorID then
+		begin
+			Result := true;
+			Break;
+		end;
+	end;
+end;}
+
+function hasKeyword(CR: IInterface; keywordEditorID: string): boolean;
+var
+  tmpKeywordsCollection: IInterface;
+  i: integer;
+begin
+	Result := false;
+	// get all keyword entries of provided record
+	tmpKeywordsCollection := ElementByPath(CR, 'KWDA');
 	// loop through each
 	for i := 0 to ElementCount(tmpKeywordsCollection) - 1 do
 	begin
@@ -436,7 +453,7 @@ end;
 
 procedure BeginLog(Who: String);
 var
-	C_FName: string;
+	Ini: TMemIniFile;
 begin
 	//AssignFile(YggLog, C_FName);
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
@@ -527,7 +544,12 @@ end;
 procedure LogMessage(level: integer; LogItem: string);
 var
 	currenttime: TDateTime;
+	C_FName: string;
+	temp: String;
 begin
+	temp := ScriptsPath + 'Ygg\log' + FormatDateTime('f',TimeBegin) + '.log';
+	temp := ReplaceStr(temp, ':', ' ');
+	C_FName := ReplaceStr(temp, '\', ' ');
 	currenttime := Time;
 	if level = 0 then
 	begin
