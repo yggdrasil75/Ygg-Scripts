@@ -163,9 +163,10 @@ end;
 function Finalize: integer;
 begin
 	CleanMasters(ArmorPatch);
-	EndTime := Time;
-	AddMessage('---Craftable process ended---');
+	LogMessage(3,'---Craftable process ended---');
+	LogMessage(0, 'Ended');
 	Sign;
+	LogMessage(0, 'Signed');
 	Result := 0;
 end;
 

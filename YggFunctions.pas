@@ -3,10 +3,10 @@ unit YggFunctions;
 var
 	Patch: IInterface;
 	CurrentRecord: IInterface;
-	StartTime: TDateTime;
+	TimeBegin: TDateTime;
 	YggLog: TextFile;
-	YggLogCurrentMessages: TStringList;
 	DebugLevel: integer;
+	YggLogCurrentMessages: TStringList;
 	
 const
 	C_FName = ScriptsPath + 'Ygg.Log';
@@ -30,7 +30,7 @@ end;
 
 procedure PassTime(Start: TDateTime);
 begin
-	StartTime := Start;
+	TimeBegin := Start;
 end;
 
 function tryStrToFloat(item: string; default: double): double;
@@ -439,10 +439,10 @@ var
 	C_FName: string;
 begin
 	//AssignFile(YggLog, C_FName);
-	YggLogCurrentMessages := TStringList.Create;
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	if ini.ReadInteger('BaseData', 'FirstRun', 0) = 0 then 
-	ini.WriteInteger('BaseData', 'FirstRun', 1);
+	if ini.ReadInteger('BaseData', 'DebugLevel', 0) = 0 then 
+	ini.WriteInteger('BaseData', 'DebugLevel', 1);
+	YggLogCurrentMessages := TStringList.Create;
 	//Rewrite(YggLog);
 	//writeln(YggLog, who);
 end;
@@ -534,7 +534,7 @@ begin
 		LogItem := '[Info]: ' + TimeBtwn(timebegin, currenttime) + ' '  + LogItem;
 	end else if level = 1 then
 	begin
-		LogItem := '[Debug]: ignore this, it is just to track slow sections. ' + TimeBtwn(timebegin, currenttime) + ' ' + LogItem;
+		LogItem := '[Debug]: ' + TimeBtwn(timebegin, currenttime) + ' ' + LogItem;
 	end else if level = 2 then 
 	begin
 		LogItem := '[Warning]: ' + TimeBtwn(timebegin, currenttime) + ' '  + LogItem;
@@ -542,8 +542,6 @@ begin
 	begin
 		LogItem := '[Error]: ' + TimeBtwn(timebegin, currenttime) + ' ' + LogItem;
 	end;
-	
-	
 	
 	if debuglevel = 0 then //only output to log file
 	begin

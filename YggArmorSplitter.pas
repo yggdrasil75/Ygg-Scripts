@@ -39,10 +39,10 @@ begin
 	remove(GroupBySignature(patch, 'CONT'));
 	RaceList := TStringList.create;
 	RaceList.DelimitedText := 'Male_Mer,Female_Mer,Male_Argonian,Female_Argonian,Male_Orc,Female_Orc,Male_Khajiit,Female_Khajiit';
-	AddMessage('---Making Armor reasonably different---');
+	LogMessage(0,'---Making Armor reasonably different---');
 	GatherArmo;
 	Copier;
-	AddMessage('armoa');
+	LogMessage(0,'armoa');
 	LVLIHandler;
 	COBJHandler;
 	OTFTHandler;
@@ -62,7 +62,7 @@ end;
 function Finalize: integer;
 begin
 	CleanMasters(Patch);
-	AddMessage('---Splitting process ended---');
+	LogMessage(0, '---Splitting process ended---');
 	Sign;
 	Result := 0;
 end;
@@ -184,7 +184,7 @@ Procedure LVLIHandler;
 begin
 	GatherLVLI;
 	CopierLVLI;
-	AddMessage('LVLI');
+	LogMessage(0, 'LVLI');
 end;
 
 procedure GatherLVLI;
@@ -229,18 +229,19 @@ var
 	CurrentGroup, CurrentRecord, TempRecord: IInterface;
 	cfa, cafa, cma, cama, ckfa, ckma, coma, cofa: IInterface;
 	TempList: TStringList;
+	LLEkLVLOR: string;
 	Item, Items, entries, ref, lvlo, CurrenGroup: IInterface;
 begin
 	LVLIListList := TStringList.Create;
 	for i := LVLIList.Count - 1 downto 0 do
 	begin
 		CurrentRecord := wbCopyElementToFile(ObjectToElement(LVLIList.Objects[i]), Patch, false, true);
-		AddMessage(FullPath(CurrentRecord));
+		LogMessage(0, FullPath(CurrentRecord));
 		TempList := TStringList.Create;
 		
 		for foobar := 0 to RaceList.Count - 1 do
 		begin
-			AddMessage(FullPath(TempRecord));
+			LogMessage(0, FullPath(TempRecord));
 			//TempRecord := ElementAssign(Patch, LowInteger, CurrentRecord, false);
 			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
 			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
@@ -255,16 +256,19 @@ begin
 			ref := ElementByName(lvlo, 'Reference');
 			
 			if not GetStuff(ref,cafa,ckfa,cama,ckma,cofa,coma,cfa,cma, 'ARMO') then continue;
-			AddMessage('Assigned? = ' + IfThen(Assigned(ElementByPath(ObjectToElement(TempList.Objects[3]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO')), 'True', 'False'));
-			AddMessage('257 = ' + FullPath(ObjectToElement(TempList.Objects[3])));
-			SetElementEditValues(ObjectToElement(TempList.Objects[1]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cfa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[0]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cma),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[3]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cafa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[7]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(ckfa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[2]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cama),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[6]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(ckma),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[5]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(cofa),8));
-			SetElementEditValues(ObjectToElement(TempList.Objects[4]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference', IntToHex(GetLoadOrderFormID(coma),8));
+			LogMessage(0, 'Assigned? = ' + IfThen(Assigned(ElementByPath(ObjectToElement(TempList.Objects[3]), 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO')), 'True', 'False'));
+			LogMessage(0, '257 = ' + FullPath(ObjectToElement(TempList.Objects[3])));
+			LLEkLVLOR := 'Leveled List Entries\[' + IntToStr(k) + ']\LVLO\Reference';
+			LogMessage(2,Name(LinksTo(ref)));
+			LogMessage(2,Name(LinksTo(cfa)));
+			SetElementEditValues(ObjectToElement(TempList.Objects[1]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cfa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[0]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cma),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[3]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cafa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[7]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(ckfa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[2]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cama),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[6]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(ckma),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[5]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cofa),8));
+			SetElementEditValues(ObjectToElement(TempList.Objects[4]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(coma),8));
 		end;
 		
 		LVLIAll := AddLVLIALL(TempList);
@@ -296,7 +300,7 @@ Procedure COBJHandler;
 begin
 	GatherCOBJ;
 	CopierCOBJ;
-	AddMessage('COBJ');
+	LogMessage(0, 'COBJ');
 	COBJList.free;
 end;
 
@@ -367,7 +371,7 @@ Procedure OTFTHandler;
 begin
 	GatherOTFT;
 	CopierOTFT;
-	AddMessage('OTFT');
+	LogMessage(0, 'OTFT');
 end;
 
 procedure GatherOTFT;
@@ -453,7 +457,7 @@ Procedure CONTHandler;
 begin
 	GatherCONT;
 	CopierCONT;
-	AddMessage('CONT');
+	LogMessage(0, 'CONT');
 	CONTList.Free;
 end;
 
@@ -532,7 +536,7 @@ begin
 			end;
 		end;
 	end;
-	AddMessage('CONT');
+	LogMessage(0, 'CONT');
 end;
 
 
@@ -540,7 +544,7 @@ Procedure NPC_Handler;
 begin
 	GatherNPC_;
 	CopierNPC_;
-	AddMessage('NPC_');
+	LogMessage(0, 'NPC_');
 	NPC_List.free;
 end;
 
@@ -557,8 +561,6 @@ begin
 		if hasGroup(fileByIndex(i), 'NPC_') then
 		NPC_Plugins.addObject(GetfileName(FileByIndex(i)), FileByIndex(i)); 
 	end;
-	NPC_List := TStringList.Create;
-	NPC_List := TStringList.Create;
 	for i := NPC_Plugins.Count - 1 downto 0 do
 	begin
 		CurrentGroup := GroupBySignature(ObjectToElement(NPC_Plugins.objects[i]), 'NPC_');
@@ -646,21 +648,21 @@ begin
 		result := false;
 		exit;
 		end;
-		AddMessage(IntToStr(OTFTListList.IndexOf(tempEDID)));
+		LogMessage(0, IntToStr(OTFTListList.IndexOf(tempEDID)));
 		templist := OTFTListList.Objects[OTFTListList.IndexOf(tempEDID)];
 	end else if sig = 'ARMO' then begin
 		if ArmoListList.IndexOf(tempEDID) < 0 then begin
 		result := false;
 		exit;
 		end;
-		AddMessage(IntToStr(ArmoListList.IndexOf(tempEDID)));
+		LogMessage(0, IntToStr(ArmoListList.IndexOf(tempEDID)));
 		templist := ArmoListList.Objects[ArmoListList.IndexOf(tempEDID)];
 	end else if sig = 'LVLI' then begin
 		if LVLIListList.IndexOf(tempEDID) < 0 then begin
 		result := false;
 		exit;
 		end;
-		AddMessage(IntToStr(LVLIListList.IndexOf(tempEDID)));
+		LogMessage(0, IntToStr(LVLIListList.IndexOf(tempEDID)));
 		templist := LVLIListList.Objects[LVLIListList.IndexOf(tempEDID)];
 	end;
 	for a := templist.count - 1 downto 0 do
