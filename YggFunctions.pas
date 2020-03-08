@@ -455,6 +455,7 @@ end;
 procedure BeginLog(Who: String);
 var
 	Ini: TMemIniFile;
+	temp: String;
 begin
 	//AssignFile(YggLog, C_FName);
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
@@ -464,8 +465,8 @@ begin
 	//Rewrite(YggLog);
 	//writeln(YggLog, who);
 	temp := ScriptsPath + 'Ygg\log' + FormatDateTime('f',TimeBegin) + '.log';
-	temp := ReplaceStr(temp, ':', ' ');
-	C_FName := ReplaceStr(temp, '\', ' ');
+	temp := StringReplace(temp, ':', ' ',[rfReplaceAll]);
+	C_FName := StringReplace(temp, '\', ' ',[rfReplaceAll]);
 end;
 
 function TimeBtwn(Start, Stop: TDateTime): string;
@@ -548,7 +549,6 @@ end;
 procedure LogMessage(level: integer; LogItem: string);
 var
 	currenttime: TDateTime;
-	temp: String;
 begin
 	currenttime := Time;
 	if level = 0 then
