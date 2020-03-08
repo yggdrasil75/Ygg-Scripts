@@ -5,6 +5,11 @@ var
 	CurrentRecord: IInterface;
 	StartTime: TDateTime;
 	YggLog: TextFile;
+	YggLogCurrentMessages: TStringList;
+	DebugLevel: integer;
+	
+const
+	C_FName = ScriptsPath + 'Ygg.Log';
 
 function PassFile(PatchToBe: IInterface): integer;
 begin
@@ -429,19 +434,94 @@ begin
 	end;
 end;
 
-{procedure BeginLog(Who: String);
+procedure BeginLog(Who: String);
 var
 	C_FName: string;
 begin
-	C_FName := ScriptsPath + 'Ygg.Log';//nothing currently, but will probably have this set to an ini later. might make it dynamically named based on time.
-	AssignFile(YggLog, C_FName);
-	Rewrite(YggLog);
-	writeln(YggLog, who);
+	//AssignFile(YggLog, C_FName);
+	YggLogCurrentMessages := TStringList.Create;
+	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
+	if ini.ReadInteger('BaseData', 'FirstRun', 0) = 0 then 
+	ini.WriteInteger('BaseData', 'FirstRun', 1);
+	//Rewrite(YggLog);
+	//writeln(YggLog, who);
 end;
 
 function TimeBtwn(Start, Stop: TDateTime): string;
 begin
 	Result := intToStr(((3600*GetHours(Stop))+(60*GetMinutes(Stop))+GetSeconds(Stop))-((3600*GetHours(Start))+(60*GetMinutes(Start))+GetSeconds(Start)));
+end;
+
+function GetSeconds(aTime: TDateTime): Integer;
+var
+	tempString: String;
+begin
+	tempString := TimeToStr(aTime);
+	Result := StrToInt(Trim(IntWithinStr(StrPosCopy(StrPosCopy(tempString, ':', False), ':', False))));
+end;
+
+// Checks if a string contains integers and then returns those integers
+function IntWithinStr(aString: String): Integer;
+var
+  i, x, tempInteger: Integer;
+  slTemp, slItem: TStringList;
+  tempString: String;
+begin
+	// Initialize
+	if not Assigned(slTemp) then slTemp := TStringList.Create else slTemp.Clear;
+	if not Assigned(slItem) then slItem := TStringList.Create else slItem.Clear;
+	
+	// Function
+	slTemp.CommaText := '0, 1, 2, 3, 4, 5, 6, 7, 8, 9';
+	for i := 1 to Length(aString) do begin
+		tempString := Copy(aString, i, 1);
+		for x := 0 to slTemp.Count-1 do begin 
+			if (tempString = slTemp[x]) then begin 
+				if (slItem.Count = 0) then begin
+					slItem.Add(tempString); 
+					tempInteger := i; 
+				end else begin
+					if not (i-tempInteger > 1) then begin 
+						slItem.Add(tempString);
+						tempInteger := i;
+					end;
+				end;
+			end;
+		end;
+	end;
+	tempString := nil;
+	if not (slItem.Count = 0) then begin
+		for i := 0 to slItem.Count-1 do begin
+			tempString := tempString+slItem[i];
+		end;
+		if (length(tempString) > 0) then
+			Result := StrToInt(tempString);
+	end else Result := -1;
+	slTemp.Free;
+	slItem.Free;
+end;
+
+function GetMinutes(aTime: TDateTime): Integer;
+begin
+	Result := StrToInt(Trim(StrPosCopy(StrPosCopy(TimeToStr(aTime), ':', False), ':', True)));
+end;
+
+function GetHours(aTime: TDateTime): Integer;
+begin
+	Result := StrToInt(Trim(StrPosCopy(TimeToStr(aTime), ':', True)));
+end;
+
+// Copies string preceding [TRUE] or following [FALSE] a string 
+function StrPosCopy(inputString,findString: String; inputBoolean: Boolean): String;
+begin
+	if ContainsText(inputString, findString) then begin 
+    if not inputBoolean then begin 
+	  Result := Copy(inputString, pos(findString, inputString)+length(findString), length(inputString)-pos(findstring, inputstring)); 
+	end;
+	if inputBoolean then begin 
+	  Result := Copy(inputString, 0, (pos(findString, inputString)-1)); 
+	end;
+  end else Result := Trim(inputString);
 end;
 
 procedure LogMessage(level: integer; LogItem: string);
@@ -454,14 +534,16 @@ begin
 		LogItem := '[Info]: ' + TimeBtwn(timebegin, currenttime) + ' '  + LogItem;
 	end else if level = 1 then
 	begin
-		LogItem := '[Debug]: ignore this, it is just to track slow sections.' + LogItem;
+		LogItem := '[Debug]: ignore this, it is just to track slow sections. ' + TimeBtwn(timebegin, currenttime) + ' ' + LogItem;
 	end else if level = 2 then 
 	begin
-		LogItem := '[Error]: ' + TimeBtwn(timebegin, currenttime) + ' '  + LogItem;
+		LogItem := '[Warning]: ' + TimeBtwn(timebegin, currenttime) + ' '  + LogItem;
 	end else if level = 3 then
 	begin
-		LogItem := '[Warning]: ' + TimeBtwn(timebegin, currenttime) + ' ' + LogItem;
+		LogItem := '[Error]: ' + TimeBtwn(timebegin, currenttime) + ' ' + LogItem;
 	end;
+	
+	
 	
 	if debuglevel = 0 then //only output to log file
 	begin
@@ -476,7 +558,8 @@ begin
 	begin
 		addmessage(LogItem);
 	end;
-	writeln(YggLog, LogItem);
+	YggLogCurrentMessages.add(LogItem);
+	YggLogCurrentMessages.SaveToFile(C_FName);
 end;
 
 procedure MasterLines;
@@ -487,6 +570,6 @@ begin
 	m := TMemo(TForm(frmMain).FindComponent('mmoMessages'));
 	for i := Pred(m.Lines.Count) downto m.Lines.Count - MasterCount(patch) do
 		logMessage(1, m.Lines[i]);
-end;}
+end;
 
 end.

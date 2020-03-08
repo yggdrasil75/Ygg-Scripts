@@ -27,9 +27,9 @@ var
 	f: integer;
 	BeginTime, EndTime: TDateTime;
 begin
-	{BeginTime := Time;
+	BeginTime := Time;
 	beginLog('Leveled List start');
-	PassTime(Time);}
+	PassTime(Time);
 	firstRun := false;
 	ArmorPatch := SelectPatch('Ygg_Crafting.esp');
 	PassFile(ArmorPatch);
@@ -40,7 +40,7 @@ begin
 		AddmasterBySignature('WEAP');
 		AddmasterBySignature('COBJ');
 		AddmasterBySignature('MISC');
-		//MasterLines;
+		MasterLines;
 	finally EndUpdate(ArmorPatch);
 	end;
 	IniProcess;
@@ -52,8 +52,7 @@ begin
 	InitializeRecipes;
 	tempPerkFunctionSetup;
 	AddMessage('---Making Armor craftable---');
-	{EndTime := Time;
-	LogMessage(1, TimeBtwn(BeginTime, EndTime) + 'Initialize');}
+	LogMessage(1, 'Initialize');
 end;
 
 function IniProcess: integer;
@@ -164,6 +163,7 @@ end;
 function Finalize: integer;
 begin
 	CleanMasters(ArmorPatch);
+	EndTime := Time;
 	AddMessage('---Craftable process ended---');
 	Sign;
 	Result := 0;
@@ -1344,7 +1344,7 @@ begin
 			//AddPerkCondition(recipeitems, ObjectToElement(CurrentMaterials.Objects[a]));
 		end else
 		begin
-			//if debug then addmessage('work 3 item');
+			LogMessage(1,'MatByKYWD: '+Name(ObjectToElement(CurrentMaterials.objects[a])));
 			AddItem(RecipeItems, ObjectToElement(CurrentMaterials.objects[a]), ceil(StrToFloat(CurrentMaterials.strings[a]) * AmountOfMainComponent * (random(1) + CraftMult)));
 		end;
 		tempPerkFunction(Keyword, RecipeItems, AmountOfMainComponent);
