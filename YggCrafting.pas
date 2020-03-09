@@ -1434,6 +1434,9 @@ begin
 				end else if pos('materiel', LowerCase(CurrentKYWD)) > 0 then
 				begin
 					MaterialList.Add(CurrentKYWD);
+				end else if pos('clothing', LowerCase(CurrentKYWD)) > 0 then 
+				begin
+					MaterialList.Add(CurrentKYWD);
 				end;
 			end;
 		end;
