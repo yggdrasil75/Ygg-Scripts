@@ -594,8 +594,8 @@ begin
 			if HasKeyword(ItemRecord, 'ArmorClothing') then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('0007866A'))) //tanning rack for clothing
 			else SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
 		end;
-		if signature(ItemRecord) = 'AMMO' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
-		if signature(ItemRecord) = 'WEAP' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088108'))); //sharpening wheel?
+		if signature(ItemRecord) = 'AMMO' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088108'))); //Sharpening wheel
+		if signature(ItemRecord) = 'WEAP' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
 	end;
 	//if debug then AddMessage('Finished Tailoring');
 end;
