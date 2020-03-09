@@ -464,7 +464,7 @@ begin
 	YggLogCurrentMessages := TStringList.Create;
 	//Rewrite(YggLog);
 	//writeln(YggLog, who);
-	temp := ScriptsPath + 'Ygg\log' + FormatDateTime('f',TimeBegin) + '.log';
+	temp := ScriptsPath + 'Ygglog' + FormatDateTime('f',TimeBegin) + '.log';
 	temp := StringReplace(temp, ':', ' ',[rfReplaceAll]);
 	C_FName := StringReplace(temp, '\', ' ',[rfReplaceAll]);
 end;

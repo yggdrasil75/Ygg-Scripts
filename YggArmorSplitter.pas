@@ -102,25 +102,6 @@ begin
 	end;
 end;
 
-function hasKeyword(CR: IInterface; keywordEditorID: string): boolean;
-var
-  tmpKeywordsCollection: IInterface;
-  i: integer;
-begin
-	Result := false;
-	// get all keyword entries of provided record
-	tmpKeywordsCollection := ElementByPath(CR, 'KWDA');
-	// loop through each
-	for i := 0 to ElementCount(tmpKeywordsCollection) - 1 do
-	begin
-		if GetElementEditValues(LinksTo(ElementByIndex(tmpKeywordsCollection, i)), 'EDID') = keywordEditorID then
-		begin
-			Result := true;
-			Break;
-		end;
-	end;
-end;
-
 procedure Copier;
 var
 	i, j, a, foobar: integer;
@@ -171,6 +152,54 @@ begin
 		
 		TempList.AddObject(EditorID(LVLIAll), LVLIAll);
 		ArmoListList.AddObject(EditorID(CurrentRecord), Templist);
+	end;
+end;
+
+procedure ArmoEITM;
+var
+	i, j, a, foobar: integer;
+	CurrentArma, CurrentGroup, CurrentRecord, TempRecord, CurrentMaleArma, CurrentFemaleArma: IInterface;
+	LVLIAll, NewItem: IInterface;
+	TempList: TStringList;
+begin
+	ARMOListList := TStringList.Create;
+	for i := ARMOList.Count - 1 downto 0 do
+	begin
+		CurrentRecord := wbCopyElementToFile(ObjectToElement(ARMOList.Objects[i]), Patch, false, true);
+		LogMessage(0, FullPath(CurrentRecord));
+		TempList := TStringList.Create;
+		
+		for foobar := 0 to RaceList.Count - 1 do
+		begin
+			LogMessage(0, FullPath(TempRecord));
+			//TempRecord := ElementAssign(Patch, LowInteger, CurrentRecord, false);
+			TempRecord := wbCopyElementToFile(CurrentRecord, Patch, true, true);
+			SetEditorID(TempRecord, EditorID(CurrentRecord) + RaceList.Strings[foobar]);
+			SetElementEditValues(TempRecord, 'Full - Name', GetElementEditValues(CurrentRecord, 'Full - Name') + ' ' + RaceList.Strings[foobar]);
+			TempList.AddObject(EditorID(TempRecord), TempRecord);
+		end;
+		
+		ref := ElementByName(CurrentRecord, 'TNAM');
+		if not assigned(ref) then continue;
+		if not GetStuff(ref,cafa,ckfa,cama,ckma,cofa,coma,cfa,cma, 'ARMO') then continue;
+		LogMessage(0, 'Assigned? = ' + IfThen(Assigned(ElementByPath(ObjectToElement(TempList.Objects[3]), 'TNAM')), 'True', 'False'));
+		LogMessage(0, '257 = ' + FullPath(ObjectToElement(TempList.Objects[3])));
+		LLEkLVLOR := 'TNAM';
+		LogMessage(2,Name(LinksTo(ref)));
+		LogMessage(2,Name(LinksTo(cfa)));
+		SetElementEditValues(ObjectToElement(TempList.Objects[1]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cfa),8));
+		SetElementEditValues(ObjectToElement(TempList.Objects[0]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cma),8));
+		SetElementEditValues(ObjectToElement(TempList.Objects[3]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cafa),8));
+		SetElementEditValues(ObjectToElement(TempList.Objects[7]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(ckfa),8));
+		SetElementEditValues(ObjectToElement(TempList.Objects[2]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cama),8));
+		SetElementEditValues(ObjectToElement(TempList.Objects[6]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(ckma),8));
+		SetElementEditValues(ObjectToElement(TempList.Objects[5]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(cofa),8));
+		SetElementEditValues(ObjectToElement(TempList.Objects[4]), LLEkLVLOR, IntToHex(GetLoadOrderFormID(coma),8));
+		
+		ARMOAll := AddARMOALL(TempList);
+		
+		TempList.AddObject(EditorID(ARMOAll), ARMOAll);
+		ARMOListList.AddObject(EditorID(CurrentRecord), Templist);
 	end;
 end;
 

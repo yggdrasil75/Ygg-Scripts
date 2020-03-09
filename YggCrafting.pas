@@ -1,28 +1,23 @@
-unit YggCraftingArmor;
-
-//Uses ArmorGooey;
-Uses YggFunctions;
-const
-
-	// FormID of Keyword, used for Armor Tempering COBJ records in Skyrim
-	ARMOR_TEMPERING_WORKBENCH_FORM_ID = '000ADB78'; // CraftingSmithingArmorTable
-
-	// FormID of Keyword, used for Armor Crafting COBJ records in Skyrim
-	ARMOR_CRAFTING_WORKBENCH_FORM_ID = '00088105'; // CraftingSmithingForge
-	
-
+unit YggCrafting;
+uses YggFunctions;
 var
-	ArmorPatch, itemRecord: IInterface;
+	Patch, itemRecord: IInterface;
 	HashedList: THashedStringList;
 	Materials, MaterialList, Recipes, TempPerkListExtra: TStringList;
-	CraftMult, skipFileCount, readFileCount, optionAddOnly, optionPerkConditions: integer;
+	ArmoList,WeapList,AMMOList: TStringList;
+	CraftMult, optionAddOnly, optionPerkConditions: integer;
 	Ini: TMemIniFile;
-	armo, firstRun: boolean;
+	firstRun: boolean;
 	sBaseMaster: string;
-
-
-// runs on script start
+	
 function Initialize: integer;
+begin
+	result := CraftingInit;
+	Processing;
+	YggFinal;
+end;
+
+function CraftingInit: integer;
 var
 	f: integer;
 	BeginTime, EndTime: TDateTime;
@@ -31,9 +26,9 @@ begin
 	beginLog('Leveled List start');
 	PassTime(Time);
 	firstRun := false;
-	ArmorPatch := SelectPatch('Ygg_Crafting.esp');
-	PassFile(ArmorPatch);
-	BeginUpdate(ArmorPatch);
+	Patch := SelectPatch('Ygg_Crafting.esp');
+	PassFile(Patch);
+	BeginUpdate(Patch);
 	try
 		AddmasterBySignature('ARMO');
 		AddmasterBySignature('AMMO');
@@ -41,13 +36,10 @@ begin
 		AddmasterBySignature('COBJ');
 		AddmasterBySignature('MISC');
 		MasterLines;
-	finally EndUpdate(ArmorPatch);
+	finally EndUpdate(Patch);
 	end;
 	IniProcess;
-	skipFileCount := 0;
-	readFileCount := 0;
-	remove(ElementByPath(ArmorPatch, 'COBJ'));
-	armo := false;
+	remove(ElementByPath(Patch, 'COBJ'));
 	Randomize;
 	InitializeRecipes;
 	tempPerkFunctionSetup;
@@ -65,8 +57,10 @@ begin
 	}
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if ini.ReadInteger('BaseData', 'FirstRun', 0) = 0 then 
-	TalkToUser := MessageDlg('There will be a few settings options pop up on the first run, these settings will be saved to Ygg.ini in the folder that contains the script you are currently running. if you ever want to change them, you can delete the line from the ini, alter it manually, or just delete the ini file itself.', mtInformation, [mbOk], 0);
+	begin
+	TalkToUser := MessageDlg('There will be a few settings options pop up on the first run, these settings will be saved to Ygg.ini in the folder that contains the script you are currently running. #13#10If you ever want to change them, you can delete the line from the ini, alter it manually, or just delete the ini file itself.', mtInformation, [mbOk], 0);
 	ini.WriteInteger('BaseData', 'FirstRun', TalkToUser);
+	end;
 	if ini.ReadInteger('Crafting', 'bCraftOnly', 0) = 0 then
 	begin
 		optionAddOnly := MessageDlg('Do you want to only create new recipes and not update existing?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
@@ -91,78 +85,129 @@ begin
 	Ini.UpdateFile;
 end;
 
-// for every record selected in xEdit
-function Process(selectedRecord: IInterface): integer;
+
+procedure gatherArmo;
+var
+	armoPlugins: TStringList;
+	i, j: integer;
+	CurrentGroup, CurrentRecord: IInterface;
+begin
+	armoPlugins := TStringList.Create;
+	for i := filecount - 1 downto 0 do
+	begin
+		if hasGroup(fileByIndex(i), 'ARMO') then
+		armoPlugins.addObject(GetfileName(FileByIndex(i)), FileByIndex(i)); 
+	end;
+	ArmoList := TStringList.Create;
+	for i := armoPlugins.Count - 1 downto 0 do
+	begin
+		CurrentGroup := GroupBySignature(ObjectToElement(armoPlugins.objects[i]), 'ARMO');
+		for j := ElementCount(CurrentGroup) - 1 downto 0 do
+		begin
+			CurrentRecord := ElementByIndex(CurrentGroup, j);
+			if GetIsDeleted(CurrentRecord) then continue;
+			if IntToStr(GetElementNativeValues(CurrentRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then continue;
+			if IntToStr(GetElementNativeValues(CurrentRecord, 'DATA\Flags\Non-Playable')) < 0 then continue;
+			if pos('skin', EditorID(CurrentRecord)) > 0 then continue;
+			if HasKeyword(CurrentRecord, 'noCraft') then continue;
+			if hasKeyword(CurrentRecord, 'Dummy') then continue;
+			if GetElementNativeValues(CurrentRecord, 'EITM') > 0 then continue;
+			if ISWinningOverride(CurrentRecord) then 
+			ArmoList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+		end;
+	end;
+end;
+procedure gatherWeap;
+var
+	WeapPlugins: TStringList;
+	i, j: integer;
+	CurrentGroup, CurrentRecord: IInterface;
+begin
+	WeapPlugins := TStringList.Create;
+	for i := filecount - 1 downto 0 do
+	begin
+		if hasGroup(fileByIndex(i), 'Weap') then
+		WeapPlugins.addObject(GetfileName(FileByIndex(i)), FileByIndex(i)); 
+	end;
+	WeapList := TStringList.Create;
+	for i := WeapPlugins.Count - 1 downto 0 do
+	begin
+		CurrentGroup := GroupBySignature(ObjectToElement(WeapPlugins.objects[i]), 'Weap');
+		for j := ElementCount(CurrentGroup) - 1 downto 0 do
+		begin
+			CurrentRecord := ElementByIndex(CurrentGroup, j);
+			if GetIsDeleted(CurrentRecord) then continue;
+			if IntToStr(GetElementNativeValues(CurrentRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then continue;
+			if IntToStr(GetElementNativeValues(CurrentRecord, 'DATA\Flags\Non-Playable')) < 0 then continue;
+			if HasKeyword(CurrentRecord, 'noCraft') then continue;
+			if GetElementNativeValues(CurrentRecord, 'EITM') > 0 then continue;
+			if hasKeyword(CurrentRecord, 'Dummy') then continue;
+			if ISWinningOverride(CurrentRecord) then 
+			WeapList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+		end;
+	end;
+end;
+procedure gatherAMMO;
+var
+	AMMOPlugins: TStringList;
+	i, j: integer;
+	CurrentGroup, CurrentRecord: IInterface;
+begin
+	AMMOPlugins := TStringList.Create;
+	for i := filecount - 1 downto 0 do
+	begin
+		if hasGroup(fileByIndex(i), 'AMMO') then
+		AMMOPlugins.addObject(GetfileName(FileByIndex(i)), FileByIndex(i)); 
+	end;
+	AMMOList := TStringList.Create;
+	for i := AMMOPlugins.Count - 1 downto 0 do
+	begin
+		CurrentGroup := GroupBySignature(ObjectToElement(AMMOPlugins.objects[i]), 'AMMO');
+		for j := ElementCount(CurrentGroup) - 1 downto 0 do
+		begin
+			CurrentRecord := ElementByIndex(CurrentGroup, j);
+			if GetIsDeleted(CurrentRecord) then continue;
+			if IntToStr(GetElementNativeValues(CurrentRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then continue;
+			if IntToStr(GetElementNativeValues(CurrentRecord, 'DATA\Flags\Non-Playable')) < 0 then continue;
+			if HasKeyword(CurrentRecord, 'noCraft') then continue;
+			if hasKeyword(CurrentRecord, 'Dummy') then continue;
+			if GetElementNativeValues(CurrentRecord, 'EITM') > 0 then continue;
+			if ISWinningOverride(CurrentRecord) then 
+			AMMOList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+		end;
+	end;
+end;
+
+procedure processing;
 var
 	recordSignature: string;
 	recipeCraft: IInterface;
 	CurrentFile: IInterface;
+	i: integer;
 begin
-	while readFileCount = 0 do
-	begin
-		if skipFileCount = 0 then
-		begin
-			CurrentFile := getfile(selectedRecord);
-			if hasGroup(CurrentFile, 'ARMO') OR hasGroup(currentFile, 'WEAP') OR hasGroup(CurrentFile, 'AMMO') then
-			begin
-				readFileCount := elementCount(CurrentFile);
-				//addMessage('plugin has armor, weapons, and/or ammo. attempting process');
-			end else
-			begin
-				skipFileCount := elementCount(CurrentFile) - 1;
-				//addMessage('plugin contains no armor, weapons or ammo, skipping.');
-				exit;
-			end;
-		end else
-		begin
-			//addMessage('skipped record');
-			skipFileCount := skipFileCount - 1;
-			exit;
-		end;
+	GatherArmo;
+	GatherWeap;
+	GatherAMMO;
+	for i := ArmoList.count - 1 downto 0 do begin
+		ItemRecord := ObjectToElement(ArmoList.Objects[i]);
+		MakeCraftable;
 	end;
-	itemRecord := selectedRecord;
-	if not IsWinningOVerride(itemRecord) then 
-	begin
-		//addmessage('checkpoint winning');
-		exit;
+	ArmoList.free;
+	for i := WeapList.count - 1 downto 0 do begin
+		ItemRecord := ObjectToElement(WeapList.Objects[i]);
+		MakeCraftable;
 	end;
-	{if hasKeyword(CurrentRecord, 'noCraft') then 
-	begin
-		//addmessage('checkpoint nocraft');
-		exit;
-	end;}
-	PassRecord(itemRecord);
-	recordSignature := Signature(selectedRecord);
-	// filter selected records, which are not valid
-	// NOTE: only armors are exepted, for now
-	if GetIsDeleted(itemRecord) then 
-	begin
-		//addmessage('checkpoint deleted');
-		exit;
+	WeapList.Free;
+	for i := AMMOList.count - 1 downto 0 do begin
+		ItemRecord := ObjectToElement(AMMOList.Objects[i]);
+		MakeCraftable;
 	end;
-	
-	if not GetElementNativeValues(itemRecord, 'EITM') > 0 then 
-	begin
-		//addmessage('checkpoint eitm');
-		exit;
-	end;
-
-	if IntToStr(GetElementNativeValues(itemRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then exit;
-	if IntToStr(GetElementNativeValues(itemRecord, 'DATA\Flags\Non-Playable')) < 0 then exit;
-	if hasKeyword(CurrentRecord, 'Dummy') then exit;
-	if hasKeyword(CurrentRecord, 'noCraft') then exit;
-	if recordSignature = 'ARMO' then makeCraftable;
-	if recordSignature = 'WEAP' then MakeCraftable;
-	if recordSignature = 'AMMO' then MakeCraftable;
-	//AddMessage('recipe done');
-	
-	Result := 0;
+	AMMOList.Free;
 end;
 
-// runs in the end
-function Finalize: integer;
+function YggFinal: integer;
 begin
-	CleanMasters(ArmorPatch);
+	CleanMasters(Patch);
 	LogMessage(3,'---Craftable process ended---');
 	LogMessage(0, 'Ended');
 	Sign;
@@ -170,7 +215,6 @@ begin
 	Result := 0;
 end;
 
-// creates new COBJ record to make item Craftable at workbenches
 procedure makeCraftable;
 var
   recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems, keywords: IInterface;
@@ -535,7 +579,7 @@ begin
 			SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(MainRecordByEditorID(GroupBySignature(FileByName('Tailoring Workbench.esp'), 'KYWD'),'CraftingTailoring')));
 		end else
 		begin
-			SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID(ARMOR_CRAFTING_WORKBENCH_FORM_ID)));
+			SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105')));
 		end;
 	end else if Assigned(FileByName('Art Of Magicka Ygg Edition.esp')) then
 	begin
@@ -545,7 +589,13 @@ begin
 		end;
 	end else
 	begin
-		SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID(ARMOR_CRAFTING_WORKBENCH_FORM_ID)));
+		if signature(ItemRecord) = 'ARMO' then
+		begin
+			if HasKeyword(ItemRecord, 'ArmorClothing') then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('0007866A'))) //tanning rack for clothing
+			else SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
+		end;
+		if signature(ItemRecord) = 'AMMO' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
+		if signature(ItemRecord) = 'WEAP' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088108'))); //sharpening wheel?
 	end;
 	//if debug then AddMessage('Finished Tailoring');
 end;
@@ -984,54 +1034,19 @@ var
 begin
 	count := 0;
 
-	if hasKeyword(CurrentRecord, 'ClothColorBlack') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorBlue') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorGreen') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorGray') or hasKeyword(CurrentRecord, 'ClothColorGrey') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorOrange') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorPink') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorPurple') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorYellow') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorRed') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorWhite') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'ClothColorLightBlue') then
-	begin
-		count := count + 1;
-	end;
-	if hasKeyword(CurrentRecord, 'AOMGhost') then
-	begin
-		count := count + 1;
-	end;
+	if hasKeyword(CurrentRecord, 'ClothColorBlack') then count := count + 1;
+	
+	if hasKeyword(CurrentRecord, 'ClothColorBlue') then	count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorGreen') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorGray') or hasKeyword(CurrentRecord, 'ClothColorGrey') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorOrange') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorPink') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorPurple') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorYellow') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorRed') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorWhite') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'ClothColorLightBlue') then count := count + 1;
+	if hasKeyword(CurrentRecord, 'AOMGhost') then count := count + 1;
 	if hasKeyword(CurrentRecord, 'ArmorMaterialLace') then
 	begin
 		count := count + 1;
@@ -1076,8 +1091,6 @@ begin
 	begin
 		count := count + 1;
 	end;
-	
-
 	result := count;
 end;
 
@@ -1087,7 +1100,7 @@ var
 begin
 	if HashedList.IndexOf(LowerCase(EditorID(WinningOverride(itemRecord)))) >= 0 then
 	begin
-		result := wbCopyElementToFile(ObjectToElement(HashedList.Objects[HashedList.IndexOf(EditorID(itemRecord))]), ArmorPatch, false, true);
+		result := wbCopyElementToFile(ObjectToElement(HashedList.Objects[HashedList.IndexOf(EditorID(itemRecord))]), Patch, false, true);
 	end else
 	begin
 		if create then
@@ -1155,7 +1168,7 @@ begin
 	input := TStringList.Create;
 	Output := TStringList.Create;
 	perks := TStringList.Create;
-	tempperklist := TStringList.Create;
+	//tempperklist := TStringList.Create;
 	CurrentKYWD := TrueRecordByEDID(CurrentKYWDName);
 	if not Assigned(CurrentKYWD) then exit;
 	RecipeCount := 0;
@@ -1203,7 +1216,7 @@ begin
 				TempList.strings[2] := IntToStr(tryStrToInt(TempList.strings[2], 0) + GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(ElementByPath(CurrentReference, 'Items'), i), 0), 1))); 
 				Input.Objects[ItemIndex] := TempList;
 			end;
-			ConPath := ElementByPath(CurrentReference, 'Conditions');
+			{ConPath := ElementByPath(CurrentReference, 'Conditions');
 			if not Assigned(ConPath) then continue;
 			for i := ElementCount(ConPath) downto 0 do
 			begin
@@ -1225,7 +1238,7 @@ begin
 				tempperklist.Assign(Perks.Objects[itemIndex]);
 				tempperklist.strings[1] := IntToStr(TryStrToInt(tempperklist.strings[1], 0) + 1);
 				perks.objects[itemIndex] := tempperklist;
-			end;
+			end;}
 			RecipeCount := RecipeCount + 1;
 		end;
 	end;
@@ -1252,11 +1265,11 @@ begin
 	else y := 1;
 	
 	
-	if perks.count > 0 then
+	{if perks.count > 0 then
 	begin
 		for a := perks.count - 1 downto 0 do
 		begin
-			tempperklist.assign(perks.objects[a]);
+			tempperklist := perks.objects[a];
 			if length(tempperklist.strings[0]) = 0 then continue;
 			if not assigned(ObjectToElement(tempperklist.objects[0])) then continue;
 			if length(tempperklist.strings[1]) = 0 then continue;
@@ -1265,11 +1278,11 @@ begin
 		end;
 		tempperklist := perks.objects[perkcounter];
 		output.add('p:' + GetFileName(GetFile(ObjectToElement(tempperklist.Objects[0]))) + '|' + tempperklist.Strings[0]);
-	end;
+	end;}
 
 	for a := input.count - 1 downto 0 do
 	begin
-		TempList.assign(input.objects[a]);
+		TempList := input.objects[a];
 		if TempList.count < 0 then continue;
 		item := ObjectToElement(TempList.Objects[0]);
 		Edid := TempList.strings[0];
