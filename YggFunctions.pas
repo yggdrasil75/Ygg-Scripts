@@ -125,7 +125,7 @@ var
 begin
   // basically we took record like 00049BB7, and by slicing 2 first symbols, we get its file index, in this case Skyrim (00)
   tmp := FileByLoadOrder(StrToInt('$' + Copy(id, 1, 2)));
-  LogMessage(0, 'assuming the following is the file of formid: ' + GetFileName(tmp) + ' ' + Name(id));
+  LogMessage(0, 'assuming the following is the file of formid: ' + GetFileName(tmp) + ' ' + id);
 
   // file was found
   if Assigned(tmp) then begin
