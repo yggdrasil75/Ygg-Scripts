@@ -14,7 +14,7 @@ function Initialize: integer;
 begin
 	result := CraftingInit;
 	Processing;
-	YggFinal;
+	CraftingFinal;
 end;
 
 function CraftingInit: integer;
@@ -205,7 +205,7 @@ begin
 	AMMOList.Free;
 end;
 
-function YggFinal: integer;
+function CraftingFinal: integer;
 begin
 	CleanMasters(Patch);
 	LogMessage(3,'---Craftable process ended---');
