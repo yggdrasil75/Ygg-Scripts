@@ -37,7 +37,7 @@ begin
 	if length(item) = 0 then
 	begin
 		elementassign(copyRecord, -1, Nil, false);
-		addMessage('item ' + name(CurrentRecord) + ' is missing required data');
+		LogMessage(1, 'item ' + name(CurrentRecord) + ' is missing required data');
 		result := default;
 	end else result := StrToFloat(item);
 end;
@@ -47,7 +47,7 @@ begin
 	if length(item) = 0 then
 	begin
 		elementassign(copyRecord, -1, Nil, false);
-		addMessage('item ' + name(CurrentRecord) + ' is missing required data');
+		LogMessage(1, 'item ' + name(CurrentRecord) + ' is missing required data');
 		result := default;
 	end else result := StrToFloat(item);
 end;
@@ -125,7 +125,7 @@ var
 begin
   // basically we took record like 00049BB7, and by slicing 2 first symbols, we get its file index, in this case Skyrim (00)
   tmp := FileByLoadOrder(StrToInt('$' + Copy(id, 1, 2)));
-  //AddMessage(GetFileName(tmp));
+  LogMessage(0, 'assuming the following is the file of formid: ' + GetFileName(tmp) + ' ' + Name(id));
 
   // file was found
   if Assigned(tmp) then begin
@@ -196,7 +196,7 @@ begin
 			Add(CurrentRecord, 'KWDA', true);
 		end;
 		keywordRef := ElementAssign(KYWD, HighInteger, foobar, false);
-		AddMessage(FullPath(keywordRef));
+		LogMessage(1, 'currently adding ' + FullPath(keywordRef));
 		SetEditValue(ElementByIndex(KYWD, IndexOf(KYWD, keywordRef)), GetEditValue(foobar));
 	end;
 end;
@@ -218,7 +218,7 @@ begin
 	end;
 	if not assigned(temp) then
 	begin
-		addmessage('there is a typo in a edid');
+		Logmessage(2,'there is a typo in a edid');
 	end;
 	result := temp;
 end;
@@ -295,10 +295,10 @@ begin
 	// add new item to list
 	newItem := ElementAssign(list, HighInteger, nil, false);
 	listName := Name(list);
-	//AddMessage(name(newItem));
+	LogMessage(0,'Current COBJ is ' + name(newItem));
 	if Length(listName) = 0 then 
 	begin
-		AddMessage('Broken');
+		LogMessage(2,'Crafting Recipe doesnt have proper item list');
 		exit;
 	end;
 	// COBJ
@@ -308,7 +308,7 @@ begin
 		// set amount
 		SetElementEditValues(newItem, 'CNTO - Item\Count', amount);
 	end;
-	//AddMessage('test');
+	LogMessage(1,'item added');
 	// remove nil records from list
 	removeInvalidEntries(list);
 

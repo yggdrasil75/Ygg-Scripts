@@ -43,6 +43,7 @@ begin
 	Randomize;
 	InitializeRecipes;
 	tempPerkFunctionSetup;
+	LogMessage(0,'---Making Armor craftable---');
 	AddMessage('---Making Armor craftable---');
 	LogMessage(1, 'Initialize');
 end;
@@ -244,7 +245,7 @@ begin
 	end;
 	if not assigned(RecipeCraft) then begin
 		recipeCraft := createRecord('COBJ');
-		//AddMessage('No Recipe Found');
+		LogMessage(1,'No Recipe Found for: ' + Name(ItemRecord) + ' Generating new one');
 
 		// add reference to the created object
 		SetElementEditValues(recipeCraft, 'CNAM', Name(itemRecord));
@@ -284,7 +285,7 @@ begin
 	end else if hasKeyword(CurrentRecord, 'ArmorClothing') then 
 	begin
 	//uses -1.4ln(x/10)+10 for value to get amount 
-		AddMessage(Name(itemRecord) + ' is Clothing');
+		LogMessage(0,Name(itemRecord) + ' is Clothing');
 		if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 42 then 
 		begin
 			amountOfMainComponent := 5;
@@ -324,7 +325,7 @@ begin
 	
 	end else if hasKeyword(CurrentRecord, 'ArmorJewelry') then
 	begin 
-		AddMessage(Name(itemRecord) + ' is Jewelry');
+		LogMessage(0,Name(itemRecord) + ' is Jewelry');
 		if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 42 then 
 		begin
 			amountOfMainComponent := 5;
@@ -354,7 +355,7 @@ begin
 		Keywords := ElementByPath(itemRecord, 'KWDA');
 		for ki := 0 to ElementCount(Keywords) do
 		begin
-			//if debug then AddMessage(GetEditValue(ElementByIndex(Keywords, ki)));
+			LogMessage(0, GetEditValue(ElementByIndex(Keywords, ki)));
 			MatByKYWD(EditorID(LinksTo(ElementByIndex(Keywords, ki))), RecipeItems, AmountOfMainComponent);
 		end;
 	end;
@@ -381,19 +382,19 @@ begin
 	removeInvalidEntries(recipeCraft);
 
 	if GetElementEditValues(recipeCraft, 'COCT') = '' then begin
-		AddMessage('WARNING: no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end	else if not assigned(ElementByPath(recipeCraft, 'COCT')) then begin
-		AddMessage('WARNING: no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end else if not assigned(ElementByPath(recipeCraft, 'Items')) then begin
-		AddMessage('WARNING: no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end else if ElementCount(ElementByPath(recipeCraft, 'Items')) < 1 then begin
-		AddMessage('WARNING: no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end;
@@ -598,7 +599,7 @@ begin
 		if signature(ItemRecord) = 'AMMO' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088108'))); //Sharpening wheel
 		if signature(ItemRecord) = 'WEAP' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
 	end;
-	//if debug then AddMessage('Finished Tailoring');
+	LogMessage(0, 'Finished Tailoring');
 end;
 
 function Clothing(amountOfMainComponent: integer; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
@@ -705,7 +706,7 @@ begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenTeal'), ccount); // Teal linens
 		end;
 	end;
-	//if debug then AddMessage('Finished Clothing');
+	LogMessage(0, 'Finished Clothing');
 end;
 
 function Dyed(amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
@@ -754,12 +755,12 @@ begin
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentBLUlite'), amountOfAdditionalComponent); // light blue pigments
 	end;
-	//if debug then AddMessage('Finished Dyeing');
+	LogMessage(0, 'Finished Dyeing');
 end;
 
 function Jeweled(amountOfMainComponent, amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
 begin
-	AddMessage('jeweled stuff');
+	LogMessage(0,'jeweled stuff');
 	if hasKeyword(CurrentRecord, 'TGCMLGemstones') then
 	begin
 		//AddMasterIfMissing(GetFile(itemRecord), 'thegemstonecollector.esp');
@@ -1003,9 +1004,9 @@ begin
 	end;
 	if hasKeyword(CurrentRecord, 'GemColorYellow') then
 	begin
-		AddMessage('Maybe I should just use gold?');
+		LogMessage(0,'Maybe I should just use gold?');
 	end;
-	//if debug then AddMessage('Finished Jeweled Armor');
+	LogMessage(0, 'Finished Jeweled Armor');
 end;
 
 function Jewelry(amountOfMainComponent, amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
@@ -1107,7 +1108,7 @@ begin
 		if create then
 		begin
 			recipeCraft := createRecord('COBJ');
-			//AddMessage('No Recipe Found');
+			LogMessage(0, 'No Recipe Found');
 
 			// add reference to the created object
 			SetElementEditValues(recipeCraft, 'CNAM', Name(itemRecord));
@@ -1175,28 +1176,28 @@ begin
 	RecipeCount := 0;
 	for k := referencedByCount(CurrentKYWD) - 1 downto 0 do
 	begin
-		//if debug then AddMessage('Cycle ' + IntToStr(k));
+		LogMessage(0, 'Cycle ' + IntToStr(k));
 		CurrentItem := ReferencedByIndex(CurrentKYWD, k);
 		TempSig := Signature(CurrentItem);
 		if ValidSignatures.IndexOf(TempSig) < 0 then continue;
 		if IntToStr(GetElementNativeValues(itemRecord, 'DATA\Flags\Non-Playable')) < 0 then continue;
 		if IntToStr(GetElementNativeValues(itemRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then exit;
 		if GetElementNativeValues(CurrentItem, 'EITM') > 0 then continue;
-		//if debug then AddMessage('Passed Signature');
+		LogMessage(0, 'Passed Signature');
 		for a := ReferencedByCount(CurrentItem) - 1 downto 0 do
 		begin
-			//if debug then AddMessage('Recipe Search ' + IntToStr(a));
+			LogMessage(0, 'Recipe Search ' + IntToStr(a));
 			CurrentReference := ReferencedByIndex(CurrentItem, a);
 			if not pos('COBJ', signature(CurrentReference)) > 0 then continue;
-			//if debug then AddMessage('it is a recipe');
+			LogMessage(0, 'it is a recipe');
 			if not equals(CurrentItem, LinksTo(ElementByPath(CurrentReference, 'CNAM'))) then continue;
-			//if debug then AddMessage('output is the same');
+			LogMessage(0, 'output is the same');
 			if GetLoadOrderFormID(LinksTo(ElementByPath(CurrentReference, 'BNAM'))) = $000ADB78 then continue;
 			if GetLoadOrderFormID(LinksTo(ElementByPath(CurrentReference, 'BNAM'))) = $00088108 then continue;
 			if not IsWinningOverride(CurrentReference) then continue;
 			if length(GetElementEditValues(CurrentReference, 'COCT')) = 0 then continue
 			else l := tryStrToInt(GetElementEditValues(CurrentReference, 'COCT'), 0) - 1;
-			//if debug then AddMessage('standard recipe limitations');
+			LogMessage(0, 'standard recipe limitations');
 			for i := l downto 0 do
 			begin
 				TempList := TStringList.Create;
@@ -1204,7 +1205,7 @@ begin
 				if ValidSignatures.IndexOf(signature(item)) >= 0 then continue;
 				EDID := EditorID(item);
 				ItemIndex := Input.IndexOf(EDID);
-				//if debug then AddMessage(IntToStr(TempList.Count));
+				LogMessage(0, IntToStr(TempList.Count));
 				if ItemIndex < 0 then 
 				begin
 					TempList.Add(EDID);
@@ -1222,7 +1223,7 @@ begin
 			for i := ElementCount(ConPath) downto 0 do
 			begin
 				cc := ElementByPath(ElementByIndex(ConPath, i), 'CTDA');
-				//addmessage(EditorID(LinksTo(ElementByPath(ElementByPath(ElementByIndex(ElementByPath(CurrentReference, 'Conditions'), 1), 'CTDA'), 'Perk'))));
+				Logmessage(0,EditorID(LinksTo(ElementByPath(ElementByPath(ElementByIndex(ElementByPath(CurrentReference, 'Conditions'), 1), 'CTDA'), 'Perk'))));
 				if not pos('HasPerk', GetEditValue(ElementByPath(CC, 'Function'))) > 0 then continue;
 				Perk := LinksTo(ElementByPath(cc, 'Perk'));
 				if not assigned(Perk) then continue;
@@ -1325,16 +1326,16 @@ begin
 				ce := copy(cs, f+1, as-f-1);
 				ca := copy(cs, as+1, length(cs) - as);
 				item := MainRecordByEditorID(GroupBySignature(FileByName(cf), cg), ce);
-				//if debug then addMessage(cg + ' ' + cf + ' ' + ce + ' ' + ca);
+				LogMessage(0, 'IniToMatList: ' + cg + ' ' + cf + ' ' + ce + ' ' + ca);
 				MaterialsSublist.AddObject(ca, item);
-				//if debug then AddMessage(FloatToStr(ca) + EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])));
+				LogMessage(0, 'IniToMatList: ' + FloatToStr(ca) + EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])));
 			end else if pos('p', copy(cs, 0, 1)) = 0 then
 			begin
 				cf := copy(cs, t+1,f-1);
 				ce := copy(cs,f+1,length(cs) - 1);
 				//MaterialsSublist.AddObject('Perk', MainRecordByEditorID(GroupBySignature(FileByName(cf), 'PERK'), ce));
 				MaterialsSublist.AddObject('Perk', RecordByEDID(FileByName(cf), ce));
-				AddMessage(EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])));
+				LogMessage(1, 'IniToMatList: ' + EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])));
 			end;
 		end;
 		MaterialList.objects[MLI] := MaterialsSublist;
@@ -1348,14 +1349,14 @@ var
 	a: integer;
 begin
 	if MaterialList.IndexOf(keyword) < 0 then exit;
-	//if debug then addmessage('work');
+	LogMessage(0, 'work');
 	CurrentMaterials := MaterialList.Objects[MaterialList.IndexOf(keyword)];
 	for a := CurrentMaterials.count - 1 downto 0 do
 	begin
-		//if debug then addMessage('work 2');
+		LogMessage(0, 'work 2');
 		if pos('Perk', CurrentMaterials.strings[a]) > 0 then
 		begin
-			//if debug then addMessage('work 3 perk');
+			LogMessage(0, 'work 3 perk');
 			//AddPerkCondition(recipeitems, ObjectToElement(CurrentMaterials.Objects[a]));
 		end else
 		begin
