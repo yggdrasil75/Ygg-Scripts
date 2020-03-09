@@ -208,7 +208,8 @@ end;
 function CraftingFinal: integer;
 begin
 	CleanMasters(Patch);
-	LogMessage(3,'---Craftable process ended---');
+	LogMessage(1,'---Craftable process ended---');
+	AddMessage('---Craftable process ended---');
 	LogMessage(0, 'Ended');
 	Sign;
 	LogMessage(0, 'Signed');
