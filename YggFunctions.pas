@@ -462,6 +462,7 @@ begin
 	if ini.ReadInteger('BaseData', 'DebugLevel', 0) = 0 then 
 	ini.WriteInteger('BaseData', 'DebugLevel', 1);
 	YggLogCurrentMessages := TStringList.Create;
+	YggLogCurrentMessages.LoadFromFile(ScriptsPath + 'Ygg.log');
 	//Rewrite(YggLog);
 	//writeln(YggLog, who);
 	temp := ScriptsPath + 'Ygglog' + FormatDateTime('f',TimeBegin) + '.log';
@@ -579,7 +580,7 @@ begin
 		addmessage(LogItem);
 	end;
 	YggLogCurrentMessages.add(LogItem);
-	YggLogCurrentMessages.SaveToFile(C_FName);
+	YggLogCurrentMessages.SaveToFile(ScriptsPath + 'Ygg.log');
 end;
 
 procedure MasterLines;
