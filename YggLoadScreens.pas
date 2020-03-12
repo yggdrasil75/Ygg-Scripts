@@ -27,25 +27,32 @@ end;
 
 function converted: boolean;
 var
-	ArtIn: TStringList;
+	ArtIn: TStringDynArray;
+	TDirectory:TDirectory;
 	ArtInTemp,ArtOutTemp: string;
 	i:integer;
+	aFolder:string;
 begin
-	if StrToInt(ShellExecute(0,nil,'Magick.exe','convert "" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:""',nil,1)) = 2 then begin
+{if StrToInt(ShellExecute(0,nil,'Magick.exe','convert "" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:""',nil,1)) = 2 then begin
 		result := false;
 		exit;
-	end;
+		end;}
+	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	ArtOut := TStringList.Create;
 	ArtIn := TStringList.Create;
-	FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
-	FindAllFiles(ArtOut,DataPath + 'Textures\Ygg\Loading', '*.dds',true);
+	{FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
+	FindAllFiles(ArtOut,DataPath + 'Textures\Ygg\Loading', '*.dds',true);}
+	LogMessage(0,'Scanning for textures in ' + aFolder);
+	ArtIn := TDirectory.GetFiles(aFolder, '*.jpg;*.png;*.bmp', soAllDirectories);
+	ArtOut := TDirectory.GetFiles(aFolder, '*.dds', soAllDirectories);
+	
 	for i := 0 to ArtIn.Count do
 	begin
-		ArtInTemp := ArtIn.strings[i];
+		ArtInTemp := ArtIn[i];
 		ArtOutTemp := StringReplace(ArtInTemp, '.png', '.dds',[rfReplaceAll]);
 		ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
 		ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
-		ShellExecute(0,nil,'Magick.exe','convert "' + ArtIn.Strings[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
+		ShellExecute(0,nil,'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
 		LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
 		ArtOut.Add(ArtOutTemp);
 	end;
@@ -60,10 +67,10 @@ begin
 	for i := ArtOut.Count - 1 do begin
 		CurrentRecord := CreateRecord('LSCR');
 		CurrentStat := CreateRecord('STAT');
-		SetEditorID(CurrentStat, 'YggLoadingSTAT'+ArtOut.Strings[i]);
+		SetEditorID(CurrentStat, 'YggLoadingSTAT'+ArtOut[i]);
 		
-		SetEditorID(CurrentRecord, 'YggLoadingLSCR'+ArtOut.Strings[i]);
-		SetElementEditValues(CurrentStat, 'Model\MODL', ArtOut.Strings[i]);
+		SetEditorID(CurrentRecord, 'YggLoadingLSCR'+ArtOut[i]);
+		SetElementEditValues(CurrentStat, 'Model\MODL', ArtOut[i]);
 		SetElementEditValues(CurrentRecord,'NNAM', name(CurrentStat));
 	end;
 end;
