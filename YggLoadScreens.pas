@@ -32,11 +32,25 @@ var
 	ArtInTemp,ArtOutTemp: string;
 	i:integer;
 	aFolder:string;
+	Paths: tstringlist;
 begin
 {if StrToInt(ShellExecute(0,nil,'Magick.exe','convert "" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:""',nil,1)) = 2 then begin
 		result := false;
 		exit;
 		end;}
+	if not ContainsText('Magick', GetEnv('PATH')) then begin
+		result := false;
+		exit;
+	end;
+	
+	Paths := TStringlist.Create;
+	paths.DelimitedText := GetEnv('PATH');
+	for i := paths.count - 1 downto 0 do
+	begin
+		if containtsText('Magick', paths.strings[i]) then
+		MagickPath := paths.strings[i];
+	end;
+	
 	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	ArtOut := TStringList.Create;
 	ArtIn := TStringList.Create;
@@ -53,7 +67,7 @@ begin
 		ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
 		ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
 		if ArtInTemp = ArtOutTemp then continue;
-		ShellExecute(0,nil,'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
+		ShellExecute(0,nil,MagickPath+'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
 		LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
 		ArtOut.Add(ArtOutTemp);
 	end;
