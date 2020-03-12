@@ -39,7 +39,7 @@ begin
 	finally EndUpdate(Patch);
 	end;
 	IniProcess;
-	remove(ElementByPath(Patch, 'COBJ'));
+	remove(GroupBySignature(Patch, 'COBJ'));
 	Randomize;
 	InitializeRecipes;
 	tempPerkFunctionSetup;
@@ -1293,6 +1293,12 @@ begin
 		else continue;
 		if amount = 0.0 then continue;
 		output.add('i' + signature(item) + ':' + GetFileName(GetFile(MasterOrSelf(item))) + '|' + EDID + '=' + FloatToStr(Amount * y));
+	end;
+	if ContainsText('Clothing',CurrentKYWDName) then begin
+		if output.length < 1 then
+		begin
+			output.add('iMISC:Skyrim.esm|RuinsLinenPile01=1.0');
+		end;
 	end;
 	input.free;
 	perks.free;
