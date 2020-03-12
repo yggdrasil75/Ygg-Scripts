@@ -1,7 +1,7 @@
 unit yggloadscreens;
 uses yggfunctions;
 var
-	ArtOut: TStringList;
+	ArtOut: TStringDynArray;
 function initialize: integer;
 begin
 	result := LoadInit;
@@ -52,6 +52,7 @@ begin
 		ArtOutTemp := StringReplace(ArtInTemp, '.png', '.dds',[rfReplaceAll]);
 		ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
 		ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
+		if ArtInTemp = ArtOutTemp then continue;
 		ShellExecute(0,nil,'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
 		LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
 		ArtOut.Add(ArtOutTemp);
