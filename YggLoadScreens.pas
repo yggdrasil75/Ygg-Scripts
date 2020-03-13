@@ -33,7 +33,7 @@ end;
 
 function AskScreenshot:boolean;
 var
-
+	optionAddScreenshot: integer;
 begin
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if ini.ReadInteger('Loading', 'Loading', 0) = 0 then
