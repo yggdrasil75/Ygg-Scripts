@@ -55,6 +55,7 @@ begin
 	end;}
 	
 	AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
+	MagickPath := ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1);
 	
 	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	//ArtOut := TStringList.Create;
@@ -72,7 +73,7 @@ begin
 		ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
 		ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
 		if ArtInTemp = ArtOutTemp then continue;
-		ShellExecute(0,nil,'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
+		ShellExecute(0,nil,MagickPath+'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
 		LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
 		ArtOut.Add(ArtOutTemp);
 	end;
