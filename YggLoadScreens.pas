@@ -47,6 +47,8 @@ begin
 		//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
 		ShellExecute(0,'open',ScriptsPath+'magickpath.bat',nil,nil,1);
 	end;
+	Ini.UpdateFile;
+	ini := TMemIniFile.Create(ScriptsPath+'Ygg.ini');
 	TempPath := Ini.ReadString('BaseData', '%K', 'a');
 	TempPath := StringReplace(MagickPath, ';',',',[rfReplaceAll]);
 	
