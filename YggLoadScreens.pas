@@ -3,6 +3,7 @@ uses yggfunctions;
 
 var
 	ArtOut: TStringDynArray;
+	Screenshots: boolean;
 	
 function initialize: integer;
 begin
@@ -24,9 +25,29 @@ begin
 	remove(GroupBySignature(Patch, 'TXST'));
 	LogMessage(0,'---Loading Is Fun---');
 	AddMessage('---Loading is fun---');
+	Screenshots := AskScreenshot;
 	converted;
 	AddLoadScreen;
 	result := 1;
+end;
+
+function AskScreenshot:boolean;
+var
+
+begin
+	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
+	if ini.ReadInteger('Loading', 'Loading', 0) = 0 then
+	begin
+		optionAddScreenshot := MessageDlg('Do you want to only create new recipes and not update existing?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		if optionAddOnly = mrAbort then
+			exit
+		else ini.WriteInteger('Loading', 'Loading', optionAddScreenshot);
+	end else optionAddScreenshot := ini.ReadInteger('Loading', 'Loading', 0);
+	
+	if optionAddScreenshot = 7 then result := true;
+	else result := false;
+	
+	Ini.UpdateFile;
 end;
 
 function converted: boolean;
@@ -41,15 +62,15 @@ var
 begin
 	//FileCreate(ScriptsPath+'Ygg.ini');
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	if ini.ReadString('BaseData','%K','0') = '0' then
+	if ini.ReadString('Loading','%K','0') = '0' then
 	begin
-		Ini.WriteString('BaseData', '%K', '');
+		Ini.WriteString('Loading', '%K', '');
 		//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
 		ShellExecute(0,'open',ScriptsPath+'magickpath.bat',nil,nil,1);
 	end;
 	Ini.UpdateFile;
 	ini := TMemIniFile.Create(ScriptsPath+'Ygg.ini');
-	TempPath := Ini.ReadString('BaseData', '%K', 'a');
+	TempPath := Ini.ReadString('Loading', '%K', 'a');
 	TempPath := StringReplace(MagickPath, ';',',',[rfReplaceAll]);
 	
 	Paths := TStringlist.Create;
@@ -84,6 +105,27 @@ begin
 		LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
 		ArtOut.Add(ArtOutTemp);
 	end;
+	
+	if Screenshot then
+	begin
+		sGamePath := Delete(DataPath,length(DataPath)-5, 5);
+		ArtIn := TDirectory.GetFiles(sDirPath, '*.jpg;*.png;*.bmp', soAllDirectories);
+		ArtOut := TDirectory.GetFiles(sDirPath, '*.dds', soAllDirectories);
+
+		for i := 0 to Length(ArtIn) - 1 do
+		begin
+			ArtInTemp := ArtIn[i];
+			ArtOutTemp := StringReplace(ArtInTemp, '.png', '.dds',[rfReplaceAll]);
+			ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
+			ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
+			ArtOutTemp := 'Data\Textures\Ygg\Loading\' + ArtOutTemp;
+			if ArtInTemp = ArtOutTemp then continue;
+			ShellExecute(0,'open',MagickPath+'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
+			LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
+			ArtOut.Add(ArtOutTemp);
+		end;
+	end;
+	
 	result := true;
 end;
 
