@@ -461,13 +461,18 @@ begin
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if ini.ReadInteger('BaseData', 'DebugLevel', 0) = 0 then 
 	ini.WriteInteger('BaseData', 'DebugLevel', 1);
-	YggLogCurrentMessages := TStringList.Create;
-	YggLogCurrentMessages.LoadFromFile(ScriptsPath + 'Ygg.log');
 	//Rewrite(YggLog);
 	//writeln(YggLog, who);
-	temp := ScriptsPath + 'Ygglog' + FormatDateTime('f',TimeBegin) + '.log';
+	temp := 'Ygglog' + DateTimeToStr(now) + '.log';
 	temp := StringReplace(temp, ':', ' ',[rfReplaceAll]);
-	C_FName := StringReplace(temp, '\', ' ',[rfReplaceAll]);
+	C_FName := ScriptsPath + StringReplace(temp, '/', ' ',[rfReplaceAll]);
+	AddMessage(C_FName);
+	//FileCreate(C_FName);
+	FileCreate(Ygg.log);
+	//FileCreate(ScriptsPath + 'Ygg.log');
+	CreateDir('Ygg');
+	YggLogCurrentMessages := TStringList.Create;
+	//YggLogCurrentMessages.LoadFromFile(ScriptsPath + 'Ygg.log');
 end;
 
 function TimeBtwn(Start, Stop: TDateTime): string;

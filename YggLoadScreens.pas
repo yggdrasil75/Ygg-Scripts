@@ -1,5 +1,6 @@
 unit yggloadscreens;
 uses yggfunctions;
+uses sysutils;
 var
 	ArtOut: TStringDynArray;
 function initialize: integer;
@@ -52,6 +53,8 @@ begin
 		if containtsText('Magick', paths.strings[i]) then
 		MagickPath := paths.strings[i];
 	end;}
+	
+	AddMessage(ExecuteProcess('magickpath.bat',''));
 	
 	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	//ArtOut := TStringList.Create;
