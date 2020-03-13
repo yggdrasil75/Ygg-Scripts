@@ -468,7 +468,7 @@ begin
 	C_FName := ScriptsPath + StringReplace(temp, '/', ' ',[rfReplaceAll]);
 	AddMessage(C_FName);
 	//FileCreate(C_FName);
-	FileCreate(Ygg.log);
+	FileCreate('Ygg.log');
 	//FileCreate(ScriptsPath + 'Ygg.log');
 	CreateDir('Ygg');
 	YggLogCurrentMessages := TStringList.Create;
