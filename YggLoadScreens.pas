@@ -37,17 +37,8 @@ var
 	aFolder:string;
 	Paths: tstringlist;
 	Ini:TMemIniFile;
-	MagickPath:string;
+	MagickPath,sDirPath:string;
 begin
-	{if StrToInt(ShellExecute(0,nil,'Magick.exe','convert "" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:""',nil,1)) = 2 then begin
-		result := false;
-		exit;
-	end;}
-	{if not ContainsText('Magick', GetEnvironmentVariable('PATH')) then begin
-		result := false;
-		exit;
-	end;}
-	
 	{Paths := TStringlist.Create;
 	paths.DelimitedText := SysUtils.GetEnvironmentVariable('PATH');
 	for i := paths.count - 1 downto 0 do
@@ -66,6 +57,11 @@ begin
 	{FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
 	FindAllFiles(ArtOut,DataPath + 'Textures\Ygg\Loading', '*.dds',true);}
 	LogMessage(0,'Scanning for textures in ' + aFolder);
+	
+	sDirPath := DataPath + 'Textures\Ygg\Loading\';
+	if not DirectoryExists(sDirPath) then  // DirectoryExists returns true if directory path exists, can return false due to user permissions
+	if not ForceDirectories(sDirPath) then  // ForceDirectories returns true if directory path was created
+	
 	ArtIn := TDirectory.GetFiles(aFolder, '*.jpg;*.png;*.bmp', soAllDirectories);
 	ArtOut := TDirectory.GetFiles(aFolder, '*.dds', soAllDirectories);
 	
