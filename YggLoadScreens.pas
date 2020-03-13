@@ -40,7 +40,7 @@ begin
 	if ini.ReadInteger('Loading', 'Loading', 0) = 0 then
 	begin
 		optionAddScreenshot := MessageDlg('Do you want to only create new recipes and not update existing?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
-		if optionAddOnly = mrAbort then
+		if optionAddScreenshot = mrAbort then
 			exit
 		else ini.WriteInteger('Loading', 'Loading', optionAddScreenshot);
 	end else optionAddScreenshot := ini.ReadInteger('Loading', 'Loading', 0);
