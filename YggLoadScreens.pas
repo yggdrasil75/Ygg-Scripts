@@ -1,8 +1,9 @@
 unit yggloadscreens;
 uses yggfunctions;
-uses sysutils;
+
 var
 	ArtOut: TStringDynArray;
+	
 function initialize: integer;
 begin
 	result := LoadInit;
@@ -38,10 +39,14 @@ var
 	Ini:TMemIniFile;
 	MagickPath,sDirPath,TempPath:string;
 begin
+	FileCreate(ScriptsPath+'Ygg.ini');
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	Ini.WriteString('BaseData', '%K', '0');
-	//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
-	ShellExecute(0,nil,ScriptsPath+'magickpath.bat',nil,nil,1);
+	if ini.ReadString('BaseData','%K','0') = '0' then
+	begin
+		Ini.WriteString('BaseData', '%K', '');
+		//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
+		ShellExecute(0,'open',ScriptsPath+'magickpath.bat',nil,nil,1);
+	end;
 	TempPath := Ini.ReadString('BaseData', '%K', 'a');
 	TempPath := StringReplace(MagickPath, ';',',',[rfReplaceAll]);
 	
@@ -73,7 +78,7 @@ begin
 		ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
 		ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
 		if ArtInTemp = ArtOutTemp then continue;
-		ShellExecute(0,nil,MagickPath+'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
+		ShellExecute(0,'open',MagickPath+'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
 		LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
 		ArtOut.Add(ArtOutTemp);
 	end;
@@ -85,7 +90,7 @@ var
 	i:integer;
 	TempInt: integer;
 	CurrentEDIDAddition:string;
-	CurrentRecord,CurrentStat,CurrentTXST: IInterface;
+	foobar,CurrentRecord,CurrentStat,CurrentTXST,temp: IInterface;
 begin
 	for i := Length(ArtOut) - 1 downto 0 do begin
 		tempint := length(artout[i]) - pos('\', ReverseString(ArtOut[i]))+2;
@@ -101,9 +106,12 @@ begin
 		
 		Add(CurrentStat,'Model',false);
 		Add(CurrentStat,'Model\MODS',false);
-		ElementAssign(ElementByPath(CurrentStat, 'Model\MODS'), HighInteger, nil, false);
+		foobar := ElementByPath(CurrentStat, 'Model\MODS');
+		temp := ElementByIndex(foobar, 0);
+		if not assigned(temp) then temp := ElementAssign(foobar, HighInteger, nil, false);
+		if assigned(temp) then addmessage('temp');
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'meshes\ygg\loading\Loader');
-		SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture', Name(CurrentTXST));
+		SetEditValue(ElementByPath(temp, 'New Texture'), Name(CurrentTXST));
 		
 		Add(CurrentTXST,'Textures (RGB/A)', false);
 		Add(CurrentTXST,'Textures', false);
@@ -122,8 +130,6 @@ begin
 		SetElementEditValues(CurrentRecord, 'XNAM\X', '-45');
 		
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
-		if assigned(CurrentTXST) then addmessage('txst?');
-		SetElementEditValues(CurrentStat, 'Model\MODS', name(CurrentTXST));
 		SetElementEditValues(CurrentStat, 'DNAM\Max Angle', '90');
 		
 		//meshes\ygg\loading\Loader.nif
