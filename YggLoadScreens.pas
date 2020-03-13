@@ -54,7 +54,7 @@ begin
 		MagickPath := paths.strings[i];
 	end;}
 	
-	AddMessage(ExecuteProcess('magickpath.bat',''));
+	AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
 	
 	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	//ArtOut := TStringList.Create;
