@@ -36,20 +36,23 @@ var
 	i:integer;
 	Paths: tstringlist;
 	Ini:TMemIniFile;
-	MagickPath,sDirPath:string;
+	MagickPath,sDirPath,TempPath:string;
 begin
-	{Paths := TStringlist.Create;
-	paths.DelimitedText := SysUtils.GetEnvironmentVariable('PATH');
-	for i := paths.count - 1 downto 0 do
-	begin
-		if containtsText('Magick', paths.strings[i]) then
-		MagickPath := paths.strings[i];
-	end;}
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
 	Ini.WriteString('BaseData', '%K', '0');
 	//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
 	ShellExecute(0,nil,ScriptsPath+'magickpath.bat',nil,nil,1);
-	MagickPath := Ini.ReadString('BaseData', '%K', 'a');
+	TempPath := Ini.ReadString('BaseData', '%K', 'a');
+	TempPath := StringReplace(MagickPath, ';',',',[rfReplaceAll]);
+	
+	Paths := TStringlist.Create;
+	paths.DelimitedText := TempPath;
+	for i := paths.count - 1 downto 0 do
+	begin
+		if containtsText('Magick', paths.strings[i]) then
+		MagickPath := paths.strings[i];
+	end;
+	
 	//ArtOut := TStringList.Create;
 	//ArtIn := TStringList.Create;
 	{FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
@@ -104,7 +107,7 @@ begin
 		
 		Add(CurrentTXST,'Textures (RGB/A)', false);
 		Add(CurrentTXST,'Textures', false);
-		SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX00', CurrentEDIDAddition+'.dds');
+		SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX00', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
 		
 		
 		Add(CurrentRecord,'NNAM', false);
