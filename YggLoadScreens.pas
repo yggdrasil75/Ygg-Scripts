@@ -36,6 +36,8 @@ var
 	i:integer;
 	aFolder:string;
 	Paths: tstringlist;
+	Ini:TMemIniFile;
+	MagickPath:string;
 begin
 	{if StrToInt(ShellExecute(0,nil,'Magick.exe','convert "" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:""',nil,1)) = 2 then begin
 		result := false;
@@ -53,10 +55,11 @@ begin
 		if containtsText('Magick', paths.strings[i]) then
 		MagickPath := paths.strings[i];
 	end;}
-	
-	AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
-	MagickPath := ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1);
-	
+	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
+	Ini.WriteString('BaseData', 'PathVariable', '0');
+	//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
+	ShellExecute(0,nil,ScriptsPath+'magickpath.bat',nil,nil,1);
+	MagickPath := Ini.ReadString('BaseData', 'PathVariable', 'a');
 	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	//ArtOut := TStringList.Create;
 	//ArtIn := TStringList.Create;
@@ -90,6 +93,7 @@ begin
 	for i := Length(ArtOut) - 1 downto 0 do begin
 		tempint := length(artout[i]) - pos('\', ReverseString(ArtOut[i]))+2;
 		CurrentEDIDAddition := copy(ArtOut[i], tempint, length(artout[i]));
+		CurrentEDIDAddition := StringReplace(CurrentEDIDAddition, '.dds', '',[rfReplaceAll]);
 		CurrentRecord := CreateRecord('LSCR');
 		CurrentStat := CreateRecord('STAT');
 		SetEditorID(CurrentStat, 'YggLoadingSTAT'+CurrentEDIDAddition);
