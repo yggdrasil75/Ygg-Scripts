@@ -45,7 +45,7 @@ begin
 		else ini.WriteInteger('Loading', 'screenshots', optionAddScreenshot);
 	end else optionAddScreenshot := ini.ReadInteger('Loading', 'Loading', 0);
 	
-	if optionAddScreenshot = 7 then result := true;
+	if optionAddScreenshot = 7 then result := true
 	else result := false;
 	
 	Ini.UpdateFile;
