@@ -20,12 +20,14 @@ begin
 	PassFile(Patch);
 	remove(GroupBySignature(Patch, 'LSCR'));
 	remove(GroupBySignature(Patch, 'STAT'));
+	remove(GroupBySignature(Patch, 'TXST'));
 	LogMessage(0,'---Loading Is Fun---');
 	AddMessage('---Loading is fun---');
 	if not Converted then begin
 		TalkToUser := MessageDlg('There was an error in execution of imagemagick, please check that you have it installed properly including path variables', mtInformation, [mbOk], 0);
 	end;
 	AddLoadScreen;
+	result := 1;
 end;
 
 function converted: boolean;
@@ -47,10 +49,10 @@ begin
 		MagickPath := paths.strings[i];
 	end;}
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	Ini.WriteString('BaseData', 'PathVariable', '0');
+	Ini.WriteString('BaseData', '%K', '0');
 	//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
 	ShellExecute(0,nil,ScriptsPath+'magickpath.bat',nil,nil,1);
-	MagickPath := Ini.ReadString('BaseData', 'PathVariable', 'a');
+	MagickPath := Ini.ReadString('BaseData', '%K', 'a');
 	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	//ArtOut := TStringList.Create;
 	//ArtIn := TStringList.Create;
@@ -84,7 +86,7 @@ var
 	i:integer;
 	TempInt: integer;
 	CurrentEDIDAddition:string;
-	CurrentRecord,CurrentStat: IInterface;
+	CurrentRecord,CurrentStat,CurrentTXST: IInterface;
 begin
 	for i := Length(ArtOut) - 1 downto 0 do begin
 		tempint := length(artout[i]) - pos('\', ReverseString(ArtOut[i]))+2;
@@ -92,12 +94,82 @@ begin
 		CurrentEDIDAddition := StringReplace(CurrentEDIDAddition, '.dds', '',[rfReplaceAll]);
 		CurrentRecord := CreateRecord('LSCR');
 		CurrentStat := CreateRecord('STAT');
+		CurrentTXST := CreateRecord('TXST');
 		SetEditorID(CurrentStat, 'YggLoadingSTAT'+CurrentEDIDAddition);
+		SetEditorID(CurrentTXST, 'YggLoadingTXST'+CurrentEDIDAddition);
 		
 		SetEditorID(CurrentRecord, 'YggLoadingLSCR'+CurrentEDIDAddition);
-		SetElementEditValues(CurrentStat, 'Model\MODL', CurrentEDIDAddition);
+		
+		Add(CurrentStat,'Model',false);
+		Add(CurrentStat,'Model\MODS',false);
+		ElementAssign(ElementByPath(CurrentStat, 'Model\MODS'), HighInteger, nil, false);
+		SetElementEditValues(CurrentStat, 'Model\MODL', 'meshes\ygg\loading\Loader');
+		SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture', Name(CurrentTXST));
+		
+		Add(CurrentTXST,'Textures (RGB/A)', false);
+		Add(CurrentTXST,'Textures', false);
+		SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX00', CurrentEDIDAddition+'.dds');
+		
+		
+		Add(CurrentRecord,'NNAM', false);
+		Add(CurrentRecord,'SNAM', false);
+		Add(CurrentRecord,'RNAM', false);
+		Add(CurrentRecord,'XNAM', false);
+		Add(CurrentRecord,'ONAM', false);
+		
 		SetElementEditValues(CurrentRecord,'NNAM', name(CurrentStat));
+		SetElementEditValues(CurrentRecord, 'SNAM', '2.0');
+		SetElementEditValues(CurrentRecord, 'RNAM\X', '-90');
+		SetElementEditValues(CurrentRecord, 'XNAM\X', '-45');
+		
+		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
+		if assigned(CurrentTXST) then addmessage('txst?');
+		SetElementEditValues(CurrentStat, 'Model\MODS', name(CurrentTXST));
+		SetElementEditValues(CurrentStat, 'DNAM\Max Angle', '90');
+		
+		//meshes\ygg\loading\Loader.nif
+		AddCondition(CurrentRecord);
 	end;
+end;
+
+// adds requirement 'HasPerk' to Conditions list
+function AddCondition(list: IInterface): IInterface;
+var
+  newCondition, tmp: IInterface;
+begin
+	if not (Name(list) = 'Conditions') then begin
+		if Signature(list) = 'LSCR' then begin // record itself was provided
+			tmp := ElementByPath(list, 'Conditions');
+			if not Assigned(tmp) then begin
+				Add(list, 'Conditions', true);
+				list := ElementByPath(list, 'Conditions');
+				newCondition := ElementByIndex(list, 0); // xEdit will create dummy condition if new list was added
+			end else begin
+				list := tmp;
+			end;
+		end;
+	end;
+
+	if not Assigned(newCondition) then begin
+	// create condition
+		newCondition := ElementAssign(list, HighInteger, nil, false);
+	end;
+
+	// set type to Equal to
+	SetElementEditValues(newCondition, 'CTDA\Type', '10100000');
+
+	// set some needed properties
+	SetElementEditValues(newCondition, 'CTDA\Comparison Value', '100');
+	SetElementEditValues(newCondition, 'CTDA\Function', 'GetRandomPercent');
+	SetElementEditValues(newCondition, 'CTDA\None', '00000000');
+	SetElementEditValues(newCondition, 'CTDA\Run On', 'Subject');
+	// don't know what is this, but it should be equal to -1, if Function Runs On Subject
+	SetElementEditValues(newCondition, 'CTDA\Parameter #3', '-1');
+
+	// remove nil records from list
+	removeInvalidEntries(list);
+
+	Result := newCondition;
 end;
 
 Function ReverseString(AText: string): string;
@@ -105,7 +177,8 @@ var
     i,j:longint;
 begin
   setlength(result,length(atext));
-  i:=1; j:=length(atext);
+  i:=1;
+  j:=length(atext);
   while (i<=j) do
     begin
       result[i]:=atext[j-i+1];
