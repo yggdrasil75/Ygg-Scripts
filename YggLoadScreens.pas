@@ -23,9 +23,7 @@ begin
 	remove(GroupBySignature(Patch, 'TXST'));
 	LogMessage(0,'---Loading Is Fun---');
 	AddMessage('---Loading is fun---');
-	if not Converted then begin
-		TalkToUser := MessageDlg('There was an error in execution of imagemagick, please check that you have it installed properly including path variables', mtInformation, [mbOk], 0);
-	end;
+	converted;
 	AddLoadScreen;
 	result := 1;
 end;
@@ -36,7 +34,6 @@ var
 	TDirectory:TDirectory;
 	ArtInTemp,ArtOutTemp: string;
 	i:integer;
-	aFolder:string;
 	Paths: tstringlist;
 	Ini:TMemIniFile;
 	MagickPath,sDirPath:string;
@@ -53,19 +50,18 @@ begin
 	//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
 	ShellExecute(0,nil,ScriptsPath+'magickpath.bat',nil,nil,1);
 	MagickPath := Ini.ReadString('BaseData', '%K', 'a');
-	aFolder := DataPath + IncludeTrailingBackslash('Textures\Ygg\Loading\');
 	//ArtOut := TStringList.Create;
 	//ArtIn := TStringList.Create;
 	{FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
 	FindAllFiles(ArtOut,DataPath + 'Textures\Ygg\Loading', '*.dds',true);}
-	LogMessage(0,'Scanning for textures in ' + aFolder);
+	LogMessage(0,'Scanning for textures in ' + sDirPath);
 	
 	sDirPath := DataPath + 'Textures\Ygg\Loading\';
 	if not DirectoryExists(sDirPath) then  // DirectoryExists returns true if directory path exists, can return false due to user permissions
 	if not ForceDirectories(sDirPath) then  // ForceDirectories returns true if directory path was created
 	
-	ArtIn := TDirectory.GetFiles(aFolder, '*.jpg;*.png;*.bmp', soAllDirectories);
-	ArtOut := TDirectory.GetFiles(aFolder, '*.dds', soAllDirectories);
+	ArtIn := TDirectory.GetFiles(sDirPath, '*.jpg;*.png;*.bmp', soAllDirectories);
+	ArtOut := TDirectory.GetFiles(sDirPath, '*.dds', soAllDirectories);
 	
 	for i := 0 to Length(ArtIn) - 1 do
 	begin
