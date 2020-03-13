@@ -107,7 +107,7 @@ begin
 		ArtOut.Add(ArtOutTemp);
 	end;
 	
-	if Screenshot then
+	if Screenshots then
 	begin
 		sGamePath := Delete(DataPath,length(DataPath)-5, 5);
 		ArtIn := TDirectory.GetFiles(sDirPath, '*.jpg;*.png;*.bmp', soAllDirectories);
