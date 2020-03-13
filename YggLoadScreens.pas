@@ -37,12 +37,12 @@ var
 	ini:TMemIniFile;
 begin
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	if ini.ReadInteger('Loading', 'Loading', 0) = 0 then
+	if ini.ReadInteger('Loading', 'screenshots', 0) = 0 then
 	begin
-		optionAddScreenshot := MessageDlg('Do you want to only create new recipes and not update existing?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		optionAddScreenshot := MessageDlg('Do you want to add screenshots from the game directory?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
 		if optionAddScreenshot = mrAbort then
 			exit
-		else ini.WriteInteger('Loading', 'Loading', optionAddScreenshot);
+		else ini.WriteInteger('Loading', 'screenshots', optionAddScreenshot);
 	end else optionAddScreenshot := ini.ReadInteger('Loading', 'Loading', 0);
 	
 	if optionAddScreenshot = 7 then result := true;
