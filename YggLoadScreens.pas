@@ -57,7 +57,7 @@ begin
 		if containtsText('Magick', paths.strings[i]) then
 		MagickPath := paths.strings[i];
 	end;
-	
+	Ini.UpdateFile;
 	//ArtOut := TStringList.Create;
 	//ArtIn := TStringList.Create;
 	{FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
