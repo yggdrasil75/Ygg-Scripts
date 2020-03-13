@@ -39,7 +39,7 @@ var
 	Ini:TMemIniFile;
 	MagickPath,sDirPath,TempPath:string;
 begin
-	FileCreate(ScriptsPath+'Ygg.ini');
+	//FileCreate(ScriptsPath+'Ygg.ini');
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if ini.ReadString('BaseData','%K','0') = '0' then
 	begin
