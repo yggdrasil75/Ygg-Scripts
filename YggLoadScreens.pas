@@ -100,9 +100,8 @@ begin
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
 		SetEditValue(ElementByIndex(ElementByIndex(CurrentStat,4),0), '90');
 		SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Name', 'CivilWarMap01:2');
+		//SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Index', '2');
 		//for j := elementcount(ElementByIndex(CurrentStat,4)) - 1 downto 0 do addmessage(name(ElementByIndex(ElementByIndex(CurrentStat, 4),0)));
-		
-		
 		
 		Add(CurrentTXST,'Textures (RGB/A)', false);
 		Add(CurrentTXST,'Textures', false);
