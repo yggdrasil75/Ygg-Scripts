@@ -66,84 +66,6 @@ begin
 	Ini.UpdateFile;
 end;
 
-{function converted: boolean;
-var
-	ArtIn: TStringDynArray;
-	TDirectory:TDirectory;
-	ArtInTemp,ArtOutTemp: string;
-	i:integer;
-	Paths: tstringlist;
-	Ini:TMemIniFile;
-	MagickPath,sDirPath,TempPath:string;
-begin
-	//FileCreate(ScriptsPath+'Ygg.ini');
-	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	TempPath := Ini.ReadString('Loading', '%k', 'a');
-	if TempPath = 'a' then
-	begin
-		Ini.WriteString('Loading', '%k', 'a');
-		//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
-		ShellExecute(0,'open',ScriptsPath+'magickpath.bat',nil,nil,1);
-	end;
-	TempPath := 'D:\games\skyrim\skyrim tools\ImageMagick-7.0.10-Q16;C:\Program Files (x86)\Embarcadero\Studio\20.0\bin;C:\Users\Public\Documents\Embarcadero\Studio\20.0\Bpl;C:\Program Files (x86)\Embarcadero\Studio\20.0\bin64;C:\Users\Public\Documents\Embarcadero\Studio\20.0\Bpl\Win64;C:\Program Files\Python37\Scripts\;C:\Program Files\Python37\;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\iCLS\;C:\Program Files\Intel\Intel(R) Management Engine Components\iCLS\;C:\Program Files (x86)\Razer Chroma SDK\bin;C:\Program Files\Razer Chroma SDK\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\ATI Technologies\ATI.ACE\Core-Static;C:\WINDOWS\System32\OpenSSH\;C:\Users\yggdrasil75\AppData\Local\Microsoft\WindowsApps;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\WorldPainter;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\Autodesk\Backburner\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\QuickTime\QTSystem\;C:\Users\yggdrasil75\AppData\Local\Programs\Python\Python37\Scripts\;C:\Users\yggdrasil75\AppData\Local\Programs\Python\Python37\;C:\Users\yggdrasil75\AppData\Local\Microsoft\WindowsApps;C:\ADE\aime_775015\oracle\instantclient\instantclient_18_3;C:\Users\yggdrasil75\AppData\Roaming\npm;C:\Users\yggdrasil75\.dotnet\tools;C:\Python37\Scripts;;C:\Users\yggdrasil75\AppData\Local\Microsoft\WindowsApps;C:\Users\yggdrasil75\AppData\Local\Programs\Microsoft VS Code\bin';//Ini.ReadString('Loading', '%k', 'a');
-	TempPath := StringReplace(MagickPath, ';',',',[rfReplaceAll]);
-	
-	Paths := TStringlist.Create;
-	paths.DelimitedText := TempPath;
-	for i := paths.count - 1 downto 0 do
-	begin
-		if ContainsText('Magick', paths.strings[i]) then
-		MagickPath := paths.strings[i];
-	end;
-	Ini.UpdateFile;
-	//ArtOut := TStringList.Create;
-	//ArtIn := TStringList.Create;
-	//FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
-	//FindAllFiles(ArtOut,DataPath + 'Textures\Ygg\Loading', '*.dds',true);
-	LogMessage(0,'Scanning for textures in ' + sDirPath);
-	
-	sDirPath := DataPath + 'Textures\Ygg\Loading\';
-	if not DirectoryExists(sDirPath) then  // DirectoryExists returns true if directory path exists, can return false due to user permissions
-	if not ForceDirectories(sDirPath) then  // ForceDirectories returns true if directory path was created
-	
-	ArtIn := TDirectory.GetFiles(sDirPath, '*.jpg;*.png;*.bmp', soAllDirectories);
-	ArtOut := TDirectory.GetFiles(sDirPath, '*.dds', soAllDirectories);
-	
-	for i := 0 to Length(ArtIn) - 1 do
-	begin
-		ArtInTemp := ArtIn[i];
-		ArtOutTemp := StringReplace(ArtInTemp, '.png', '.dds',[rfReplaceAll]);
-		ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
-		ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
-		if ArtInTemp = ArtOutTemp then continue;
-		ShellExecute(0,'open',MagickPath+'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
-		LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
-		ArtOut.Add(ArtOutTemp);
-	end;
-	
-	if Screenshots then
-	begin
-		sGamePath := Delete(DataPath,length(DataPath)-5, 5);
-		ArtIn := TDirectory.GetFiles(sDirPath, '*.jpg;*.png;*.bmp', soAllDirectories);
-		ArtOut := TDirectory.GetFiles(sDirPath, '*.dds', soAllDirectories);
-
-		for i := 0 to Length(ArtIn) - 1 do
-		begin
-			ArtInTemp := ArtIn[i];
-			ArtOutTemp := StringReplace(ArtInTemp, '.png', '.dds',[rfReplaceAll]);
-			ArtOutTemp := StringReplace(ArtInTemp, '.jpg', '.dds',[rfReplaceAll]);
-			ArtOutTemp := StringReplace(ArtInTemp, '.bmp', '.dds',[rfReplaceAll]);
-			ArtOutTemp := 'Data\Textures\Ygg\Loading\' + ArtOutTemp;
-			if ArtInTemp = ArtOutTemp then continue;
-			ShellExecute(0,'open',MagickPath+'Magick.exe','convert "' + ArtIn[i] + '" -define dd:mipmaps=1 -define dds:compression=dtx5 DDS:"'+ArtOutTemp'"',nil,1);
-			LogMessage(1,'Converted ' + ArtInTemp + ' to DDS');
-			ArtOut.Add(ArtOutTemp);
-		end;
-	end;
-	
-	result := true;
-end;}
-
 procedure AddLoadScreen;
 var
 	i:integer;
@@ -166,11 +88,18 @@ begin
 		Add(CurrentStat,'Model',false);
 		Add(CurrentStat,'Model\MODS',false);
 		foobar := ElementByPath(CurrentStat, 'Model\MODS');
+		if not assigned(foobar) then begin
+			addmessage('not foobar');
+			temp := ElementAssign(foobar, HighInteger, nil, false);
+		end;
 		temp := ElementByIndex(foobar, 0);
 		if not assigned(temp) then temp := ElementAssign(foobar, HighInteger, nil, false);
 		if assigned(temp) then addmessage('temp');
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'meshes\ygg\loading\Loader');
 		SetEditValue(ElementByPath(temp, 'New Texture'), Name(CurrentTXST));
+		
+		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
+		SetElementEditValues(CurrentStat, 'DNAM\Max Angle', '90');
 		
 		Add(CurrentTXST,'Textures (RGB/A)', false);
 		Add(CurrentTXST,'Textures', false);
@@ -187,9 +116,6 @@ begin
 		SetElementEditValues(CurrentRecord, 'SNAM', '2.0');
 		SetElementEditValues(CurrentRecord, 'RNAM\X', '-90');
 		SetElementEditValues(CurrentRecord, 'XNAM\X', '-45');
-		
-		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
-		SetElementEditValues(CurrentStat, 'DNAM\Max Angle', '90');
 		
 		AddCondition(CurrentRecord);
 	end;
