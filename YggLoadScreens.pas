@@ -15,7 +15,7 @@ var
 	f: integer;
 	BeginTime, EndTime: TDateTime;
 	TDirectory:TDirectory;
-	sDirPath:string;
+	sDirPath,sGamePath:string;
 begin
 	BeginTime := Time;
 	beginLog('YggLoading');
@@ -68,7 +68,7 @@ end;
 
 procedure AddLoadScreen;
 var
-	i:integer;
+	j,i:integer;
 	TempInt: integer;
 	CurrentEDIDAddition:string;
 	foobar,CurrentRecord,CurrentStat,CurrentTXST,temp: IInterface;
@@ -94,11 +94,13 @@ begin
 		temp := ElementByIndex(foobar, 0);
 		if not assigned(temp) then temp := ElementAssign(foobar, HighInteger, nil, false);
 		if assigned(temp) then addmessage('temp');
-		SetElementEditValues(CurrentStat, 'Model\MODL', 'meshes\ygg\loading\Loader');
 		SetEditValue(ElementByPath(temp, 'New Texture'), Name(CurrentTXST));
-		
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
-		SetElementEditValues(CurrentStat, 'DNAM\Max Angle', '90');
+		SetEditValue(ElementByIndex(ElementByIndex(CurrentStat,4),0), '90');
+		SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Name', 'CivilWarMap01:2');
+		for j := elementcount(ElementByIndex(CurrentStat,4)) - 1 downto 0 do addmessage(name(ElementByIndex(ElementByIndex(CurrentStat, 4),0)));
+		
+		
 		
 		Add(CurrentTXST,'Textures (RGB/A)', false);
 		Add(CurrentTXST,'Textures', false);
