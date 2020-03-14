@@ -14,6 +14,8 @@ function LoadInit: integer;
 var
 	f: integer;
 	BeginTime, EndTime: TDateTime;
+	TDirectory:TDirectory;
+	sDirPath:string;
 begin
 	BeginTime := Time;
 	beginLog('YggLoading');
@@ -26,7 +28,20 @@ begin
 	LogMessage(0,'---Loading Is Fun---');
 	AddMessage('---Loading is fun---');
 	Screenshots := AskScreenshot;
-	converted;
+	//converted;
+	if Screenshots then
+	begin
+		sGamePath := Delete(DataPath,length(DataPath)-5, 5);
+		ArtIn := TDirectory.GetFiles(sDirPath, '*.jpg;*.png;*.bmp', soAllDirectories);
+		for i := length(ArtIn) - 1 downto 0 do begin
+		AddMessage(ArtIn);
+			CopyFile(ArtIn[i],DataPath+'\textures\ygg\loading\'+ArtIn[i]);
+		end;
+	end;
+	
+	ShellExecute(0,'open',DataPath+'\textures\ygg\loading\magick.bat',nil,DataPath+'\textures\ygg\loading\',1);
+	sDirPath := DataPath + 'Textures\Ygg\Loading\';
+	ArtOut := TDirectory.GetFiles(sDirPath, '*.dds', soAllDirectories);
 	AddLoadScreen;
 	result := 1;
 end;
@@ -51,7 +66,7 @@ begin
 	Ini.UpdateFile;
 end;
 
-function converted: boolean;
+{function converted: boolean;
 var
 	ArtIn: TStringDynArray;
 	TDirectory:TDirectory;
@@ -63,29 +78,28 @@ var
 begin
 	//FileCreate(ScriptsPath+'Ygg.ini');
 	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	if ini.ReadString('Loading','%K','0') = '0' then
+	TempPath := Ini.ReadString('Loading', '%k', 'a');
+	if TempPath = 'a' then
 	begin
-		Ini.WriteString('Loading', '%K', '');
+		Ini.WriteString('Loading', '%k', 'a');
 		//AddMessage(ShellExecute('cmd',nil,ScriptsPath+'magickpath.bat',nil,nil,1));
 		ShellExecute(0,'open',ScriptsPath+'magickpath.bat',nil,nil,1);
 	end;
-	Ini.UpdateFile;
-	ini := TMemIniFile.Create(ScriptsPath+'Ygg.ini');
-	TempPath := Ini.ReadString('Loading', '%K', 'a');
+	TempPath := 'D:\games\skyrim\skyrim tools\ImageMagick-7.0.10-Q16;C:\Program Files (x86)\Embarcadero\Studio\20.0\bin;C:\Users\Public\Documents\Embarcadero\Studio\20.0\Bpl;C:\Program Files (x86)\Embarcadero\Studio\20.0\bin64;C:\Users\Public\Documents\Embarcadero\Studio\20.0\Bpl\Win64;C:\Program Files\Python37\Scripts\;C:\Program Files\Python37\;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\iCLS\;C:\Program Files\Intel\Intel(R) Management Engine Components\iCLS\;C:\Program Files (x86)\Razer Chroma SDK\bin;C:\Program Files\Razer Chroma SDK\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\ATI Technologies\ATI.ACE\Core-Static;C:\WINDOWS\System32\OpenSSH\;C:\Users\yggdrasil75\AppData\Local\Microsoft\WindowsApps;C:\Program Files\Common Files\Autodesk Shared\;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\WorldPainter;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\Autodesk\Backburner\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\QuickTime\QTSystem\;C:\Users\yggdrasil75\AppData\Local\Programs\Python\Python37\Scripts\;C:\Users\yggdrasil75\AppData\Local\Programs\Python\Python37\;C:\Users\yggdrasil75\AppData\Local\Microsoft\WindowsApps;C:\ADE\aime_775015\oracle\instantclient\instantclient_18_3;C:\Users\yggdrasil75\AppData\Roaming\npm;C:\Users\yggdrasil75\.dotnet\tools;C:\Python37\Scripts;;C:\Users\yggdrasil75\AppData\Local\Microsoft\WindowsApps;C:\Users\yggdrasil75\AppData\Local\Programs\Microsoft VS Code\bin';//Ini.ReadString('Loading', '%k', 'a');
 	TempPath := StringReplace(MagickPath, ';',',',[rfReplaceAll]);
 	
 	Paths := TStringlist.Create;
 	paths.DelimitedText := TempPath;
 	for i := paths.count - 1 downto 0 do
 	begin
-		if containtsText('Magick', paths.strings[i]) then
+		if ContainsText('Magick', paths.strings[i]) then
 		MagickPath := paths.strings[i];
 	end;
 	Ini.UpdateFile;
 	//ArtOut := TStringList.Create;
 	//ArtIn := TStringList.Create;
-	{FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
-	FindAllFiles(ArtOut,DataPath + 'Textures\Ygg\Loading', '*.dds',true);}
+	//FindAllFiles(ArtIn,DataPath + 'Textures\Ygg\Loading', '*.jpg;*.png;*.bmp',true);
+	//FindAllFiles(ArtOut,DataPath + 'Textures\Ygg\Loading', '*.dds',true);
 	LogMessage(0,'Scanning for textures in ' + sDirPath);
 	
 	sDirPath := DataPath + 'Textures\Ygg\Loading\';
@@ -128,7 +142,7 @@ begin
 	end;
 	
 	result := true;
-end;
+end;}
 
 procedure AddLoadScreen;
 var
@@ -177,12 +191,10 @@ begin
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
 		SetElementEditValues(CurrentStat, 'DNAM\Max Angle', '90');
 		
-		//meshes\ygg\loading\Loader.nif
 		AddCondition(CurrentRecord);
 	end;
 end;
 
-// adds requirement 'HasPerk' to Conditions list
 function AddCondition(list: IInterface): IInterface;
 var
   newCondition, tmp: IInterface;
