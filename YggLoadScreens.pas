@@ -87,11 +87,10 @@ begin
 		
 		Add(CurrentStat,'Model',false);
 		Add(CurrentStat,'Model\MODS',false);
-		foobar := ElementByPath(CurrentStat, 'Model\MODS');
-		if not assigned(foobar) then begin
-			addmessage('not foobar');
-			temp := ElementAssign(foobar, HighInteger, nil, false);
-		end;
+		foobar := ElementAssign(ElementByName(CurrentStat, 'Model'), 2, nil, False); 
+		if assigned(foobar) then
+			addmessage('foobar');
+		temp := ElementAssign(ElementByName(CurrentStat, 'Model\MODS'), 3, nil, False); 
 		temp := ElementByIndex(foobar, 0);
 		if not assigned(temp) then temp := ElementAssign(foobar, HighInteger, nil, false);
 		if assigned(temp) then addmessage('temp');
