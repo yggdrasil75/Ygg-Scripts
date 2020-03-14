@@ -22,6 +22,7 @@ begin
 	PassTime(Time);
 	Patch := SelectPatch('Ygg_Loading.esp');
 	PassFile(Patch);
+	AddmasterBySignature('LSCR');
 	remove(GroupBySignature(Patch, 'LSCR'));
 	remove(GroupBySignature(Patch, 'STAT'));
 	remove(GroupBySignature(Patch, 'TXST'));
@@ -44,6 +45,7 @@ begin
 	ArtOut := TDirectory.GetFiles(sDirPath, '*.dds', soAllDirectories);
 	AddLoadScreen;
 	result := 1;
+	sign;
 end;
 
 function AskScreenshot:boolean;
@@ -88,23 +90,25 @@ begin
 		Add(CurrentStat,'Model',false);
 		Add(CurrentStat,'Model\MODS',false);
 		foobar := ElementAssign(ElementByName(CurrentStat, 'Model'), 2, nil, False); 
-		if assigned(foobar) then
-			addmessage('foobar');
+		//if assigned(foobar) then
+			//addmessage('foobar');
 		temp := ElementAssign(ElementByName(CurrentStat, 'Model\MODS'), 3, nil, False); 
 		temp := ElementByIndex(foobar, 0);
 		if not assigned(temp) then temp := ElementAssign(foobar, HighInteger, nil, false);
-		if assigned(temp) then addmessage('temp');
+		//if assigned(temp) then addmessage('temp');
 		SetEditValue(ElementByPath(temp, 'New Texture'), Name(CurrentTXST));
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
 		SetEditValue(ElementByIndex(ElementByIndex(CurrentStat,4),0), '90');
 		SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Name', 'CivilWarMap01:2');
-		for j := elementcount(ElementByIndex(CurrentStat,4)) - 1 downto 0 do addmessage(name(ElementByIndex(ElementByIndex(CurrentStat, 4),0)));
+		//for j := elementcount(ElementByIndex(CurrentStat,4)) - 1 downto 0 do addmessage(name(ElementByIndex(ElementByIndex(CurrentStat, 4),0)));
 		
 		
 		
 		Add(CurrentTXST,'Textures (RGB/A)', false);
 		Add(CurrentTXST,'Textures', false);
 		SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX00', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
+		ElementAssign(CurrentTXST, 2, nil, false);
+		SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX01', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
 		
 		
 		Add(CurrentRecord,'NNAM', false);
