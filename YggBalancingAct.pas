@@ -2,8 +2,6 @@ unit YggRebalancingAct;
 
 var
 	ArmorPatch, itemRecord, copyRecord: IInterface;
-	skipFileCount, readFileCount: integer;
-	MiddleChar: char;
 	WeapList, Recipes, MasterList, RatingsByKeyword: TStringList;
 	HashedRatingsByKeyword, HashedList, HashedWeapList: THashedStringList;
 	YggIni: TIniFile;
@@ -15,6 +13,13 @@ Uses YggFunctions;
 function Initialize: integer;
 var
 	f: integer;
+begin
+	
+end;
+
+function BalancingInit:integer;
+var
+	f:integer;
 begin
 	AddMessage('---Setting up tight rope---');
 		ArmorPatch := SelectPatch('Ygg_Rebalance.esp');
@@ -28,8 +33,6 @@ begin
 	end;
 	IniSettings;
 	Randomize;
-	skipFileCount := 0;
-	readFileCount := 0;
 	remove(ElementByPath(ArmorPatch, 'WEAP'));
 	remove(ElementByPath(ArmorPatch, 'ARMO'));
 	remove(ElementByPath(ArmorPatch, 'AMMO'));
@@ -38,6 +41,10 @@ begin
 	InitializeArmoLists;
 	InitializeWeapLists;
 	AddMessage('---Tight rope in place---');
+	GatherArmo;
+	GatherWeap;
+	GatherAMMO;
+	
 end;
 
 // for every record selected in xEdit
@@ -529,7 +536,7 @@ begin
 				begin
 					CurrentKeyword := LowerCase(EditorId(WinningOverride(LinksTo(ElementByIndex(Keywords, k)))));
 					currentAddress := CurrentKeyword + Name(ElementByIndex(ElementByPath(CurrentArmo, 'BOD2\First Person Flags'), 0));
-					if pos('material', CurrentKeyword) > 0 then
+					if ContainsText('material', CurrentKeyword) OR ContainsText('materiel', CurrentKeyword) then
 					begin
 						{//check if the keyword is in the list yet, if not, add it anyway.
 						if KeywordList.IndexOf(CurrentKeyword) < 0 then
