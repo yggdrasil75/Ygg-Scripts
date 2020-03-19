@@ -91,13 +91,15 @@ procedure gatherArmo;
 var
 	armoPlugins: TStringList;
 	i, j: integer;
-	CurrentGroup, CurrentRecord: IInterface;
+	temp,CurrentGroup, CurrentRecord: IInterface;
 begin
 	armoPlugins := TStringList.Create;
 	for i := filecount - 1 downto 0 do
 	begin
-		if hasGroup(fileByIndex(i), 'ARMO') then
-		armoPlugins.addObject(GetfileName(FileByIndex(i)), FileByIndex(i)); 
+		temp := fileByIndex(i);
+		if hasGroup(temp, 'ARMO') then
+			armoplugins.addObject(GetFileName(temp),temp);
+		//armoPlugins.addObject(GetfileName(FileByIndex(i)), FileByIndex(i)); 
 	end;
 	ArmoList := TStringList.Create;
 	for i := armoPlugins.Count - 1 downto 0 do
