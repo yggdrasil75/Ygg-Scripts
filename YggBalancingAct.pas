@@ -1,672 +1,527 @@
-unit YggRebalancingAct;
+unit YggBalancingAct;
+uses YggFunctions;
 
-var
-	ArmorPatch, itemRecord, copyRecord: IInterface;
-	WeapList, Recipes, MasterList, RatingsByKeyword: TStringList;
-	HashedRatingsByKeyword, HashedList, HashedWeapList: THashedStringList;
-	YggIni: TIniFile;
-	
-//Uses ArmorGooey;
-Uses YggFunctions;
-
-// runs on script start
-function Initialize: integer;
-var
-	f: integer;
+Function Initialize: integer;
 begin
-	
+	Balancer;
 end;
 
-function BalancingInit:integer;
-var
-	f:integer;
+procedure Balancer;
 begin
-	AddMessage('---Setting up tight rope---');
-		ArmorPatch := SelectPatch('Ygg_Rebalance.esp');
-	PassFile(ArmorPatch);
-	BeginUpdate(ArmorPatch);
+	//"init"
+	BeginTime := Time;
+	BeginLog('Balancing Act Start');
+	PassTime(Time);
+	Patch := SelectPatch('Ygg_Rebalance.esp');
+	PassFile(Patch);
+	BeginUpdate(Patch);
 	try
 		AddMasterBySignature('ARMO');
 		AddMasterBySignature('WEAP');
 		AddMasterBySignature('AMMO');
-	finally EndUpdate(ArmorPatch);
+		remove(GroupBySignature(Patch, 'WEAP'));
+		remove(GroupBySignature(Patch, 'ARMO'));
+		remove(GroupBySignature(Patch, 'AMMO'));
+	finally EndUpdate(Patch);
 	end;
-	IniSettings;
+	IniProcess;
 	Randomize;
-	remove(ElementByPath(ArmorPatch, 'WEAP'));
-	remove(ElementByPath(ArmorPatch, 'ARMO'));
-	remove(ElementByPath(ArmorPatch, 'AMMO'));
-	InitializeRecipes;
-	DefineMasters;
-	InitializeArmoLists;
-	InitializeWeapLists;
-	AddMessage('---Tight rope in place---');
-	GatherArmo;
-	GatherWeap;
-	GatherAMMO;
+	InitializeLists;
 	
-end;
-
-// for every record selected in xEdit
-function Process(selectedRecord: IInterface): integer;
-var
-	recordSignature: string;
-	recipeCraft, CurrentFile: IInterface;
-begin
-	while readFileCount = 0 do
-	begin
-		if skipFileCount = 0 then
-		begin
-			CurrentFile := getfile(selectedRecord);
-			if hasGroup(CurrentFile, 'ARMO') or hasGroup(CurrentFile, 'WEAP') or hasGroup(CurrentFile, 'AMMO') then
-			begin
-				readFileCount := elementCount(CurrentFile);
-				//addMessage('plugin has armor, weapons, and/or ammo. attempting process');
-			end else
-			begin
-				skipFileCount := elementCount(CurrentFile) - 1;
-				//addMessage('plugin contains no armor, weapons or ammo, skipping.');
-				exit;
-			end;
-		end else
-		begin
-			//addMessage('skipped record');
-			skipFileCount := skipFileCount - 1;
-			exit;
-		end;
-	end;
-	//addMessage(signature(selectedRecord));
-	itemRecord := selectedRecord;
-	recordSignature := Signature(selectedRecord);
+	//processing
+	LogMessage(1,'Processing Section Start');
+	BalancingProcess;
+	LogMessage(1,'Processing Section Done');
 	
-	if (pos('ARMO', recordSignature) > 0) or (pos('WEAP', recordSignature) > 0) or (pos('AMMO', recordSignature) > 0) then
-	begin
-		
-		//addMessage('record being read');
-		if not IsWinningOVerride(itemRecord) then
-		begin
-			//addmessage('checkpoint winningOverride');
-			exit;
-		end;
-		if GetIsDeleted(itemRecord) then 
-		begin
-			//addmessage('checkpoint deleted');
-			exit;
-		end;
-		if IntToStr(GetElementNativeValues(itemRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then 
-		begin
-			//addmessage('checkpoint nonplayable');
-			exit;
-		end;
-		PassRecord(itemRecord);
-		if pos('ARMO', recordSignature) > 0 then RatingBalancer;
-		if pos('WEAP', recordSignature) > 0 then WeapProcessor;
-		if HashedList.IndexOf(EditorID(itemRecord)) > 0 then recipeCraft := ObjectToElement(HashedList.Objects[HashedList.IndexOf(EditorID(itemRecord))]);
-		//recipeCraft := findRecipe(false);
-		//recipeCraft := FindCurrentRecipe;
-		//recipeCraft := FindCraftingRecipe;
-		if Assigned(recipeCraft) then
-		begin
-			copyRecord := wbCopyElementToFile(WinningOverride(itemRecord), patch, false, true);
-			BeginUpdate(recipeCraft);
-			try
-				//addMessage('Checkpoint recipe');
-				//fixValue(recipeCraft);
-				//fixweight(recipeCraft);
-				fixvalueandweight(recipeCraft);
-			finally EndUpdate(recipeCraft);
-			end;
-		end;
-	end;
-		//addmessage('checkpoint');
-	readFileCount := readFileCount - 1;
-	Result := 0;
-end;
-
-// runs in the end
-function Finalize: integer;
-begin
+	
+	//finalizing
 	AddMessage('---Balancing act ended---');
 	Sign;
 	AddMessage('---Tight rope removed---');
 	Result := 0;
 end;
 
-function FindCurrentRecipe: IInterface;
-var
-	f: integer;
-	BNAM, CurrentRecord: IInterface;
+procedure IniProcess;
 begin
-	//f := HashedList.IndexOf(EditorID(itemRecord));
-	//CurrentRecord := ObjectToElement(HashedList.Objects[f]);
-	//result := WinningOverride(CurrentRecord);
-	result := ObjectToElement(HashedList.Objects[HashedList.IndexOf(EditorID(itemRecord))]);
+	TrustedPlugins := TStringList.Create;
+	TrustedPlugins.Delimiter := ',';
+	TrustedPlugins.StrictDelimiter := True;
+	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
+	TrustedPlugins.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', '.esp');
+	if not TrustedPlugins.count <= 1 then 
+		YggIni.WriteString('BaseData', 'sBaseMaster', 'Skyrim.esm,Dragonborn.esm,Update.esm,Dawnguard.esm,HearthFires.esm,SkyrimSE.exe,Unofficial Skyrim Special Edition Patch.esp');
+	TrustedPlugins.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', '.esp');
+	YggIni.UpdateFile;
+end;
+
+procedure InitializeLists;
+begin
+	LogMessage(1,'Gathering Lists');
+	
+	Recipes := TStringList.Create;
+	Recipes.Duplicates := DupIgnore;
+	Armo := TStringList.Create;
+	ArmoRating := TStringList.Create;
+	ArmoWeight := TStringList.Create;
+	ArmoValue := TStringList.Create;
+	Ammo := TStringList.Create;
+	AMMODamage := TStringList.Create;
+	AMMOValue := TStringList.Create;
+	AMMOWeight := TStringList.Create; //game doesnt use this unless you have survival mode
+	Weap := TStringList.Create;
+	WeapValue := TStringList.Create;
+	WeapWeight := TStringList.Create;
+	WeapDamage := TStringList.Create;
+	WeapSpeed := TStringList.Create;
+	WeapReach := TStringList.Create;
+	WeapCrdtDam := TStringList.Create;
+	WeapRangeMin := TStringList.Create;
+	WeapRangeMax := TStringList.Create;
+	for i := FileCount - 1 downto 0 do begin
+		CurrentFile := FileByIndex(i);
+		//recipes
+		if HasGroup(CurrentFile, 'COBJ') then begin
+			CurrentGroup := GroupBySignature(CurrentFile, 'COBJ');
+			for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+				CurrentItem := ElementByIndex(CurrentGroup,j);
+				if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+				BANM := LinksTo(ElementByPath(CurrentItem, 'BNAM'));
+				if GetLoadOrderFormid(BNAM) = $000ADB78 then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'workbench') then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'armortable') then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'sharpeningwheel') then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'grindstone') then continue;
+				if ContainsText(LowerCase(Name(CurrentItem)), 'temper') then continue;
+				if IsWinningOverride(CurrentItem) then Recipes.AddObject(EditorID(WinningOverride(LinksTo(ElementByPath(CurrentItem, 'CNAM')))), CurrentItem);
+			end;
+		end;
+		LogMessage(1, 'Checked COBJ In ' + GetFileName(CurrentFile));
+		//armo
+		if HasGroup(CurrentFile, 'ARMO') then begin
+			AddArmo(CurrentFile);
+		end;
+		LogMessage(1, 'Checked ARMO In ' + GetFileName(CurrentFile));
+		//weap
+		if HasGroup(CurrentFile, 'WEAP') then begin
+			AddWeap(CurrentFile);
+		end;
+		LogMessage(1, 'Checked WEAP In ' + GetFileName(CurrentFile));
+		//ammo
+		if HasGroup(CurrentFile, 'AMMO') then begin
+			AddAmmo(CurrentFile);
+		end;
+		LogMessage(1, 'Checked AMMO In ' + GetFileName(CurrentFile));
+	end;
+	
+	//finalize lists
+	//finalize armolists
+	FinalizeArmo;
+	FinalizeWeap;
+	FinalizeAmmo;
+end;
+
+procedure AddArmo(CurrentFile: IInterface);
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'ARMO');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, 'j');
+		if GetIsDeleted(CurrentItem) then continue;
+		if ContainsText(LowerCase(Name(CurrentItem)), 'skin') then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		if IsWinningOverride(CurrentItem) then begin
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			//for processing
+			Armo.AddObject(EditorID(CurrentItem), CurrentItem);
+			//for calculations
+			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+			Keywords := ElementsByPath(CurrentItem, 'KWDA');
+			for k := ElementCount(Keywords) - 1 downto 0 do begin
+				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+				if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+				begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByIndex(ElementByPath(CurrentItem, 'BOD2\First Person Flags'),0));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if length(GetElementEditValues(CurrentItem, 'DNAM')) > 0 then
+						ArmoRating.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 0 then
+						ArmoWeight.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DATA\Value')) > 0 then
+						ArmoValue.AddObject(CurrentAddress, CurrentItem);
+				end;
+			end;
+		end;
+	end;
+end;
+
+procedure AddWeap(CurrentFile: IInterface);
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'WEAP');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, 'j');
+		if GetIsDeleted(CurrentItem) then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		if IsWinningOverride(CurrentItem) then begin
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			//for processing
+			Weap.AddObject(EditorID(CurrentItem), CurrentItem);
+			//for calculations
+			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+			Keywords := ElementsByPath(CurrentItem, 'KWDA');
+			for k := ElementCount(Keywords) - 1 downto 0 do begin
+				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+				if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+				begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentAnim := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
+					CurrentAddress := CurrentKeyword+CurrentAnim;
+					if length(GetElementEditValues(CurrentItem, 'DATA\Damage')) > 0 then
+						WeapDamage.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 0 then
+						WeapWeight.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DATA\Value')) > 0 then
+						WeapValue.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DNAM\Speed')) > 0 then
+						WeapSpeed.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DNAM\Reach')) > 0 then
+						WeapReach.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'CRDT\Damage')) > 0 then
+						WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) > 0 then
+						WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) > 0 then
+						WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
+				end;
+			end;
+		end;
+	end;
+end;
+
+procedure AddAmmo(CurrentFile: IInterface);
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'Ammo');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, 'j');
+		if GetIsDeleted(CurrentItem) then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		if IsWinningOverride(CurrentItem) then begin
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			//for processing
+			Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
+			//for calculations
+			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+			Keywords := ElementsByPath(CurrentItem, 'KWDA');
+			for k := ElementCount(Keywords) - 1 downto 0 do begin
+				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+				if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+				begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if length(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 0 then
+						AmmoWeight.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DATA\Damage')) > 0 then
+						AmmoDamage.AddObject(CurrentAddress, CurrentItem);
+					if length(GetElementEditValues(CurrentItem, 'DATA\Value')) > 0 then
+						AmmoValue.AddObject(CurrentAddress, CurrentItem);
+				end;
+			end;
+		end;
+	end;
+end;
+
+procedure FinalizeArmo;
+begin
+	LogMessage(1,'processing ratings');
+	averager('DNAM',ArmoRating);
+	
+	LogMessage(1,'processing Armo Weight');
+	averager('DATA\Weight',ArmoWeight);
+	
+	LogMessage(1,'processing armo Value');
+	averager('DATA\Weight',ArmoValue);
 	
 end;
 
-function InitializeWeapLists: integer;
-var
-	f, g, k: integer;
-	CurrentFile, CurrentGroup, CurrentWeap, CurrentKeyword, Keywords: IInterface;
-	KeywordList: TstringList;
-	currentAddress: string;
+procedure FinalizeWeap;
 begin
-	WeapList := TstringList.Create;
-	WeapList.Duplicates := dupAccept;
-	KeywordList := TstringList.Create;
-	for f :=  0 to FileCount - 1 do
-	begin
-		currentFile := FileByIndex(f);
-		if HasGroup(currentFile, 'WEAP') then
-		begin
-			CurrentGroup := GroupBySignature(currentFile, 'WEAP');
-			for g := 0 to ElementCount(CurrentGroup) - 1 do
-			begin
-				CurrentWeap := ElementByIndex(CurrentGroup, g);
-				if not IsWinningOverride(CurrentWeap) then continue;
-				if GetIsDeleted(CurrentWeap) then continue;
-				if IntToStr(GetElementNativeValues(CurrentWeap, 'Record Header\Record Flags\Non-Playable')) < 0 then continue;
-				Keywords := ElementByPath(CurrentWeap, 'KWDA');
-				for k := ElementCount(Keywords) - 1 downTo 0 do
-				begin
-					CurrentKeyword := LowerCase(EditorId(WinningOverride(LinksTo(ElementByIndex(Keywords, k)))));
-					currentAddress := CurrentKeyword + GetElementEditValues(CurrentWeap, 'DNAM\Animation Type');
-					if pos('material', CurrentKeyword) > 0 then
-					begin
-						{//check if the keyword is in the list yet, if not, add it anyway.
-						if KeywordList.IndexOf(CurrentKeyword) < 0 then
-						begin
-							KeywordList.Add(CurrentKeyword);
-							WeapList.AddObject(currentAddress, CurrentWeap);
-						//check if the bod2 is in the list yet, if not, add it anyway.
-						end else if WeapList.IndexOf(currentAddress) < 0 then
-						begin
-							KeywordList.Add(CurrentKeyword);
-							WeapList.AddObject(currentAddress, CurrentWeap);
-						end else if MasterList.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentWeap)))) < 0 then continue;}
-						WeapList.AddObject(currentAddress, CurrentWeap);
-						continue;
-					end;
-				end;
-			end;
-		end;
-	end;
-	KeywordList.free;
-	KeywordList.clear;
-	WeapList.Sorted;
-	HashedWeapList := THashedStringList.Create;
-	HashedWeapList.Assign(WeapList);
+	LogMessage(1,'processing weap Damage');
+	averager('DATA\Damage',WeapDamage);
+	LogMessage(1,'processing weap Weight');
+	averager('DATA\Weight',WeapWeight);
+	LogMessage(1,'processing weap Value');
+	averager('DATA\Value',WeapValue);
+	LogMessage(1,'processing weap speed');
+	averager('DNAM\Speed',WeapSpeed);
+	LogMessage(1,'processing weap reach');
+	averager('DNAM\Reach',WeapReach);
+	LogMessage(1,'processing weap critical damage');
+	averager('CRDT\Damage',WeapCrdtDam);
+	LogMessage(1,'processing weap minimum range');
+	averager('DNAM\Range Min',WeapRangeMin);
+	LogMessage(1,'processing weap maximum range');
+	averager('DNAM\Range Max',WeapRangeMax);
 end;
 
-function WeapProcessor: integer;
-var
-	count, k, startIndex, f: integer;
-	TotalCrit, TotalDamage, TotalReach, TotalSpeed, TotalMinRange, TotalMaxRange: double;
-	OriginalCrit, OriginalDamage, OriginalReach, OriginalSpeed, OriginalMinRange, OriginalMaxRange: double;
-	AverageCrit, AverageDamage, AverageReach, AverageSpeed, AverageMinRange, AverageMaxRange: double;
-	TempRecord, Keywords: IInterface;
-	CurrentKeyword, currentAddress: String;
+procedure FinalizeAmmo;
 begin
-	Keywords := ElementByPath(itemRecord, 'KWDA');
-	count := 0;
-	TotalSpeed := 0;
-	TotalReach := 0;
-	TotalDamage := 0;
-	TotalCrit := 0;
-	TotalMinRange := 0;
-	TotalMaxRange := 0;
-	OriginalSpeed := tryStrToFloat(GetElementEditValues(itemRecord, 'DNAM\Speed'), 1);
-	OriginalReach := tryStrToFloat(GetElementEditValues(itemRecord, 'DNAM\Reach'), 1);
-	OriginalDamage := tryStrToFloat(GetElementEditValues(itemRecord, 'DATA\Damage'), 9);
-	OriginalCrit := tryStrToFloat(GetElementEditValues(itemRecord, 'CRDT\Damage'), 3);
-	OriginalMinRange := tryStrToFloat(GetElementEditValues(itemRecord, 'DNAM\Range Min'), 500);
-	OriginalMaxRange := tryStrToFloat(GetElementEditValues(itemRecord, 'DNAM\Range Max'), 2000);
-	for k := ElementCount(Keywords) - 1 downTo 0 do
-	begin
-		CurrentKeyword := EditorId(WinningOverride(LinksTo(ElementByIndex(Keywords, k))));
-		if pos('material', CurrentKeyword) > 0 then
-		begin
-			currentAddress := CurrentKeyword + GetElementEditValues(itemRecord, 'DNAM\Animation Type');
-			StartIndex := HashedWeapList.IndexOf(currentAddress);
-			if startIndex > 0 then
+	LogMessage(1,'processing Damage of ammos');
+	averager('DATA\Damage',AmmoDamage);
+	
+	LogMessage(1,'processing Ammo Weight');
+	averager('DATA\Weight',AmmoWeight);
+	
+	LogMessage(1,'processing ammo value');
+	averager('DATA\Weight',AmmoValue);
+	
+end;
+
+procedure averager(Path:string; out List:TStringList);
+begin
+	TempListA := TStringList.Create;
+	for i := List.Count - 1 downto 0 do begin
+		ara := List.Strings[i];
+		inda := TempListA.IndexOf(ara);
+		rating := GetElementEditValues(ObjectToElement(List.objects[i]), Path);
+		if inda < 0 then
+			TempListB := TStringList.Create
+		else
+			TempListB := TempListA.objects[inda];
+		TempListB.Add(rating);
+		TempListA.AddObject(ara,TempListB);
+	end;
+	List.free;
+	List := TStringList.Create;
+	for i := TempListA.Count - 1 downto 0 do begin
+		TempListB := TempListA.objects[i];
+		rating := 0;
+		for j := TempListB.count - 1 downto 0 do begin
+			rating := rating + TryStrToFloat(TempListB.strings[j],5.0);
+		end;
+		rating := rating / TempListB.count;
+		List.AddObject(TempListA.strings[i],rating);
+	end;
+	TempListA.free;
+	TempListB.free;
+end;
+
+procedure BalancingProcess;
+begin
+	for i := Armo.Count - 1 downto 0 do begin
+		itemRecord := ObjectToElement(Armo.objects[i]);
+		Keywords := ElementsByPath(itemRecord, 'KWDA');
+		for k := ElementCount(Keywords) - 1 downto 0 do begin
+			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+			if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
 			begin
-				for f := startIndex to HashedWeapList.Count - 1 do
-				begin
-					if pos(HashedWeapList.Strings[f], currentAddress) > 0 then
-					begin
-						TempRecord := ObjectToElement(HashedWeapList.Objects[f]);
-						Count := Count + 1;
-						TotalSpeed := TotalSpeed + tryStrToFloat(GetElementEditValues(TempRecord, 'DNAM\Speed'), 1);
-						TotalReach := TotalReach + tryStrToFloat(GetElementEditValues(TempRecord, 'DNAM\Reach'), 1);
-						TotalDamage := TotalDamage + tryStrToFloat(GetElementEditValues(TempRecord, 'DATA\Damage'), 9);
-						TotalCrit := TotalCrit + tryStrToFloat(GetElementEditValues(TempRecord, 'CRDT\Damage'), 3);
-						TotalMinRange := TotalMinRange + tryStrToFloat(GetElementEditValues(itemRecord, 'DNAM\Range Min'), 500);
-						TotalMaxRange := TotalMaxRange + tryStrToFloat(GetElementEditValues(itemRecord, 'DNAM\Range Max'), 2000);
-					end else
-					begin
-						break;
-					end;
-				end;
+				CurrentBOD2 := Name(ElementByIndex(ElementByPath(itemRecord, 'BOD2\First Person Flags'),0));
+				CurrentAddress := CurrentKeyword+CurrentBOD2;
 			end;
 		end;
+		Ratings(itemRecord,CurrentAddress);
+		Weight(itemRecord,CurrentAddress);
+		Value(itemRecord,CurrentAddress);
 	end;
-	if count = 0 then
-	begin
-		count := 1;
-		TotalSpeed := OriginalSpeed;
-		TotalReach := OriginalReach;
-		TotalDamage := OriginalDamage;
-		TotalCrit := OriginalCrit;
-		TotalMinRange := OriginalMinRange;
-		TotalMaxRange := OriginalMaxRange;
-	end;
-	AverageSpeed := TotalSpeed / count;
-	AverageReach := TotalReach / count;
-	AverageDamage := TotalDamage / count;
-	AverageCrit := TotalCrit / count;
-	AverageMinRange := TotalMinRange / count;
-	AverageMaxRange := TotalMaxRange / count;
-	if pos('Bow', GetElementEditValues(itemRecord, 'DNAM\Animation Type')) > 0 then
-	begin
-		if OriginalMinRange > AverageMinRange then
-		begin
-			SetElementEditValues(CopyRecord, 'DNAM\Range Min', FloatToStr(AverageMinRange * (random(0.75) + 1)));
-		end else if OriginalMinRange < AverageMinRange then
-		begin
-			SetElementEditValues(CopyRecord, 'DNAM\Range Min', FloatToStr(AverageMinRange * (random(0.5) + 0.5)));
-		end else
-		begin
-			SetElementEditValues(CopyRecord, 'DNAM\Range Min', FloatToStr(AverageMinRange * (random(0.2) + 0.9)));
+	Armo.Free;
+	for i := Weap.Count - 1 downto 0 do begin
+		itemRecord := ObjectToElement(Weap.Objects[i]);
+		Keywords := ElementsByPath(itemRecord, 'KWDA');
+		for k := ElementCount(Keywords) - 1 downto 0 do begin
+			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+			if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+			begin
+				CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
+				CurrentAddress := CurrentKeyword+CurrentBOD2;
+			end;
 		end;
-		if OriginalMaxRange > AverageMaxRange then
-		begin
-			SetElementEditValues(CopyRecord, 'DNAM\Range Max', FloatToStr(AverageMaxRange * (random(0.75) + 1)));
-		end else if OriginalMaxRange < AverageMaxRange then
-		begin
-			SetElementEditValues(CopyRecord, 'DNAM\Range Max', FloatToStr(AverageMaxRange * (random(0.5) + 0.5)));
-		end else
-		begin
-			SetElementEditValues(CopyRecord, 'DNAM\Range Max', FloatToStr(AverageMaxRange * (random(0.2) + 0.9)));
+		Weight(itemRecord,CurrentAddress);
+		Value(itemRecord,CurrentAddress);
+		WeapProcess(itemRecord,CurrentAddress);
+	end;
+	Weap.Free;
+	for i := Ammo.Count - 1 downto 0 do begin
+		itemRecord := ObjectToElement(Ammo.Objects[i]);
+		Keywords := ElementByPath(itemRecord, 'KWDA');
+		for k := ElementCount(Keywords) - 1 downto 0 do begin
+			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+			if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+			begin
+				CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
+				CurrentAddress := CurrentKeyword+CurrentBOD2;
+			end;
 		end;
-	end;
-	if OriginalSpeed > AverageSpeed then
-	begin
-		SetElementEditValues(CopyRecord, 'DNAM\Speed', FloatToStr(AverageSpeed * (random(0.75) + 1)));
-	end else if OriginalSpeed < AverageSpeed then
-	begin
-		SetElementEditValues(CopyRecord, 'DNAM\Speed', FloatToStr(AverageSpeed * (random(0.5) + 0.5)));
-	end else
-	begin
-		SetElementEditValues(CopyRecord, 'DNAM\Speed', FloatToStr(AverageSpeed * (random(0.2) + 0.9)));
-	end;
-	if OriginalReach > AverageReach then
-	begin
-		SetElementEditValues(CopyRecord, 'DNAM\Reach', FloatToStr(AverageReach * (random(0.75) + 1)));
-	end else if OriginalReach < AverageReach then
-	begin
-		SetElementEditValues(CopyRecord, 'DNAM\Reach', FloatToStr(AverageReach * (random(0.5) + 0.5)));
-	end else
-	begin
-		SetElementEditValues(CopyRecord, 'DNAM\Reach', FloatToStr(AverageReach * (random(0.2) + 0.9)));
-	end;
-	if OriginalDamage > AverageDamage then
-	begin
-		SetElementEditValues(CopyRecord, 'DATA\Damage', IntToStr(floor(AverageDamage * (random(0.75) + 1))));
-	end else if OriginalDamage < AverageDamage then
-	begin
-		SetElementEditValues(CopyRecord, 'DATA\Damage', IntToStr(floor(AverageDamage * (random(0.5) + 0.5))));
-	end else
-	begin
-		SetElementEditValues(CopyRecord, 'DATA\Damage', IntToStr(floor(AverageDamage * (random(0.2) + 0.9))));
-	end;
-	if OriginalCrit > AverageCrit then
-	begin
-		SetElementEditValues(CopyRecord, 'CRDT\Damage', IntToStr(floor(AverageCrit * (random(0.75) + 1))));
-	end else if OriginalCrit < AverageCrit then
-	begin
-		SetElementEditValues(CopyRecord, 'CRDT\Damage', IntToStr(floor(AverageCrit * (random(0.5) + 0.5))));
-	end else
-	begin
-		SetElementEditValues(CopyRecord, 'CRDT\Damage', IntToStr(floor(AverageCrit * (random(0.2) + 0.9))));
+		Weight(itemRecord,CurrentAddress);
+		Value(itemRecord,CurrentAddress);
+		AmmoProcess(itemRecord,CurrentAddress);
 	end;
 end;
 
-function fixvalueandweight(recipeCraft: IInterface): integer;
-var
-	weightOriginal, weightNew: double;
-	ValueOriginal, ValueNew: Double;
-	amount, i, l: integer;
-	item, path: IInterface;
+procedure Ratings(item:IInterface;address:string);
 begin
-	weightOriginal := tryStrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight'), 10);
-	ValueOriginal := tryStrToFloat(GetElementEditValues(itemRecord, 'DATA\Value'), 10);
-	weightNew := 0;
-	ValueNew := 0;
-	path := ElementByPath(recipeCraft, 'Items');
-	l := pred(tryStrToInt(GetElementEditValues(recipeCraft, 'COCT'), 1));
-	if assigned(ElementByPath(recipeCraft, 'COCT')) then
-	begin
-		for i := l downto 0 do
-		begin
-			item := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
-			if not assigned(item) then continue;
+	OriginalRating := TryStrToFloat(GetElementEditValues(item, 'DNAM'),0);
+	averageRating := ArmoRating.objects[ArmoRating.IndexOf(address)];
+	temp := BalanceRandomizerfloat(OriginalRating,averageRating,7);
+	SetElementEditValues(item, 'DNAM', FloatToStr(temp));
+end;
+
+Procedure Weight(item:IInterface;address:string);
+begin
+	//estimating weight
+	
+	WeightCobj := 0;
+	cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
+	path := ElementByPath(cobj, 'Items');
+	LogMessage(1,'processing cobj for item: ' + name(item));
+	l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
+	if assigned(ElementByPath(cobj, 'COCT')) then begin
+		for i := l downto 0 do begin
+			cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
 			Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
-			if pos(signature(item), 'ALCH') > 0 then
+			if pos(signature(cobjitem), 'ALCH') > 0 then
 			begin
-				weightNew := amount * tryStrToFloat(GetElementEditValues(item, 'DATA - Weight'), weightOriginal) + weightNew;
-				ValueNew := amount * tryStrToFloat(GetElementEditValues(item, 'ENIT\Value'), ValueOriginal) + ValueNew;
+				WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA - Weight'), weightOriginal) + WeightCobj;
 			end else
 			begin
-				weightNew := amount * tryStrToFloat(GetElementEditValues(item, 'DATA\Weight'), weightOriginal) + weightNew;
-				ValueNew := amount * tryStrToFloat(GetElementEditValues(item, 'DATA\Value'), ValueOriginal) + ValueNew;
+				WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA\Weight'), weightOriginal) + WeightCobj;
 			end;
 		end;
 	end;
-	if pos(signature(itemRecord), 'ARMO') > 0 then
-	begin
-		if hasKeyword(CurrentRecord, 'ArmorClothing') then
-		begin
-			if weightNew > weightOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(1) + 1)));
-			end else if weightOriginal > weightNew then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(0.75) + 0.25)));
-			end else if weightNew = weightOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(0.25)+ 0.9)));
-			end;
-			if ValueNew > ValueOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(1) + 1))));
-			end else if ValueOriginal > ValueNew then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(0.75) + 0.25))));
-			end else if ValueNew = ValueOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(0.25)+ 0.9))));
-			end;
-		end;
-		if hasKeyword(CurrentRecord, 'ArmorHeavy') then
-		begin
-			if weightNew > weightOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(3) + 1)));
-			end else if weightOriginal > weightNew then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(0.5) + 0.5)));
-			end else if weightNew = weightOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(0.25)+ 0.9)));
-			end;
-			if ValueNew > ValueOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(3) + 1))));
-			end else if ValueOriginal > ValueNew then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(0.5) + 0.5))));
-			end else if ValueNew = ValueOriginal then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(0.25)+ 0.9))));
-			end;
-		end;
-		if hasKeyword(CurrentRecord, 'ArmorLight') then
-		begin
-			if weightNew > (2 * weightOriginal) then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(2) + 2)));
-			end else
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(1) + 1)));
-			end;
-			if ValueNew > (2 * ValueOriginal) then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(2) + 2))));
-			end else
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(1) + 1))));
-			end;
-		end;
-		if hasKeyword(CurrentRecord, 'ArmorJewelry') then
-		begin
-			if weightNew > (1 * weightOriginal) then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * (random(0.5) + 1)));
-			end else if weightNew > (0.5 * weightOriginal) then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * random(0.5) + 0.5));
-			end else if weightNew > (0.25 * weightOriginal) then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * random(0.25) + 0.25));
-			end else
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Weight', FloatToStr(weightNew * random(0.25) + 0.01));
-			end;
-			if ValueNew > (5 * ValueOriginal) then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(5) + 5))));
-			end else if ValueNew > (2 * ValueOriginal) then
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(3) + 2))));
-			end else
-			begin
-				SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(2)+ 1))));
-			end;
-		end;
-	end;
-	if pos(signature(itemRecord), 'AMMO') > 0 then
-	begin
-		weightNew := weightNew * 0.05;
-		ValueNew := ValueNew * 0.05;
-		if weightNew > (1 * weightOriginal) then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Weight', (weightNew * (random(0.5) + 1)));
-		end else if weightNew > (0.5 * weightOriginal) then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Weight', (weightNew * random(0.5) + 0.5));
-		end else if weightNew > (0.25 * weightOriginal) then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Weight', (weightNew * random(0.25) + 0.25));
-		end else
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Weight', (weightNew * random(0.25) + 0.01));
-		end;
-		if ValueNew > (5 * ValueOriginal) then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(5) + 5))));
-		end else if ValueNew > (2 * ValueOriginal) then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(3) + 2))));
-		end else
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(2)+ 1))));
-		end;
-	end;
-	if pos(signature(itemRecord), 'WEAP') > 0 then
-	begin
-		if weightNew > weightOriginal then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Weight', (weightNew * (random(3) + 1)));
-		end else if weightOriginal > weightNew then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Weight', (weightNew * (random(0.5) + 0.5)));
-		end else if weightNew = weightOriginal then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Weight', (weightNew * (random(0.25)+ 0.9)));
-		end;
-		if ValueNew > ValueOriginal then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(3) + 1))));
-		end else if ValueOriginal > ValueNew then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(0.5) + 0.5))));
-		end else if ValueNew = ValueOriginal then
-		begin
-			SetElementEditValues(CopyRecord, 'DATA\Value', IntToStr(floor(ValueNew * (random(0.25)+ 0.9))));
-		end;
-   
-	end;
-	AddMessage('weight and value done: ' + name(itemRecord));
+	
+	if signature(item) = 'ARMO' then
+		WeightExisting := ArmoWeight.Objects[ArmoWeight.IndexOf(address)];
+	else if signature(item) = 'WEAP' then 
+		WeightExisting := WeapWeight.Objects[WeapWeight.IndexOf(address)];
+	else WeightExisting := AmmoWeight.Objects[AmmoWeight.IndexOf(address)];
+	
+	weight := TryStrToFloat(GetElementEditValues(item, 'DATA\Weight'),0.0);
+	LogMessage(1, 'the estimated weight based on cobj is: ' + IntToStr(WeightCobj) + ' the estimated weight based on included items is: ' + IntToStr(WeightExisting) + 'the current weight is: ' + weight);
+	weightedAverage := WeightCobj * 0.3 + WeightExisting * 0.7;
+	temp := BalanceRandomizerfloat(weight,weightedAverage,7);
+	SetElementEditValues(item. 'Data\Weight', FloatToStr(temp);
 end;
 
-function InitializeArmoLists: integer;
-var
-	f, g, k: integer;
-	CurrentFile, CurrentGroup, CurrentArmo, CurrentKeyword, Keywords: IInterface;
-	KeywordList: TstringList;
-	currentAddress: string;
+procedure Value(item:IInterface;address:string);
 begin
-	RatingsByKeyword := TstringList.Create;
-	RatingsByKeyword.Duplicates := dupAccept;
-	KeywordList := TstringList.Create;
-	for f :=  0 to FileCount - 1 do
-	begin
-		currentFile := FileByIndex(f);
-		if HasGroup(currentFile, 'ARMO') then
-		begin
-			CurrentGroup := GroupBySignature(currentFile, 'ARMO');
-			for g := 0 to ElementCount(CurrentGroup) - 1 do
+	
+	ValueCobj := 0;
+	cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
+	path := ElementByPath(cobj, 'Items');
+	LogMessage(1,'processing cobj for item: ' + name(item));
+	l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
+	if assigned(ElementByPath(cobj, 'COCT')) then begin
+		for i := l downto 0 do begin
+			cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
+			Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
+			if pos(signature(cobjitem), 'ALCH') > 0 then
 			begin
-				CurrentArmo := ElementByIndex(CurrentGroup, g);
-				if not IsWinningOverride(CurrentArmo) then continue;
-				if GetIsDeleted(CurrentArmo) then continue;
-				if IntToStr(GetElementNativeValues(CurrentArmo, 'Record Header\Record Flags\Non-Playable')) < 0 then continue;
-				Keywords := ElementByPath(CurrentArmo, 'KWDA');
-				for k := ElementCount(Keywords) - 1 downTo 0 do
-				begin
-					CurrentKeyword := LowerCase(EditorId(WinningOverride(LinksTo(ElementByIndex(Keywords, k)))));
-					currentAddress := CurrentKeyword + Name(ElementByIndex(ElementByPath(CurrentArmo, 'BOD2\First Person Flags'), 0));
-					if ContainsText('material', CurrentKeyword) OR ContainsText('materiel', CurrentKeyword) then
-					begin
-						{//check if the keyword is in the list yet, if not, add it anyway.
-						if KeywordList.IndexOf(CurrentKeyword) < 0 then
-						begin
-							KeywordList.Add(CurrentKeyword);
-							RatingsByKeyword.AddObject(currentAddress, CurrentArmo);
-						//check if the bod2 is in the list yet, if not, add it anyway.
-						end else if RatingsByKeyword.IndexOf(currentAddress) < 0 then
-						begin
-							KeywordList.Add(CurrentKeyword);
-							RatingsByKeyword.AddObject(currentAddress, CurrentArmo);
-						end else if MasterList.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentArmo)))) < 0 then continue;}
-						RatingsByKeyword.AddObject(currentAddress, CurrentArmo);
-						continue;
-					end;
-				end;
-			end;
-		end;
-	end;
-	KeywordList.free;
-	KeywordList.clear;
-	RatingsByKeyword.Sorted;
-	HashedRatingsByKeyword := THashedStringList.Create;
-	HashedRatingsByKeyword.Assign(RatingsByKeyword);
-end;
-
-function RatingBalancer: integer;
-var
-	startIndex, k, f, count: integer;
-	TotalRating, AverageRating, OriginalRating: Double;
-	tempRecord, CurrentKeyword, Keywords: IInterface;
-	currentAddress: String;
-begin
-	Count := 0;
-	TotalRating := 0;
-	Keywords := ElementByPath(itemRecord, 'KWDA');
-	OriginalRating := tryStrToFloat(GetElementEditValues(itemRecord, 'DNAM'), 0);
-	for k := ElementCount(Keywords) - 1 downTo 0 do
-	begin
-		CurrentKeyword := EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords, k))));
-		if pos('material', CurrentKeyword) > 0 then
-		begin
-			currentAddress := CurrentKeyword + Name(ElementByIndex(ElementByPath(itemRecord, 'BOD2\First Person Flags'), 0));
-			startIndex := HashedRatingsByKeyword.IndexOf(currentAddress);
-			if startIndex > 0 then
-			begin
-				for f := startIndex to HashedRatingsByKeyword.Count - 1 do
-				begin
-					if pos(HashedRatingsByKeyword.Strings[f], currentAddress) > 0 then
-					begin
-						TempRecord := ObjectToElement(HashedRatingsByKeyword.Objects[f]);
-						Count := Count + 1;
-						TotalRating := TotalRating + tryStrToFloat(GetElementEditValues(TempRecord, 'DNAM'), 0);
-					end else
-					begin
-						break;
-					end;
-				end;
+				ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'ENIT\Value'), ValueOriginal) + ValueCobj;
 			end else
 			begin
-				count := 1;
-				TotalRating := OriginalRating;
+				ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'DATA\Value'), ValueOriginal) + ValueCobj;
 			end;
 		end;
 	end;
-	if count = 0 then
+	
+	if signature(item) = 'ARMO' then
+		valueExisting := Armovalue.Objects[Armovalue.IndexOf(address)];
+	else if signature(item) = 'WEAP' then 
+		valueExisting := Weapvalue.Objects[Weapvalue.IndexOf(address)];
+	else valueExisting := Ammovalue.Objects[Ammovalue.IndexOf(address)];
+	
+	Value := tryStrToInt(GetElementEditValues(item, 'DATA\Value'),0.0);
+	LogMessage(1, 'the estimated Value based on cobj is: ' + IntToStr(ValueCobj) + ' the estimated Value based on included items is: ' + IntToStr(ValueExisting) + 'the current Value is: ' + Value);
+	ValueAverage := ValueCobj * 0.3 + ValueExisting * 0.7;
+	temp := BalanceRandomizerInt(Value,ValueAverage,500);
+	SetElementEditValues(item. 'Data\Value', IntToStr(floor(temp));
+end;
+
+procedure WeapProcess(item:IInterface;address:string);
+begin
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Speed'), 1.0);
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerfloat(original,existing,0.5);
+	SetElementEditValues(item, 'DNAM\Speed', FloatToStr(temp));
+	
+	original := tryStrToInt(GetElementEditValues(item, 'DATA\Damage'), 1);
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerInt(original,existing,5);
+	SetElementEditValues(item, 'DATA\Damage', IntToStr(floor(temp)));
+	
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Reach'), 1.0);
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerfloat(original,existing,0.5);
+	SetElementEditValues(item, 'DNAM\Reach', FloatToStr(temp));
+	
+	original := tryStrToInt(GetElementEditValues(item, 'CRDT\Damage'), 1);
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerInt(original,existing,5);
+	SetElementEditValues(item, 'CRDT\Damage', IntToStr(temp));
+	
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Min'), 1.0);
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerfloat(original,existing,500);
+	SetElementEditValues(item, 'DNAM\Range Min', FloatToStr(temp));
+	
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Max'), 1.0);
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerfloat(original,existing,500);
+	SetElementEditValues(item, 'DNAM\Range Max', FloatToStr(temp));
+end;
+
+procedure AmmoProcess(item:IInterface;address:string);
+begin
+	original := tryStrToFloat(GetElementEditValues(item, 'DATA\Damage'), 1.0);
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerfloat(original,existing,5);
+	SetElementEditValues(item, 'DATA\Damage', IntToStr(floor(temp)));
+end;
+
+procedure BalanceRandomizerInt(original:int,existing:float;VaritionDiff:float):int;
+begin
+	if Original > existing then
 	begin
-		count := 1;
-		TotalRating := OriginalRating;
-	end;
-	AverageRating := TotalRating / count;
-	if OriginalRating > TotalRating then
+		temp := existing * (random(0.5) + 1);
+	end else if Original < existing then
 	begin
-		SetElementEditValues(CopyRecord, 'DNAM', FloatToStr(AverageRating * (random(0.75) + 1)));
-	end else if OriginalRating < TotalRating then
-	begin
-		SetElementEditValues(CopyRecord, 'DNAM', FloatToStr(AverageRating * (random(0.5) + 0.5)));
+		temp := existing * (random(0.5) + 0.5);
 	end else
 	begin
-		//SetElementEditValues(CopyRecord, 'DNAM', FloatToStr(AverageRating * (random(0.2) + 0.9)));
+		temp := existing * (random(0.4) + 0.8);
 	end;
-end;
-
-function DefineMasters: integer;
-begin
-	MasterList := TstringList.Create;
-	MasterList.Delimiter := ',';
-	MasterList.StrictDelimiter := True;
-	MasterList.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', 'Skyrim.esm,Dragonborn.esm,Update.esm,Dawnguard.esm,HearthFires.esm,SkyrimSE.exe,Unofficial Skyrim Special Edition Patch.esp');
-end;
- 
-function InitializeRecipes: integer;
-var
-	f, r: integer;
-	BNAM, currentFile, CurrentGroup, CurrentRecord: IInterface;
-begin
-	Recipes := TStringList.Create;
-	Recipes.Duplicates := dupIgnore;
-	for f := FileCount - 1 downto 0 do
-	begin
-		currentFile := FileByIndex(f);
-		if HasGroup(currentFile, 'COBJ') then
+	while temp > existing + 0.5 OR temp < existing - 0.5 do begin
+		if temp > existing then
 		begin
-			CurrentGroup := GroupBySignature(currentFile, 'COBJ');
-			for r := ElementCount(CurrentGroup) - 1 downto 0 do
-			begin
-				CurrentRecord := ElementByIndex(CurrentGroup, r);
-				BNAM := LinksTo(ElementByPath(CurrentRecord, 'BNAM'));
-				if GetLoadOrderFormID(BNAM) = $000ADb78 then continue;
-				if IsWinningOverride(CurrentRecord) then
-				begin
-					Recipes.AddObject(LowerCase(EditorID(WinningOverride(LinksTo(ElementByPath(CurrentRecord, 'CNAM'))))), CurrentRecord);
-				end;
-			end;
-		end else
+			temp := temp - 5 * (random(0.5) + 1);
+		end else if temp < existing then
 		begin
-			continue;
+			temp := temp + 5 * (random(0.5) + 0.5);
 		end;
 	end;
-	Recipes.Sorted;
-	//MiddleChar := LeftStr(Recipes.Strings[Recipes.Count / 2], 1);
-	HashedList := THashedStringList.Create;
-	HashedList.Assign(Recipes);
+	result := floor(temp);
 end;
 
-function IniSettings: integer;
+procedure BalanceRandomizerfloat(original,existing:float;VaritionDiff:float):float;
 begin
-	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
-	if not length(YggIni.ReadString('BaseData', 'sBaseMaster', '.esp')) > 4 then YggIni.WriteString('BaseData', 'sBaseMaster', 'Skyrim.esm,Dragonborn.esm,Update.esm,Dawnguard.esm,HearthFires.esm,SkyrimSE.exe,Unofficial Skyrim Special Edition Patch.esp');
-	YggIni.UpdateFile;
+	if Original > existing then
+	begin
+		temp := existing * (random(0.5) + 1);
+	end else if Original < existing then
+	begin
+		temp := existing * (random(0.5) + 0.5);
+	end else
+	begin
+		temp := existing * (random(0.4) + 0.8);
+	end;
+	while temp > existing + VaritionDiff OR temp < existing - VaritionDiff do begin
+		if temp > existing then
+		begin
+			temp := temp - VaritionDiff * (random(0.5) + 1);
+		end else if temp < existing then
+		begin
+			temp := temp + VaritionDiff * (random(0.5) + 0.5);
+		end;
+	end;
+	result := temp;
 end;
 
 end.
