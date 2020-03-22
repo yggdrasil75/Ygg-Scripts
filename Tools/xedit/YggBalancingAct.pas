@@ -418,7 +418,9 @@ begin
 	AddIndex := ArmoRating.IndexOf(address);
 	if not AddIndex < 0 then
 		averageRating := ArmoRating.objects[AddIndex]
-	else ArmoRating.Objects[ArmoRating.IndexOf('averageofall')];
+	else if ArmoRating.IndexOf('averageofall') < 0 then 
+		AverageRating := 0;
+	else AverageRating := ArmoRating.Objects[ArmoRating.IndexOf('averageofall')];
 	temp := BalanceRandomizerfloat(OriginalRating,averageRating,7);
 	SetElementEditValues(item, 'DNAM', FloatToStr(temp));
 end;
