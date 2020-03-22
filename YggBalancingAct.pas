@@ -355,7 +355,7 @@ var
 begin
 	for i := Armo.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Armo.objects[i]);
-		wbCopyElementToFile(CurrentItem, Patch, false,true);
+		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
 		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
@@ -373,7 +373,7 @@ begin
 	Armo.Free;
 	for i := Weap.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Weap.Objects[i]);
-		wbCopyElementToFile(CurrentItem, Patch, false,true);
+		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
 		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
@@ -391,7 +391,7 @@ begin
 	Weap.Free;
 	for i := Ammo.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Ammo.Objects[i]);
-		wbCopyElementToFile(CurrentItem, Patch, false,true);
+		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
 		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
@@ -427,9 +427,9 @@ Procedure Weight(item:IInterface;address:string);
 var
 	i,l,j:integer;
 	cobj: IInterface;
-	WeightCobj,WeightExisting,Weight:double;
+	weightedAverage,WeightCobj,WeightExisting,Weight:double;
 	temp: double;
-	AddIndex:integer;
+	AddIndex,VaritionDiff:integer;
 begin
 	LogMessage(1,'Weighing: ' + Name(item));
 	//estimating weight
@@ -474,10 +474,30 @@ begin
 	end else WeightCobj := WeightExisting;
 	
 	weight := TryStrToFloat(GetElementEditValues(item, 'DATA\Weight'),0.0);
-	LogMessage(1, 'the estimated weight based on cobj is: ' + IntToStr(WeightCobj) + ' the estimated weight based on included items is: ' + IntToStr(WeightExisting) + 'the current weight is: ' + weight);
+	LogMessage(1, 'the estimated weight based on cobj is: ' + FloatToStr(WeightCobj) + ' the estimated weight based on included items is: ' + FloatToStr(WeightExisting) + 'the current weight is: ' + FloatToStr(weight));
 	weightedAverage := WeightCobj * 0.3 + WeightExisting * 0.7;
-	temp := BalanceRandomizerfloat(weight,weightedAverage,7);
-	SetElementEditValues(item. 'Data\Weight', FloatToStr(temp);
+	VaritionDiff := 7;
+		if weight > weightedAverage then
+		begin
+			temp := weightedAverage * (random(0.5) + 0.5);
+		end else if weight < weightedAverage then
+		begin
+			temp := weightedAverage * (random(0.3) + 0.5);
+		end else
+		begin
+			temp := weightedAverage * (random(0.4) + 0.5);
+		end;
+		while temp > weightedAverage + VaritionDiff OR temp < weightedAverage - VaritionDiff do begin
+			if temp > weightedAverage then
+			begin
+				temp := temp - VaritionDiff * (random(0.5) + 1);
+			end else if temp < weightedAverage then
+			begin
+				temp := temp + VaritionDiff * (random(0.5) + 0.5);
+			end;
+		end;
+		result := temp;
+	SetElementEditValues(item, 'Data\Weight', FloatToStr(temp));
 end;
 
 procedure Value(item:IInterface;address:string);
@@ -489,25 +509,6 @@ var
 	AddIndex:integer;
 begin
 	LogMessage(1,'valuing: ' + Name(item));
-	
-	ValueCobj := 0;
-	cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
-	path := ElementByPath(cobj, 'Items');
-	LogMessage(1,'processing cobj for item: ' + name(item));
-	l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
-	if assigned(ElementByPath(cobj, 'COCT')) then begin
-		for i := l downto 0 do begin
-			cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
-			Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
-			if pos(signature(cobjitem), 'ALCH') > 0 then
-			begin
-				ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'ENIT\Value'), Value) + ValueCobj;
-			end else
-			begin
-				ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'DATA\Value'), Value) + ValueCobj;
-			end;
-		end;
-	end;
 	
 	if signature(item) = 'ARMO' then begin
 		AddIndex := Armovalue.IndexOf(address);
@@ -526,11 +527,33 @@ begin
 		else Ammovalue.Objects[Ammovalue.IndexOf('averageofall')];
 	end;
 	
+	ValueCobj := 0;
+	AddIndex := Recipes.IndexOf(EditorID(item));
+	if not AddIndex < 0 then begin
+		cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
+		path := ElementByPath(cobj, 'Items');
+		LogMessage(1,'processing cobj for item: ' + name(item));
+		l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
+		if assigned(ElementByPath(cobj, 'COCT')) then begin
+			for i := l downto 0 do begin
+				cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
+				Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
+				if pos(signature(cobjitem), 'ALCH') > 0 then
+				begin
+					ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'ENIT\Value'), Value) + ValueCobj;
+				end else
+				begin
+					ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'DATA\Value'), Value) + ValueCobj;
+				end;
+			end;
+		end;
+	end else ValueCobj := valueExisting;
+	
 	Value := tryStrToInt(GetElementEditValues(item, 'DATA\Value'),0.0);
-	LogMessage(1, 'the estimated Value based on cobj is: ' + IntToStr(ValueCobj) + ' the estimated Value based on included items is: ' + IntToStr(ValueExisting) + 'the current Value is: ' + Value);
+	LogMessage(1, 'the estimated Value based on cobj is: ' + FloatToStr(ValueCobj) + ' the estimated Value based on included items is: ' + FloatToStr(ValueExisting) + 'the current Value is: ' + FloatToStr(Value));
 	ValueAverage := ValueCobj * 0.3 + ValueExisting * 0.7;
 	temp := BalanceRandomizerInt(Value,ValueAverage,500);
-	SetElementEditValues(item. 'Data\Value', IntToStr(floor(temp));
+	SetElementEditValues(item, 'Data\Value', IntToStr(floor(temp)));
 end;
 
 procedure WeapProcess(item:IInterface;address:string);
