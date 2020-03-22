@@ -57,6 +57,7 @@ var
 i: integer;
 temp: IInterface;
 begin
+	LogMessage(2,'Adding Masters with ' + sig);
 	for i := 0 to fileCount - 1 do
 	begin
 		temp := FileByIndex(i);
@@ -425,6 +426,7 @@ var
 	i1, i2: integer;
 	cg: IInterface;
 begin
+	LogMessage(1,'Signing file');
     for i1 := FileCount - 1 downto 0 do
     begin
         if HasGroup(FileByIndex(i1), 'COBJ') then
