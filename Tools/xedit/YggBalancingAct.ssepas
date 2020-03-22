@@ -4,9 +4,14 @@ var
 	Recipes,Armo,ArmoRating,ArmoWeight : TStringList;
 	ArmoValue,Ammo,AMMODamage,AMMOValue : TStringList;
 	AMMOWeight,Weap,WeapValue,WeapWeight : TStringList;
-	WeapDamage,WeapSpeed : TStringList;
-	WeapReach,WeapCrdtDam,WeapRangeMin,TrustedPlugins,WeapRangeMax : TStringList;
+	WeapReach,WeapDamage,WeapSpeed : TStringList;
+	WeapCrdtDam,WeapRangeMin,TrustedPlugins,WeapRangeMax : TStringList;
 	YggIni: TMemIniFile;
+	C_FName:string;
+	Patch,CurrentItem: IInterface;
+	TimeBegin: TDateTime;
+	YggLogCurrentMessages: TStringList;
+	DebugLevel: integer;
 
 Function Initialize: integer;
 begin
@@ -20,19 +25,23 @@ begin
 	//"init"
 	BeginTime := Time;
 	BeginLog('Balancing Act Start');
-	PassTime(Time);
+	TimeBegin := PassTime(Time);
 	Patch := SelectPatch('Ygg_Rebalance.esp');
 	PassFile(Patch);
 	BeginUpdate(Patch);
 	try
-		AddMasterBySignature('ARMO');
-		AddMasterBySignature('WEAP');
-		AddMasterBySignature('AMMO');
 		remove(GroupBySignature(Patch, 'WEAP'));
 		remove(GroupBySignature(Patch, 'ARMO'));
 		remove(GroupBySignature(Patch, 'AMMO'));
+		Cleanmasters(Patch);
+		AddMasterBySignature('ARMO');
+		AddMasterBySignature('WEAP');
+		AddMasterBySignature('AMMO');
+		AddMasterBySignature('KWDA');
+		AddMasterBySignature('ARMA');
 	finally EndUpdate(Patch);
 	end;
+	MasterLines;
 	IniProcess;
 	Randomize;
 	InitializeLists;
