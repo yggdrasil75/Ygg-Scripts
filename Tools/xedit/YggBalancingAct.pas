@@ -325,8 +325,7 @@ begin
 		TempListB.Add(ratings);
 		TempListA.AddObject(ara,TempListB);
 	end;
-	List.free;
-	List := TStringList.Create;
+	List.clear;
 	for i := TempListA.Count - 1 downto 0 do begin
 		TempListB := TempListA.objects[i];
 		rating := 0;
