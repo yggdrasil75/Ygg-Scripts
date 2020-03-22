@@ -160,11 +160,11 @@ begin
 					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
 					CurrentBOD2 := Name(ElementByIndex(ElementByPath(CurrentItem, 'BOD2\First Person Flags'),0));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
-					if length(GetElementEditValues(CurrentItem, 'DNAM')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM')) then
 						ArmoRating.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
 						ArmoWeight.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DATA\Value')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
 						ArmoValue.AddObject(CurrentAddress, CurrentItem);
 				end;
 			end;
@@ -198,21 +198,21 @@ begin
 					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
-					if length(GetElementEditValues(CurrentItem, 'DATA\Damage')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
 						WeapDamage.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
 						WeapWeight.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DATA\Value')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
 						WeapValue.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DNAM\Speed')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Speed')) then
 						WeapSpeed.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DNAM\Reach')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Reach')) then
 						WeapReach.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'CRDT\Damage')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
 						WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
 						WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
 						WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
 				end;
 			end;
@@ -246,11 +246,11 @@ begin
 					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
-					if length(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
 						AmmoWeight.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DATA\Damage')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
 						AmmoDamage.AddObject(CurrentAddress, CurrentItem);
-					if length(GetElementEditValues(CurrentItem, 'DATA\Value')) > 0 then
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
 						AmmoValue.AddObject(CurrentAddress, CurrentItem);
 				end;
 			end;
