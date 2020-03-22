@@ -336,7 +336,12 @@ begin
 		List.AddObject(TempListA.strings[i],rating);
 		completeAverage := CompleteAverage + Rating;
 	end;
-	CompleteAverage := CompleteAverage / TempListA.Count;
+	if not List.count = 0 then
+		CompleteAverage := CompleteAverage / List.Count
+	else begin
+		CompleteAverage := 0;
+		LogMessage(2, 'List contained no items, path: ' + path);
+	end;
 	List.AddObject('averageofall',CompleteAverage);
 	TempListA.free;
 end;
@@ -350,6 +355,8 @@ var
 begin
 	for i := Armo.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Armo.objects[i]);
+		wbCopyElementToFile(CurrentItem, Patch, false,true);
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
 			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
@@ -366,6 +373,8 @@ begin
 	Armo.Free;
 	for i := Weap.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Weap.Objects[i]);
+		wbCopyElementToFile(CurrentItem, Patch, false,true);
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
 			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
@@ -382,6 +391,8 @@ begin
 	Weap.Free;
 	for i := Ammo.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Ammo.Objects[i]);
+		wbCopyElementToFile(CurrentItem, Patch, false,true);
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
 			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
@@ -400,11 +411,13 @@ end;
 procedure Ratings(item:IInterface;address:string);
 var
 	temp,OriginalRating,AverageRating: double;
+	AddIndex:integer;
 begin
+	LogMessage(1,'Rating: ' + Name(item));
 	OriginalRating := TryStrToFloat(GetElementEditValues(item, 'DNAM'),0);
 	AddIndex := ArmoRating.IndexOf(address);
-	if AddIndex < 0 then
-		averageRating := ArmoRating.objects[AddIndex];
+	if not AddIndex < 0 then
+		averageRating := ArmoRating.objects[AddIndex]
 	else ArmoRating.Objects[ArmoRating.IndexOf('averageofall')];
 	temp := BalanceRandomizerfloat(OriginalRating,averageRating,7);
 	SetElementEditValues(item, 'DNAM', FloatToStr(temp));
@@ -416,44 +429,49 @@ var
 	cobj: IInterface;
 	WeightCobj,WeightExisting,Weight:double;
 	temp: double;
+	AddIndex:integer;
 begin
+	LogMessage(1,'Weighing: ' + Name(item));
 	//estimating weight
-	
-	WeightCobj := 0;
-	cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
-	path := ElementByPath(cobj, 'Items');
-	LogMessage(1,'processing cobj for item: ' + name(item));
-	l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
-	if assigned(ElementByPath(cobj, 'COCT')) then begin
-		for i := l downto 0 do begin
-			cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
-			Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
-			if pos(signature(cobjitem), 'ALCH') > 0 then
-			begin
-				WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA - Weight'), weightOriginal) + WeightCobj;
-			end else
-			begin
-				WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA\Weight'), weightOriginal) + WeightCobj;
-			end;
-		end;
-	end;
 	
 	if signature(item) = 'ARMO' then begin
 		AddIndex := ArmoWeight.IndexOf(address);
-		if AddIndex < 0 then
-			WeightExisting := ArmoWeight.objects[AddIndex];
+		if not AddIndex < 0 then
+			WeightExisting := ArmoWeight.objects[AddIndex]
 		else ArmoWeight.Objects[ArmoWeight.IndexOf('averageofall')];
 	end else if signature(item) = 'WEAP' then begin
 		AddIndex := WeapWeight.IndexOf(address);
-		if AddIndex < 0 then
-			WeightExisting := WeapWeight.objects[AddIndex];
+		if not AddIndex < 0 then
+			WeightExisting := WeapWeight.objects[AddIndex]
 		else WeapWeight.Objects[WeapWeight.IndexOf('averageofall')];
 	end else begin
 		AddIndex := AmmoWeight.IndexOf(address);
-		if AddIndex < 0 then
-			WeightExisting := AmmoWeight.objects[AddIndex];
+		if not AddIndex < 0 then
+			WeightExisting := AmmoWeight.objects[AddIndex]
 		else AmmoWeight.Objects[AmmoWeight.IndexOf('averageofall')];
 	end;
+	
+	WeightCobj := 0;
+	AddIndex := Recipes.IndexOf(EditorID(item));
+	if not AddIndex < 0 then begin
+		cobj := Recipes.objects[AddIndex]
+		path := ElementByPath(cobj, 'Items');
+		LogMessage(1,'processing cobj for item: ' + name(item));
+		l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
+		if assigned(ElementByPath(cobj, 'COCT')) then begin
+			for i := l downto 0 do begin
+				cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
+				Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
+				if pos(signature(cobjitem), 'ALCH') > 0 then
+				begin
+					WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA - Weight'), weightOriginal) + WeightCobj;
+				end else
+				begin
+					WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA\Weight'), weightOriginal) + WeightCobj;
+				end;
+			end;
+		end;
+	end else WeightCobj := WeightExisting;
 	
 	weight := TryStrToFloat(GetElementEditValues(item, 'DATA\Weight'),0.0);
 	LogMessage(1, 'the estimated weight based on cobj is: ' + IntToStr(WeightCobj) + ' the estimated weight based on included items is: ' + IntToStr(WeightExisting) + 'the current weight is: ' + weight);
@@ -468,7 +486,9 @@ var
 	ValueAverage,ValueCobj,ValueExisting:double;
 	Value:int;
 	temp: double;
+	AddIndex:integer;
 begin
+	LogMessage(1,'valuing: ' + Name(item));
 	
 	ValueCobj := 0;
 	cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
@@ -491,18 +511,18 @@ begin
 	
 	if signature(item) = 'ARMO' then begin
 		AddIndex := Armovalue.IndexOf(address);
-		if AddIndex < 0 then
-			valueExisting := Armovalue.objects[AddIndex];
+		if not AddIndex < 0 then
+			valueExisting := Armovalue.objects[AddIndex]
 		else Armovalue.Objects[Armovalue.IndexOf('averageofall')];
 	end else if signature(item) = 'WEAP' then begin
 		AddIndex := Weapvalue.IndexOf(address);
-		if AddIndex < 0 then
-			valueExisting := Weapvalue.objects[AddIndex];
+		if not AddIndex < 0 then
+			valueExisting := Weapvalue.objects[AddIndex]
 		else Weapvalue.Objects[Weapvalue.IndexOf('averageofall')];
 	end else begin 
 		AddIndex := Ammovalue.IndexOf(address);
-		if AddIndex < 0 then
-			valueExisting := Ammovalue.objects[AddIndex];
+		if not AddIndex < 0 then
+			valueExisting := Ammovalue.objects[AddIndex]
 		else Ammovalue.Objects[Ammovalue.IndexOf('averageofall')];
 	end;
 	
@@ -517,11 +537,13 @@ procedure WeapProcess(item:IInterface;address:string);
 var
 	original,temp,existing: double;
 	originali,tempi: int;
+	AddIndex:integer;
 begin
+	LogMessage(1,'sharpening: ' + Name(item));
 	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Speed'), 1.0);
 		AddIndex := WeapSpeed.IndexOf(address);
-		if AddIndex < 0 then
-			existing := WeapSpeed.objects[AddIndex];
+		if not AddIndex < 0 then
+			existing := WeapSpeed.objects[AddIndex]
 		else WeapSpeed.Objects[WeapSpeed.IndexOf('averageofall')];
 	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
 	temp := BalanceRandomizerfloat(original,existing,0.5);
@@ -529,40 +551,40 @@ begin
 	
 	originali := tryStrToInt(GetElementEditValues(item, 'DATA\Damage'), 1);
 		AddIndex := WeapDamage.IndexOf(address);
-		if AddIndex < 0 then
-			existing := WeapDamage.objects[AddIndex];
+		if not AddIndex < 0 then
+			existing := WeapDamage.objects[AddIndex]
 		else WeapDamage.Objects[WeapDamage.IndexOf('averageofall')];
 	tempi := BalanceRandomizerInt(original,existing,5);
 	SetElementEditValues(item, 'DATA\Damage', IntToStr(temp));
 	
 	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Reach'), 1.0);
 		AddIndex := WeapReach.IndexOf(address);
-		if AddIndex < 0 then
-			existing := WeapReach.objects[AddIndex];
+		if not AddIndex < 0 then
+			existing := WeapReach.objects[AddIndex]
 		else WeapReach.Objects[WeapReach.IndexOf('averageofall')];
 	temp := BalanceRandomizerfloat(original,existing,0.5);
 	SetElementEditValues(item, 'DNAM\Reach', FloatToStr(temp));
 	
 	originali := tryStrToInt(GetElementEditValues(item, 'CRDT\Damage'), 1);
 		AddIndex := WeapCrdtDam.IndexOf(address);
-		if AddIndex < 0 then
-			existing := WeapCrdtDam.objects[AddIndex];
+		if not AddIndex < 0 then
+			existing := WeapCrdtDam.objects[AddIndex]
 		else WeapCrdtDam.Objects[WeapCrdtDam.IndexOf('averageofall')];
 	tempi := BalanceRandomizerInt(original,existing,5);
 	SetElementEditValues(item, 'CRDT\Damage', IntToStr(temp));
 	
 	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Min'), 1.0);
 		AddIndex := WeapRangeMin.IndexOf(address);
-		if AddIndex < 0 then
-			existing := WeapRangeMin.objects[AddIndex];
+		if not AddIndex < 0 then
+			existing := WeapRangeMin.objects[AddIndex]
 		else WeapRangeMin.Objects[WeapRangeMin.IndexOf('averageofall')];
 	temp := BalanceRandomizerfloat(original,existing,500);
 	SetElementEditValues(item, 'DNAM\Range Min', FloatToStr(temp));
 	
 	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Max'), 1.0);
 		AddIndex := WeapRangeMax.IndexOf(address);
-		if AddIndex < 0 then
-			existing := WeapRangeMax.objects[AddIndex];
+		if not AddIndex < 0 then
+			existing := WeapRangeMax.objects[AddIndex]
 		else WeapRangeMax.Objects[WeapRangeMax.IndexOf('averageofall')];
 	temp := BalanceRandomizerfloat(original,existing,500);
 	SetElementEditValues(item, 'DNAM\Range Max', FloatToStr(temp));
@@ -572,17 +594,21 @@ procedure AmmoProcess(item:IInterface;address:string);
 var
 	original,temp,existing: double;
 	originali,tempi: int;
+	AddIndex:integer;
 begin
+	LogMessage(1,'firing: ' + Name(item));
 	original := tryStrToFloat(GetElementEditValues(item, 'DATA\Damage'), 1.0);
 		AddIndex := AMMODamage.IndexOf(address);
-		if AddIndex < 0 then
-			existing := AMMODamage.objects[AddIndex];
+		if not AddIndex < 0 then
+			existing := AMMODamage.objects[AddIndex]
 		else AMMODamage.Objects[AMMODamage.IndexOf('averageofall')];
 	temp := BalanceRandomizerfloat(original,existing,5);
 	SetElementEditValues(item, 'DATA\Damage', IntToStr(floor(temp)));
 end;
 
 function BalanceRandomizerInt(original:int,existing:float;VaritionDiff:float):int;
+var
+	temp:double;
 begin
 	if Original > existing then
 	begin
@@ -607,6 +633,8 @@ begin
 end;
 
 function BalanceRandomizerfloat(original,existing:float;VaritionDiff:float):float;
+var
+	temp: double;
 begin
 	if Original > existing then
 	begin
