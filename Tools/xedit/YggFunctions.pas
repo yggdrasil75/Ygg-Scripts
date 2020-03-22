@@ -443,7 +443,6 @@ begin
 	FileCreate('Ygg.log');
 	//FileCreate(ScriptsPath + 'Ygg.log');
 	CreateDir('Ygg');
-	YggLogCurrentMessages := TStringList.Create;
 	//YggLogCurrentMessages.LoadFromFile(ScriptsPath + 'Ygg.log');
 end;
 
