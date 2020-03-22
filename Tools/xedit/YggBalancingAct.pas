@@ -628,7 +628,7 @@ begin
 	SetElementEditValues(item, 'DATA\Damage', IntToStr(floor(temp)));
 end;
 
-function BalanceRandomizerInt(original:int,existing:float;VaritionDiff:float):int;
+function BalanceRandomizerInt(original:int;existing:float;VaritionDiff:float):int;
 var
 	temp:double;
 begin
