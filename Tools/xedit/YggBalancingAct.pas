@@ -306,7 +306,7 @@ end;
 
 procedure averager(Path:string; out List:TStringList);
 var
-	i,j:integer;
+	i,listcount,j:integer;
 	TempListA,TempListB:TStringList;
 	ratings,ara,inda:string;
 	rating:double;
