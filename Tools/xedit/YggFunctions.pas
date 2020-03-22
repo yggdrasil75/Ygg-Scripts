@@ -1,35 +1,14 @@
 unit YggFunctions;
-
-var
-	C_FName: string;
-	Patch: IInterface;
-	CurrentRecord: IInterface;
-	TimeBegin: TDateTime;
-	YggLog: TextFile;
-	DebugLevel: integer;
-	YggLogCurrentMessages: TStringList;
 	
-
-function PassFile(PatchToBe: IInterface): integer;
-begin
-	Patch := PatchToBe;
-	result := 0;
-end;
-
-function getPatch: IInterface;
-begin
-	result := Patch;
-end;
-
 function PassRecord(itemRecord: IInterface): integer;
 begin
-	CurrentRecord := itemRecord;
+	CurrentItem := itemRecord;
 	result := 0;
 end;
 
-procedure PassTime(Start: TDateTime);
+function PassTime(Start: TDateTime): TDateTime;
 begin
-	TimeBegin := Start;
+  Result := Start;
 end;
 
 function tryStrToFloat(item: string; default: double): double;
@@ -37,7 +16,7 @@ begin
 	if length(item) = 0 then
 	begin
 		elementassign(copyRecord, -1, Nil, false);
-		LogMessage(1, 'item ' + name(CurrentRecord) + ' is missing required data');
+		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data');
 		result := default;
 	end else result := StrToFloat(item);
 end;
@@ -47,7 +26,7 @@ begin
 	if length(item) = 0 then
 	begin
 		elementassign(copyRecord, -1, Nil, false);
-		LogMessage(1, 'item ' + name(CurrentRecord) + ' is missing required data');
+		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data');
 		result := default;
 	end else result := StrToFloat(item);
 end;
@@ -61,7 +40,7 @@ begin
 	for i := 0 to fileCount - 1 do
 	begin
 		temp := FileByIndex(i);
-		if pos(GetFileName(patch), GetFileName(temp)) < 1 then
+		if pos(GetFileName(Patch), GetFileName(temp)) < 1 then
 		begin
 			if HasGroup(temp, sig) then
 			begin
@@ -97,7 +76,7 @@ begin
 	for i := Pred(OverrideCount(m)) downto 0 do
 	begin
 		ovr := OverrideByIndex(m, i);
-		if not equals(GetFile(WinningOverride(ovr)), patch) then
+		if not equals(GetFile(WinningOverride(ovr)), Patch) then
 		begin
 			for b := 0 to Improper.Count - 1 do
 			begin
@@ -153,7 +132,7 @@ var
 begin
 	Result := false;
 	// get all keyword entries of provided record
-	tmpKeywordsCollection := ElementByPath(CurrentRecord, 'KWDA');
+	tmpKeywordsCollection := ElementByPath(CurrentItem, 'KWDA');
 	// loop through each
 	for i := 0 to ElementCount(tmpKeywordsCollection) - 1 do
 	begin
@@ -191,10 +170,10 @@ begin
 	foobar := TrueRecordByEDID(keyword);
 	if not hasKeyword(keyword) then 
 	begin
-		KYWD := ElementByPath(CurrentRecord, 'KWDA');
+		KYWD := ElementByPath(CurrentItem, 'KWDA');
 		if not Assigned(KYWD) then 
 		begin
-			Add(CurrentRecord, 'KWDA', true);
+			Add(CurrentItem, 'KWDA', true);
 		end;
 		keywordRef := ElementAssign(KYWD, HighInteger, foobar, false);
 		LogMessage(1, 'currently adding ' + FullPath(keywordRef));
@@ -366,10 +345,11 @@ begin
 	begin
 		if not FileExists(DataPath + PatchName) then 
 		begin
-			result := AddNewFileName(PatchName, false);
+			Patch := AddNewFileName(PatchName, false);
+			result := Patch;
 		end else
 		begin
-			ShowMessage('The Patch exists, but is not loaded, creating a new patch');
+			ShowMessage('The Patch exists, but is not loaded, creating a new Patch');
 			result := AddNewFile;
 		end;
 	end;
@@ -406,19 +386,9 @@ begin
 	result := NewItem
 end;
 
-function AddAllMaster: integer;
-var
-	f: integer;
-begin
-	for f := 0 to FileCount - 2 do
-	begin
-		AddMasterIfMissing(Patch, GetFileName(FileByIndex(f)));
-	end;
-end;
-
 function sign: integer;
 begin
-	SetElementEditValues(ElementByIndex(patch,0),'CNAM - Author', 'Yggdrasil75');
+	SetElementEditValues(ElementByIndex(Patch,0),'CNAM - Author', 'Yggdrasil75');
 end;
 
 function GatherRecipes(sig: String; List: TList): integer;
@@ -434,9 +404,9 @@ begin
             cg := GroupBySignature(FileByIndex(i1), 'COBJ');
             for i2 := 0 to ElementCount(Cg) - 1 do 
             begin
-                if HasSignature(LinksTo(MasterOrSelf(ElementByPath(CurrentRecord, 'CNAM'))), sig) then
+                if HasSignature(LinksTo(MasterOrSelf(ElementByPath(CurrentItem, 'CNAM'))), sig) then
                 begin
-                    List.Add(MasterOrSelf(ElementByPath(CurrentRecord, 'CNAM')));
+                    List.Add(MasterOrSelf(ElementByPath(CurrentItem, 'CNAM')));
                 end;
             end;
         end;
@@ -596,7 +566,7 @@ var
   i: Integer;
 begin
 	m := TMemo(TForm(frmMain).FindComponent('mmoMessages'));
-	for i := Pred(m.Lines.Count) downto m.Lines.Count - MasterCount(patch) do
+	for i := Pred(m.Lines.Count) downto m.Lines.Count - MasterCount(Patch) do
 		logMessage(1, m.Lines[i]);
 end;
 
