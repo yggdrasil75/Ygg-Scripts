@@ -312,8 +312,9 @@ var
 	rating:double;
 	CompleteAverage:double;
 begin
+	listcount := list.count;
 	TempListA := TStringList.Create;
-	for i := List.Count - 1 downto 0 do begin
+	for i := listcount - 1 downto 0 do begin
 		ara := List.Strings[i];
 		inda := TempListA.IndexOf(ara);
 		ratings := GetElementEditValues(ObjectToElement(List.objects[i]), Path);
@@ -336,8 +337,8 @@ begin
 		List.AddObject(TempListA.strings[i],rating);
 		completeAverage := CompleteAverage + Rating;
 	end;
-	if not List.count = 0 then
-		CompleteAverage := CompleteAverage / List.Count
+	if not listcount= 0 then
+		CompleteAverage := CompleteAverage / listcount
 	else begin
 		CompleteAverage := 0;
 		LogMessage(2, 'List contained no items, path: ' + path);
