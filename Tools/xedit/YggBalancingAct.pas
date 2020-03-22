@@ -23,11 +23,11 @@ var
 	BeginTime, EndTime: TDateTime;
 begin
 	//"init"
+	YggLogCurrentMessages := TStringList.Create;
 	BeginTime := Time;
 	BeginLog('Balancing Act Start');
 	TimeBegin := PassTime(Time);
 	Patch := SelectPatch('Ygg_Rebalance.esp');
-	PassFile(Patch);
 	BeginUpdate(Patch);
 	try
 		remove(GroupBySignature(Patch, 'WEAP'));
