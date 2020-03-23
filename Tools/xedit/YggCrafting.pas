@@ -8,7 +8,13 @@ var
 	CraftMult, optionAddOnly, optionPerkConditions: integer;
 	Ini: TMemIniFile;
 	firstRun: boolean;
+	DebugLevel: integer;
 	sBaseMaster: string;
+	SingleFile: boolean;
+	SinglePlugin: IInterface;
+	
+const
+	scaleFactor = Screen.PixelsPerInch / 96;
 	
 function Initialize: integer;
 begin
@@ -26,9 +32,21 @@ begin
 	beginLog('Crafter start');
 	PassTime(Time);
 	firstRun := false;
-	Patch := SelectPatch('Ygg_Crafting.esp');
+	SingleMode;
+	if not SingleFile then 
+		Patch := SelectPatch('Ygg_Crafting.esp')
+	else begin
+		temp := GetFileName(SinglePlugin);
+		temp := StringReplace(temp, '.esp', '', [rfReplaceAll]);
+		temp := StringReplace(temp, '.esl', '', [rfReplaceAll]);
+		temp := StringReplace(temp, '.esm', '', [rfReplaceAll]);
+		Patch := SelectPatch(temp+' Ygg_Crafting.esp');
+		LogMessage(2, 'Using ' + GetFileName(Patch) + ' due to single mode',YggLogCurrentMessages);
+	end;
 	BeginUpdate(Patch);
 	try
+		remove(GroupBySignature(Patch, 'COBJ'));
+		Cleanmasters(Patch);
 		AddmasterBySignature('ARMO');
 		AddmasterBySignature('AMMO');
 		AddmasterBySignature('WEAP');
@@ -38,7 +56,6 @@ begin
 	finally EndUpdate(Patch);
 	end;
 	IniProcess;
-	remove(GroupBySignature(Patch, 'COBJ'));
 	Randomize;
 	InitializeRecipes;
 	tempPerkFunctionSetup;
@@ -85,6 +102,119 @@ begin
 	Ini.UpdateFile;
 end;
 
+procedure SingleMode;
+var
+	YggIni: TMemIniFile;
+	temp: integer;
+	bool:boolean;
+begin
+	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
+	if YggIni.ReadInteger('Balance', 'bAskEvery', 0) = 0 then
+	begin
+		temp := MessageDlg('Do you want to be asked every time for single mode?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		if temp = mrAbort then
+			exit
+		else YggIni.WriteInteger('Balance', 'bAskEvery', temp);
+	end else temp := YggIni.ReadInteger('Balance', 'bAskEvery', 0);
+	if temp = 6 then bool := true
+	else bool := false;
+	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 OR 
+		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 6 OR 
+		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 7 OR 
+		bool then
+	begin
+		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		if temp = mrAbort then
+			exit
+		else YggIni.WriteInteger('Balance', 'bSingleMode', temp);
+	end else temp := YggIni.ReadInteger('Balance', 'bSingleMode', 0);
+	if temp = 6 then SingleFile := true
+	else SingleFile := false;
+	YggIni.UpdateFile;
+	if SingleFile then begin
+		SinglePlugin := Configure('Balance SinglePlugin mode');
+	end;
+end;
+
+function Configure(asCaption: String): IwbFile;
+var
+  frm: TForm;
+  lblPlugins: TLabel;
+  chkAddTags: TCheckBox;
+  chkLogging: TCheckBox;
+  cbbPlugins: TComboBox;
+  btnCancel: TButton;
+  btnOk: TButton;
+  i: Integer;
+  kFile: IwbFile;
+begin
+  Result := nil;
+
+  frm := TForm.Create(TForm(frmMain));
+
+  try
+    frm.Caption := asCaption;
+    frm.BorderStyle := bsToolWindow;
+    frm.ClientWidth := 234 * scaleFactor;
+    frm.ClientHeight := 90 * scaleFactor;
+    frm.Position := poScreenCenter;
+    frm.KeyPreview := True;
+
+    lblPlugins := TLabel.Create(frm);
+    lblPlugins.Parent := frm;
+    lblPlugins.Left := 16 * scaleFactor;
+    lblPlugins.Top := 10 * scaleFactor;
+    lblPlugins.Width := 200 * scaleFactor;
+    lblPlugins.Height := 16 * scaleFactor;
+    lblPlugins.Caption := 'Select file to balance:';
+    lblPlugins.AutoSize := False;
+
+    cbbPlugins := TComboBox.Create(frm);
+    cbbPlugins.Parent := frm;
+    cbbPlugins.Left := 16 * scaleFactor;
+    cbbPlugins.Top := 30 * scaleFactor;
+    cbbPlugins.Width := 200 * scaleFactor;
+    cbbPlugins.Height := 21 * scaleFactor;
+    cbbPlugins.Style := csDropDownList;
+    cbbPlugins.DoubleBuffered := True;
+    cbbPlugins.TabOrder := 2;
+
+	for i := 0 to Pred(FileCount) do
+	begin
+		kFile := FileByIndex(i);
+		if IsEditable(kFile) then
+			cbbPlugins.Items.Add(GetFileName(kFile));
+	end;
+
+    cbbPlugins.ItemIndex := Pred(cbbPlugins.Items.Count);
+
+    btnOk := TButton.Create(frm);
+    btnOk.Parent := frm;
+    btnOk.Left := 62 * scaleFactor;
+    btnOk.Top := 55 * scaleFactor;
+    btnOk.Width := 75 * scaleFactor;
+    btnOk.Height := 25 * scaleFactor;
+    btnOk.Caption := 'Run';
+    btnOk.Default := True;
+    btnOk.ModalResult := mrOk;
+    btnOk.TabOrder := 3;
+
+    btnCancel := TButton.Create(frm);
+    btnCancel.Parent := frm;
+    btnCancel.Left := 143 * scaleFactor;
+    btnCancel.Top := 55 * scaleFactor;
+    btnCancel.Width := 75 * scaleFactor;
+    btnCancel.Height := 25 * scaleFactor;
+    btnCancel.Caption := 'Abort';
+    btnCancel.ModalResult := mrAbort;
+    btnCancel.TabOrder := 4;
+
+    if frm.ShowModal = mrOk then
+      Result := FileByName(cbbPlugins.Text);
+  finally
+    frm.Free;
+  end;
+end;
 
 procedure gatherArmo;
 var
@@ -113,10 +243,14 @@ begin
 			if hasKeyword(CurrentRecord, 'Dummy') then continue;
 			if GetElementNativeValues(CurrentRecord, 'EITM') > 0 then continue;
 			if ISWinningOverride(CurrentRecord) then 
-			ArmoList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+			if SingleFile then 
+				if equals(GetFile(CurrentRecord), SinglePlugin) then 
+					ArmoList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+			else ArmoList.AddObject(EditorID(CurrentRecord), CurrentRecord);
 		end;
 	end;
 end;
+
 procedure gatherWeap;
 var
 	WeapPlugins: TStringList;
@@ -143,10 +277,14 @@ begin
 			if GetElementNativeValues(CurrentRecord, 'EITM') > 0 then continue;
 			if hasKeyword(CurrentRecord, 'Dummy') then continue;
 			if ISWinningOverride(CurrentRecord) then 
-			WeapList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+			if SingleFile then 
+				if equals(GetFile(CurrentRecord), SinglePlugin) then 
+					WeapList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+			else WeapList.AddObject(EditorID(CurrentRecord), CurrentRecord);
 		end;
 	end;
 end;
+
 procedure gatherAMMO;
 var
 	AMMOPlugins: TStringList;
@@ -173,7 +311,10 @@ begin
 			if hasKeyword(CurrentRecord, 'Dummy') then continue;
 			if GetElementNativeValues(CurrentRecord, 'EITM') > 0 then continue;
 			if ISWinningOverride(CurrentRecord) then 
-			AMMOList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+			if SingleFile then 
+				if equals(GetFile(CurrentRecord), SinglePlugin) then 
+					AMMOList.AddObject(EditorID(CurrentRecord), CurrentRecord);
+			else AMMOList.AddObject(EditorID(CurrentRecord), CurrentRecord);
 		end;
 	end;
 end;
