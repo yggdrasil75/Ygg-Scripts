@@ -16,7 +16,7 @@ begin
 	if length(item) = 0 then
 	begin
 		elementassign(copyRecord, -1, Nil, false);
-		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data');
+		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data',YggLogCurrentMessages);
 		result := default;
 	end else result := StrToFloat(item);
 end;
@@ -26,7 +26,7 @@ begin
 	if length(item) = 0 then
 	begin
 		elementassign(copyRecord, -1, Nil, false);
-		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data');
+		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data',YggLogCurrentMessages);
 		result := default;
 	end else result := StrToFloat(item);
 end;
@@ -36,7 +36,7 @@ var
 i: integer;
 temp: IInterface;
 begin
-	LogMessage(2,'Adding Masters with ' + sig);
+	LogMessage(2,'Adding Masters with ' + sig,YggLogCurrentMessages);
 	for i := 0 to fileCount - 1 do
 	begin
 		temp := FileByIndex(i);
@@ -105,7 +105,7 @@ var
 begin
   // basically we took record like 00049BB7, and by slicing 2 first symbols, we get its file index, in this case Skyrim (00)
   tmp := FileByLoadOrder(StrToInt('$' + Copy(id, 1, 2)));
-  LogMessage(0, 'assuming the following is the file of formid: ' + GetFileName(tmp) + ' ' + id);
+  LogMessage(0, 'assuming the following is the file of formid: ' + GetFileName(tmp) + ' ' + id,YggLogCurrentMessages);
 
   // file was found
   if Assigned(tmp) then begin
@@ -176,7 +176,7 @@ begin
 			Add(CurrentItem, 'KWDA', true);
 		end;
 		keywordRef := ElementAssign(KYWD, HighInteger, foobar, false);
-		LogMessage(1, 'currently adding ' + FullPath(keywordRef));
+		LogMessage(1, 'currently adding ' + FullPath(keywordRef),YggLogCurrentMessages);
 		SetEditValue(ElementByIndex(KYWD, IndexOf(KYWD, keywordRef)), GetEditValue(foobar));
 	end;
 end;
@@ -198,7 +198,7 @@ begin
 	end;
 	if not assigned(temp) then
 	begin
-		Logmessage(2,'there is a typo in a edid');
+		Logmessage(2,'there is a typo in a edid',YggLogCurrentMessages);
 	end;
 	result := temp;
 end;
@@ -275,10 +275,10 @@ begin
 	// add new item to list
 	newItem := ElementAssign(list, HighInteger, nil, false);
 	listName := Name(list);
-	LogMessage(0,'Current COBJ is ' + name(newItem));
+	LogMessage(0,'Current COBJ is ' + name(newItem),YggLogCurrentMessages);
 	if Length(listName) = 0 then 
 	begin
-		LogMessage(2,'Crafting Recipe doesnt have proper item list');
+		LogMessage(2,'Crafting Recipe doesnt have proper item list',YggLogCurrentMessages);
 		exit;
 	end;
 	// COBJ
@@ -288,7 +288,7 @@ begin
 		// set amount
 		SetElementEditValues(newItem, 'CNTO - Item\Count', amount);
 	end;
-	LogMessage(1,'item added');
+	LogMessage(1,'item added',YggLogCurrentMessages);
 	// remove nil records from list
 	removeInvalidEntries(list);
 
@@ -396,7 +396,7 @@ var
 	i1, i2: integer;
 	cg: IInterface;
 begin
-	LogMessage(1,'Signing file');
+	LogMessage(1,'Signing file',YggLogCurrentMessages);
     for i1 := FileCount - 1 downto 0 do
     begin
         if HasGroup(FileByIndex(i1), 'COBJ') then
@@ -523,7 +523,7 @@ begin
   end else Result := Trim(inputString);
 end;
 
-procedure LogMessage(level: integer; LogItem: string);
+procedure LogMessage(level: integer; LogItem: string;YggLogCurrentMessages: TStringList);
 var
 	currenttime: TDateTime;
 begin
@@ -566,7 +566,7 @@ var
 begin
 	m := TMemo(TForm(frmMain).FindComponent('mmoMessages'));
 	for i := Pred(m.Lines.Count) downto m.Lines.Count - MasterCount(Patch) do
-		logMessage(1, m.Lines[i]);
+		logMessage(1, m.Lines[i],YggLogCurrentMessages);
 end;
 
 end.
