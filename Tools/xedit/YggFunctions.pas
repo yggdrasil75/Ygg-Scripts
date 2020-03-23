@@ -428,6 +428,7 @@ procedure BeginLog(Who: String);
 var
 	Ini: TMemIniFile;
 	temp: String;
+	yggFile:THandle;
 begin
 	//AssignFile(YggLog, C_FName);
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
@@ -440,9 +441,10 @@ begin
 	C_FName := ScriptsPath + StringReplace(temp, '/', ' ',[rfReplaceAll]);
 	AddMessage(C_FName);
 	//FileCreate(C_FName);
-	FileCreate('Ygg.log');
+	//yggFile := FileCreate('Ygg.log');
+	//FileClose(yggFile);
 	//FileCreate(ScriptsPath + 'Ygg.log');
-	CreateDir('Ygg');
+	//CreateDir('Ygg');
 	//YggLogCurrentMessages.LoadFromFile(ScriptsPath + 'Ygg.log');
 end;
 
