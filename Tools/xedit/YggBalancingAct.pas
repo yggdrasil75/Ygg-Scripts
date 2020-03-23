@@ -65,6 +65,7 @@ begin
 			for i := length(SPM) - 1 downto 0 do begin
 				AddMasterIfMissing(Patch,SPM[i]);
 			end;
+			AddMasterIfMissing(Patch, GetFileName(SinglePlugin));
 		end;
 	finally EndUpdate(Patch);
 	end;
