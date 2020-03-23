@@ -632,6 +632,7 @@ var
 	weightedAverage,WeightCobj,WeightExisting,Weight:double;
 	temp: double;
 	AddIndex,VaritionDiff:integer;
+	breaker:integer;
 begin
 	LogMessage(1,'Weighing: ' + Name(item),YggLogCurrentMessages);
 	//estimating weight
@@ -694,6 +695,7 @@ begin
 	begin
 		temp := weightedAverage * (random(0.4) + 0.5);
 	end;
+	breaker := 0;
 	while temp > weightedAverage + VaritionDiff do begin
 		if temp > weightedAverage then
 		begin
@@ -702,7 +704,10 @@ begin
 		begin
 			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
+		if breaker > 5 then break;
+		inc(breaker);
 	end;
+	breaker := 0;
 	while temp < weightedAverage - VaritionDiff do begin
 		if temp > weightedAverage then
 		begin
@@ -711,6 +716,8 @@ begin
 		begin
 			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
+		if breaker > 5 then break;
+		inc(breaker);
 	end;
 	LogMessage(1,'randomized weight',YggLogCurrentMessages);
 	SetElementEditValues(item, 'Data\Weight', FloatToStr(temp));
@@ -854,6 +861,7 @@ end;
 function BalanceRandomizerInt(original:int;existing:float;VaritionDiff:float):int;
 var
 	temp:double;
+	breaker:integer;
 begin
 	if Original > existing then
 	begin
@@ -865,6 +873,7 @@ begin
 	begin
 		temp := existing * (random(0.4) + 0.8);
 	end;
+	breaker := 0;
 	while temp > existing + VaritionDiff do begin
 		if temp > existing then
 		begin
@@ -873,7 +882,10 @@ begin
 		begin
 			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
+		if breaker > 5 then break;
+		inc(breaker);
 	end;
+	breaker := 0;
 	while temp < existing - VaritionDiff do begin
 		if temp > existing then
 		begin
@@ -882,6 +894,8 @@ begin
 		begin
 			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
+		if breaker > 5 then break;
+		inc(breaker);
 	end;
 	result := floor(temp);
 end;
@@ -889,6 +903,7 @@ end;
 function BalanceRandomizerfloat(original,existing:float;VaritionDiff:float):float;
 var
 	temp: double;
+	breaker:integer;
 begin
 	if Original > existing then
 	begin
@@ -900,6 +915,7 @@ begin
 	begin
 		temp := existing * (random(0.4) + 0.8);
 	end;
+	breaker := 0;
 	while temp > existing + VaritionDiff do begin
 		if temp > existing then
 		begin
@@ -908,7 +924,10 @@ begin
 		begin
 			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
+		if breaker > 5 then break;
+		inc(breaker);
 	end;
+	breaker := 0;
 	while temp < existing - VaritionDiff do begin
 		if temp > existing then
 		begin
@@ -917,6 +936,8 @@ begin
 		begin
 			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
+		if breaker > 5 then break;
+		inc(breaker);
 	end;
 	result := temp;
 end;
