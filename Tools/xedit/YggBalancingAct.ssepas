@@ -524,7 +524,7 @@ begin
 	if WeightExisting = 0 then WeightExisting := WeightCobj;
 	weight := TryStrToFloat(GetElementEditValues(item, 'DATA\Weight'),0.0);
 	LogMessage(1, 'the estimated weight based on cobj is: ' + FloatToStr(WeightCobj) + ' the estimated weight based on included items is: ' + FloatToStr(WeightExisting) + 'the current weight is: ' + FloatToStr(weight),YggLogCurrentMessages);
-	if signature(item) = 'AMMO' then weightedAverage := WeightCobj * 0.7 + WeightExisting * 0.3;
+	if signature(item) = 'AMMO' then weightedAverage := WeightCobj * 0.7 + WeightExisting * 0.3
 	else weightedAverage := WeightCobj * 0.3 + WeightExisting * 0.7;
 	if weightedAverage = 0 then weightedAverage := weight;
 	VaritionDiff := 7;
