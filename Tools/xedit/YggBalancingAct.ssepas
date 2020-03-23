@@ -89,24 +89,25 @@ end;
 procedure SingleMode;
 var
 	YggIni: TMemIniFile;
-	temp: integer;
-	bool:boolean;
+	temp,tempEvery: integer;
+	bEvery:boolean;
 begin
 	YggIni := TIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if YggIni.ReadInteger('Balance', 'bAskEvery', 0) = 0 then
 	begin
-		temp := MessageDlg('Do you want to be asked every time for single mode?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		tempEvery := MessageDlg('Do you want to be asked every time for single mode?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		if tempEvery = mrAbort then
+			exit
+		else YggIni.WriteInteger('Balance', 'bAskEvery', tempEvery);
+	end else tempEvery := YggIni.ReadInteger('Balance', 'bAskEvery', 0);
+	if tempEvery = 7 then bEvery := false
+	else bEvery := true;
+	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0  then begin
+		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
 		if temp = mrAbort then
 			exit
-		else YggIni.WriteInteger('Balance', 'bAskEvery', temp);
-	end else temp := YggIni.ReadInteger('Balance', 'bAskEvery', 0);
-	if temp = 7 then bool := true
-	else bool := false;
-	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 OR 
-		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 6 OR 
-		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 7 OR 
-		bool then
-	begin
+		else YggIni.WriteInteger('Balance', 'bSingleMode', temp);
+	end else if bEvery then begin
 		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
 		if temp = mrAbort then
 			exit
@@ -496,7 +497,7 @@ begin
 	averager('DATA\Weight',ArmoWeight);
 	
 	LogMessage(1,'processing armo Value',YggLogCurrentMessages);
-	averager('DATA\Weight',ArmoValue);
+	averager('DATA\Value',ArmoValue);
 	
 end;
 
@@ -655,7 +656,7 @@ end;
 Procedure Weight(item:IInterface;address:string);
 var
 	i,l,j:integer;
-	cobj: IInterface;
+	path,cobj: IInterface;
 	weightedAverage,WeightCobj,WeightExisting,Weight:double;
 	temp: double;
 	AddIndex,VaritionDiff:integer;
