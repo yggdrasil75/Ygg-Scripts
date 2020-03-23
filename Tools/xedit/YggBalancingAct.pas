@@ -603,7 +603,7 @@ begin
 	Value := tryStrToInt(GetElementEditValues(item, 'DATA\Value'),0.0);
 	LogMessage(1, 'the estimated Value based on cobj is: ' + FloatToStr(ValueCobj) + ' the estimated Value based on included items is: ' + FloatToStr(ValueExisting) + 'the current Value is: ' + FloatToStr(Value),YggLogCurrentMessages);
 	
-	if signature(item) = 'AMMO' then ValueAverage := ValueCobj * 0.7 + valueExisting * 0.3;
+	if signature(item) = 'AMMO' then ValueAverage := ValueCobj * 0.7 + valueExisting * 0.3
 	else ValueAverage := ValueCobj * 0.3 + valueExisting * 0.7;
 	if ValueAverage = 0 then ValueAverage := Value;
 	
