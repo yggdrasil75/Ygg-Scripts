@@ -409,10 +409,12 @@ begin
 						WeapReach.AddObject(CurrentAddress, CurrentItem);
 					if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
 						WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
-						WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
-						WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
+					if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Min'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
+							WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
+							WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
+					end;
 				end;
 			end;
 		end;
@@ -814,22 +816,23 @@ begin
 		else WeapCrdtDam.Objects[WeapCrdtDam.IndexOf('averageofall')];
 	tempi := BalanceRandomizerInt(original,existing,5);
 	SetElementEditValues(item, 'CRDT\Damage', IntToStr(temp));
-	
-	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Min'), 1.0);
-		AddIndex := WeapRangeMin.IndexOf(address);
-		if not AddIndex < 0 then
-			existing := WeapRangeMin.objects[AddIndex]
-		else WeapRangeMin.Objects[WeapRangeMin.IndexOf('averageofall')];
-	temp := BalanceRandomizerfloat(original,existing,500);
-	SetElementEditValues(item, 'DNAM\Range Min', FloatToStr(temp));
-	
-	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Max'), 1.0);
-		AddIndex := WeapRangeMax.IndexOf(address);
-		if not AddIndex < 0 then
-			existing := WeapRangeMax.objects[AddIndex]
-		else WeapRangeMax.Objects[WeapRangeMax.IndexOf('averageofall')];
-	temp := BalanceRandomizerfloat(original,existing,500);
-	SetElementEditValues(item, 'DNAM\Range Max', FloatToStr(temp));
+	if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Min'), 0) = 0 then begin
+		original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Min'), 1.0);
+			AddIndex := WeapRangeMin.IndexOf(address);
+			if not AddIndex < 0 then
+				existing := WeapRangeMin.objects[AddIndex]
+			else WeapRangeMin.Objects[WeapRangeMin.IndexOf('averageofall')];
+		temp := BalanceRandomizerfloat(original,existing,500);
+		SetElementEditValues(item, 'DNAM\Range Min', FloatToStr(temp));
+		
+		original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Max'), 1.0);
+			AddIndex := WeapRangeMax.IndexOf(address);
+			if not AddIndex < 0 then
+				existing := WeapRangeMax.objects[AddIndex]
+			else WeapRangeMax.Objects[WeapRangeMax.IndexOf('averageofall')];
+		temp := BalanceRandomizerfloat(original,existing,500);
+		SetElementEditValues(item, 'DNAM\Range Max', FloatToStr(temp));
+	end;
 end;
 
 procedure AmmoProcess(item:IInterface;address:string);
