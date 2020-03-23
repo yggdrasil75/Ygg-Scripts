@@ -86,6 +86,16 @@ begin
 	LogMessage(3,'Completed',YggLogCurrentMessages);
 end;
 
+procedure BalancerMode;
+begin
+	//balancer mode will be for someone making a new balancing mod. when used, fixed values will be used from the ini instead of dynamic
+end;
+
+procedure modDevMode;
+begin
+	//similar to single mode, except instead of making a patch, it directly edits the plugin. needs to confirm editability of plugin before processing.
+end;
+
 procedure SingleMode;
 var
 	YggIni: TMemIniFile;
@@ -290,7 +300,6 @@ begin
 	end;
 	
 	//finalize lists
-	//finalize armolists
 	FinalizeArmo;
 	FinalizeWeap;
 	FinalizeAmmo;
@@ -390,7 +399,7 @@ begin
 							WeapReach.AddObject(CurrentAddress, CurrentItem);
 						if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
 							WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
-					if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Min'),0) = 0 then begin
+					if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Max'),0) = 0 then begin
 						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
 							WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
 						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
@@ -467,53 +476,55 @@ end;
 procedure FinalizeArmo;
 begin
 	LogMessage(1,'processing ratings',YggLogCurrentMessages);
-	averager('DNAM',ArmoRating);
+	averager('DNAM',ArmoRating,Armo);
 	
 	LogMessage(1,'processing Armo Weight',YggLogCurrentMessages);
-	averager('DATA\Weight',ArmoWeight);
+	averager('DATA\Weight',ArmoWeight,Armo);
 	
 	LogMessage(1,'processing armo Value',YggLogCurrentMessages);
-	averager('DATA\Value',ArmoValue);
+	averager('DATA\Value',ArmoValue,Armo);
 	
 end;
 
 procedure FinalizeWeap;
 begin
 	LogMessage(1,'processing weap Damage',YggLogCurrentMessages);
-	averager('DATA\Damage',WeapDamage);
+	averager('DATA\Damage',WeapDamage,Weap);
 	LogMessage(1,'processing weap Weight',YggLogCurrentMessages);
-	averager('DATA\Weight',WeapWeight);
+	averager('DATA\Weight',WeapWeight,Weap);
 	LogMessage(1,'processing weap Value',YggLogCurrentMessages);
-	averager('DATA\Value',WeapValue);
+	averager('DATA\Value',WeapValue,Weap);
 	LogMessage(1,'processing weap speed',YggLogCurrentMessages);
-	averager('DNAM\Speed',WeapSpeed);
+	averager('DNAM\Speed',WeapSpeed,Weap);
 	LogMessage(1,'processing weap reach',YggLogCurrentMessages);
-	averager('DNAM\Reach',WeapReach);
+	averager('DNAM\Reach',WeapReach,Weap);
 	LogMessage(1,'processing weap critical damage',YggLogCurrentMessages);
-	averager('CRDT\Damage',WeapCrdtDam);
+	averager('CRDT\Damage',WeapCrdtDam,Weap);
 	LogMessage(1,'processing weap minimum range',YggLogCurrentMessages);
-	averager('DNAM\Range Min',WeapRangeMin);
+	averager('DNAM\Range Min',WeapRangeMin,Weap);
 	LogMessage(1,'processing weap maximum range',YggLogCurrentMessages);
-	averager('DNAM\Range Max',WeapRangeMax);
+	averager('DNAM\Range Max',WeapRangeMax,Weap);
 end;
 
 procedure FinalizeAmmo;
 begin
 	LogMessage(1,'processing Damage of ammos',YggLogCurrentMessages);
-	averager('DATA\Damage',AmmoDamage);
+	averager('DATA\Damage',AmmoDamage,Ammo);
 	
 	LogMessage(1,'processing Ammo Weight',YggLogCurrentMessages);
-	averager('DATA\Weight',AmmoWeight);
+	averager('DATA\Weight',AmmoWeight,Ammo);
 	
 	LogMessage(1,'processing ammo value',YggLogCurrentMessages);
-	averager('DATA\Value',AmmoValue);
+	averager('DATA\Value',AmmoValue,Ammo);
 	
 end;
 
-procedure averager(Path:string; out List:TStringList);
+procedure averager(Path:string; out List:TStringList;backup: TStringList);
 var
 	i,listcount,j:integer;
 	TempListA,TempListB:TStringList;
+	backupcount,j:integer;
+	TempbackupA,TempbackupB:TStringList;
 	ratings,ara,inda:string;
 	rating:double;
 	CompleteAverage:double;
@@ -545,6 +556,31 @@ begin
 	if listcount > 0 then
 		CompleteAverage := CompleteAverage / listcount
 	else begin
+		backupcount := backup.count;
+		TempbackupA := TStringbackup.Create;
+		for i := backupcount - 1 downto 0 do begin
+			ara := backup.Strings[i];
+			inda := TempbackupA.IndexOf(ara);
+			ratings := GetElementEditValues(ObjectToElement(backup.objects[i]), Path);
+			if inda < 0 then
+				TempbackupB := TStringbackup.Create
+			else
+				TempbackupB := TempbackupA.objects[inda];
+			TempbackupB.Add(ratings);
+			TempbackupA.AddObject(ara,TempbackupB);
+		end;
+		backup.clear;
+		for i := TempbackupA.Count - 1 downto 0 do begin
+			TempbackupB := TempbackupA.objects[i];
+			rating := 0;
+			for j := TempbackupB.count - 1 downto 0 do begin
+				rating := rating + TryStrToFloat(TempbackupB.strings[j],5.0);
+			end;
+			rating := rating / TempbackupB.count;
+			backup.AddObject(TempbackupA.strings[i],rating);
+			completeAverage := CompleteAverage + Rating;
+		end;
+	
 		CompleteAverage := 0;
 		LogMessage(3, 'List contained no items, path: ' + path,YggLogCurrentMessages);
 	end;
@@ -632,10 +668,10 @@ end;
 Procedure Weight(item:IInterface;address:string);
 var
 	i,l,j:integer;
-	path,cobj: IInterface;
+	cobjitem,path,cobj: IInterface;
 	weightedAverage,WeightCobj,WeightExisting,Weight:double;
 	temp: double;
-	AddIndex,VaritionDiff:integer;
+	Amount,AddIndex,VaritionDiff:integer;
 	breaker:integer;
 begin
 	LogMessage(1,'Weighing: ' + Name(item),YggLogCurrentMessages);
@@ -733,8 +769,8 @@ var
 	ValueAverage,ValueCobj,ValueExisting:double;
 	Value:int;
 	temp: double;
-	AddIndex:integer;
-	path,cobj: IInterface;
+	Amount,AddIndex:integer;
+	cobjitem,path,cobj: IInterface;
 begin
 	LogMessage(1,'valuing: ' + Name(item),YggLogCurrentMessages);
 	
@@ -801,7 +837,6 @@ begin
 		if not AddIndex < 0 then
 			existing := WeapSpeed.objects[AddIndex]
 		else WeapSpeed.Objects[WeapSpeed.IndexOf('averageofall')];
-	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
 	temp := BalanceRandomizerfloat(original,existing,0.5);
 	SetElementEditValues(item, 'DNAM\Speed', FloatToStr(temp));
 	
