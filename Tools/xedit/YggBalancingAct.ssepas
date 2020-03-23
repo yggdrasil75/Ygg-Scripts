@@ -53,20 +53,20 @@ begin
 		remove(GroupBySignature(Patch, 'ARMO'));
 		remove(GroupBySignature(Patch, 'AMMO'));
 		Cleanmasters(Patch);
-		if not SingleFile then begin
+		//if not SingleFile then begin
 			AddMasterBySignature('ARMO');
 			AddMasterBySignature('WEAP');
 			AddMasterBySignature('AMMO');
 			AddMasterBySignature('KWDA');
 			AddMasterBySignature('ARMA');
-		end else begin
+		{end else begin
 			SPM := TStringList.Create;
 			ReportRequiredMasters(SinglePlugin, SPM, true,true);
 			for i := length(SPM) - 1 downto 0 do begin
 				AddMasterIfMissing(Patch,SPM[i]);
 			end;
 			AddMasterIfMissing(Patch, GetFileName(SinglePlugin));
-		end;
+		end;}
 	finally EndUpdate(Patch);
 	end;
 	MasterLines;
