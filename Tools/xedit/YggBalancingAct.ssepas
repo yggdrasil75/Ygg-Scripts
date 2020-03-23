@@ -44,7 +44,7 @@ begin
 		temp := StringReplace(temp, '.esp', '', [rfReplaceAll]);
 		temp := StringReplace(temp, '.esl', '', [rfReplaceAll]);
 		temp := StringReplace(temp, '.esm', '', [rfReplaceAll]);
-		Patch := SelectPatch(temp+'Ygg_Rebalance.esp');
+		Patch := SelectPatch(temp+' Ygg_Rebalance.esp');
 		LogMessage(2, 'Using ' + GetFileName(Patch) + ' due to single mode',YggLogCurrentMessages);
 	end;
 	BeginUpdate(Patch);
@@ -90,9 +90,22 @@ procedure SingleMode;
 var
 	YggIni: TMemIniFile;
 	temp: integer;
+	bool:boolean;
 begin
 	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
-	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 then
+	if YggIni.ReadInteger('Balance', 'bAskEvery', 0) = 0 then
+	begin
+		temp := MessageDlg('Do you want to be asked every time for single mode?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		if temp = mrAbort then
+			exit
+		else YggIni.WriteInteger('Balance', 'bAskEvery', temp);
+	end else temp := YggIni.ReadInteger('Balance', 'bAskEvery', 0);
+	if temp = 6 then bool := true
+	else bool := false;
+	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 OR 
+		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 6 OR 
+		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 7 OR 
+		bool then
 	begin
 		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
 		if temp = mrAbort then
@@ -431,28 +444,15 @@ begin
 			Keywords := ElementByPath(CurrentItem, 'KWDA');
 			for k := ElementCount(Keywords) - 1 downto 0 do begin
 				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
-				if ContainsText(CurrentKeyword, 'material') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
-					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
-					CurrentAddress := CurrentKeyword+CurrentBOD2;
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
-						AmmoWeight.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
-						AmmoDamage.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
-						AmmoValue.AddObject(CurrentAddress, CurrentItem);
-				end;
-				if ContainsText(CurrentKeyword, 'materiel') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
-					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
-					CurrentAddress := CurrentKeyword+CurrentBOD2;
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
-						AmmoWeight.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
-						AmmoDamage.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
-						AmmoValue.AddObject(CurrentAddress, CurrentItem);
-				end;
+				LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
+				CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
+				CurrentAddress := CurrentKeyword+CurrentBOD2;
+				if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+					AmmoWeight.AddObject(CurrentAddress, CurrentItem);
+				if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
+					AmmoDamage.AddObject(CurrentAddress, CurrentItem);
+				if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+					AmmoValue.AddObject(CurrentAddress, CurrentItem);
 			end;
 		end;
 	end;
@@ -500,7 +500,7 @@ begin
 	averager('DATA\Weight',AmmoWeight);
 	
 	LogMessage(1,'processing ammo value',YggLogCurrentMessages);
-	averager('DATA\Weight',AmmoValue);
+	averager('DATA\Value',AmmoValue);
 	
 end;
 
