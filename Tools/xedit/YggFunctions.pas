@@ -436,10 +436,10 @@ begin
 	ini.WriteInteger('BaseData', 'DebugLevel', 1);
 	//Rewrite(YggLog);
 	//writeln(YggLog, who);
-	temp := 'Ygglog' + DateTimeToStr(now) + '.log';
-	temp := StringReplace(temp, ':', ' ',[rfReplaceAll]);
-	C_FName := ScriptsPath + StringReplace(temp, '/', ' ',[rfReplaceAll]);
-	AddMessage(C_FName);
+	//temp := 'Ygglog' + DateTimeToStr(now) + '.log';
+	//temp := StringReplace(temp, ':', ' ',[rfReplaceAll]);
+	//C_FName := ScriptsPath + StringReplace(temp, '/', ' ',[rfReplaceAll]);
+	//AddMessage(C_FName);
 	//FileCreate(C_FName);
 	//yggFile := FileCreate('Ygg.log');
 	//FileClose(yggFile);
