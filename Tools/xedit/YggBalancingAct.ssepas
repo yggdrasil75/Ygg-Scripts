@@ -47,16 +47,16 @@ begin
 	InitializeLists;
 	
 	//processing
-	LogMessage(1,'Processing Section Start');
+	LogMessage(1,'Processing Section Start',YggLogCurrentMessages);
 	BalancingProcess;
-	LogMessage(1,'Processing Section Done');
+	LogMessage(1,'Processing Section Done',YggLogCurrentMessages);
 	
 	
 	//finalizing
 	AddMessage('---Balancing act ended---');
 	Sign;
 	AddMessage('---Tight rope removed---');
-	LogMessage(3,'Completed');
+	LogMessage(3,'Completed',YggLogCurrentMessages);
 end;
 
 procedure IniProcess;
@@ -78,7 +78,7 @@ var
 	CurrentFile,CurrentGroup,CurrentItem:IInterface;
 	BNAM:IInterface;
 begin
-	LogMessage(1,'Gathering Lists');
+	LogMessage(1,'Gathering Lists',YggLogCurrentMessages);
 	
 	Recipes := TStringList.Create;
 	Recipes.Duplicates := DupIgnore;
@@ -117,22 +117,22 @@ begin
 				if IsWinningOverride(CurrentItem) then Recipes.AddObject(EditorID(WinningOverride(LinksTo(ElementByPath(CurrentItem, 'CNAM')))), CurrentItem);
 			end;
 		end;
-		LogMessage(1, 'Checked COBJ In ' + GetFileName(CurrentFile));
+		LogMessage(1, 'Checked COBJ In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		//armo
 		if HasGroup(CurrentFile, 'ARMO') then begin
 			AddArmo(CurrentFile);
 		end;
-		LogMessage(1, 'Checked ARMO In ' + GetFileName(CurrentFile));
+		LogMessage(1, 'Checked ARMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		//weap
 		if HasGroup(CurrentFile, 'WEAP') then begin
 			AddWeap(CurrentFile);
 		end;
-		LogMessage(1, 'Checked WEAP In ' + GetFileName(CurrentFile));
+		LogMessage(1, 'Checked WEAP In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		//ammo
 		if HasGroup(CurrentFile, 'AMMO') then begin
 			AddAmmo(CurrentFile);
 		end;
-		LogMessage(1, 'Checked AMMO In ' + GetFileName(CurrentFile));
+		LogMessage(1, 'Checked AMMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 	end;
 	
 	//finalize lists
@@ -156,7 +156,7 @@ begin
 		if ContainsText(LowerCase(Name(CurrentItem)), 'skin') then continue;
 		if hasKeyword(CurrentItem, 'Dummy') then continue;
 		if IsWinningOverride(CurrentItem) then begin
-			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
 			//for processing
 			Armo.AddObject(EditorID(CurrentItem), CurrentItem);
 			//for calculations
@@ -165,7 +165,7 @@ begin
 			for k := ElementCount(Keywords) - 1 downto 0 do begin
 				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
 				if ContainsText(CurrentKeyword, 'material') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByIndex(ElementByPath(CurrentItem, 'BOD2\First Person Flags'),0));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
 					if assigned(GetElementEditValues(CurrentItem, 'DNAM')) then
@@ -176,7 +176,7 @@ begin
 						ArmoValue.AddObject(CurrentAddress, CurrentItem);
 				end;
 				if ContainsText(CurrentKeyword, 'materiel') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByIndex(ElementByPath(CurrentItem, 'BOD2\First Person Flags'),0));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
 					if assigned(GetElementEditValues(CurrentItem, 'DNAM')) then
@@ -204,7 +204,7 @@ begin
 		if GetIsDeleted(CurrentItem) then continue;
 		if hasKeyword(CurrentItem, 'Dummy') then continue;
 		if IsWinningOverride(CurrentItem) then begin
-			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
 			//for processing
 			Weap.AddObject(EditorID(CurrentItem), CurrentItem);
 			//for calculations
@@ -213,7 +213,7 @@ begin
 			for k := ElementCount(Keywords) - 1 downto 0 do begin
 				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
 				if ContainsText(CurrentKeyword, 'material') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
 					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
@@ -234,7 +234,7 @@ begin
 						WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
 				end;
 				if ContainsText(CurrentKeyword, 'materiel') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
 					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
@@ -272,7 +272,7 @@ begin
 		if GetIsDeleted(CurrentItem) then continue;
 		if hasKeyword(CurrentItem, 'Dummy') then continue;
 		if IsWinningOverride(CurrentItem) then begin
-			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
 			//for processing
 			Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
 			//for calculations
@@ -281,7 +281,7 @@ begin
 			for k := ElementCount(Keywords) - 1 downto 0 do begin
 				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
 				if ContainsText(CurrentKeyword, 'material') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
 					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
@@ -292,7 +292,7 @@ begin
 						AmmoValue.AddObject(CurrentAddress, CurrentItem);
 				end;
 				if ContainsText(CurrentKeyword, 'materiel') then begin
-					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
 					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
@@ -309,46 +309,46 @@ end;
 
 procedure FinalizeArmo;
 begin
-	LogMessage(1,'processing ratings');
+	LogMessage(1,'processing ratings',YggLogCurrentMessages);
 	averager('DNAM',ArmoRating);
 	
-	LogMessage(1,'processing Armo Weight');
+	LogMessage(1,'processing Armo Weight',YggLogCurrentMessages);
 	averager('DATA\Weight',ArmoWeight);
 	
-	LogMessage(1,'processing armo Value');
+	LogMessage(1,'processing armo Value',YggLogCurrentMessages);
 	averager('DATA\Weight',ArmoValue);
 	
 end;
 
 procedure FinalizeWeap;
 begin
-	LogMessage(1,'processing weap Damage');
+	LogMessage(1,'processing weap Damage',YggLogCurrentMessages);
 	averager('DATA\Damage',WeapDamage);
-	LogMessage(1,'processing weap Weight');
+	LogMessage(1,'processing weap Weight',YggLogCurrentMessages);
 	averager('DATA\Weight',WeapWeight);
-	LogMessage(1,'processing weap Value');
+	LogMessage(1,'processing weap Value',YggLogCurrentMessages);
 	averager('DATA\Value',WeapValue);
-	LogMessage(1,'processing weap speed');
+	LogMessage(1,'processing weap speed',YggLogCurrentMessages);
 	averager('DNAM\Speed',WeapSpeed);
-	LogMessage(1,'processing weap reach');
+	LogMessage(1,'processing weap reach',YggLogCurrentMessages);
 	averager('DNAM\Reach',WeapReach);
-	LogMessage(1,'processing weap critical damage');
+	LogMessage(1,'processing weap critical damage',YggLogCurrentMessages);
 	averager('CRDT\Damage',WeapCrdtDam);
-	LogMessage(1,'processing weap minimum range');
+	LogMessage(1,'processing weap minimum range',YggLogCurrentMessages);
 	averager('DNAM\Range Min',WeapRangeMin);
-	LogMessage(1,'processing weap maximum range');
+	LogMessage(1,'processing weap maximum range',YggLogCurrentMessages);
 	averager('DNAM\Range Max',WeapRangeMax);
 end;
 
 procedure FinalizeAmmo;
 begin
-	LogMessage(1,'processing Damage of ammos');
+	LogMessage(1,'processing Damage of ammos',YggLogCurrentMessages);
 	averager('DATA\Damage',AmmoDamage);
 	
-	LogMessage(1,'processing Ammo Weight');
+	LogMessage(1,'processing Ammo Weight',YggLogCurrentMessages);
 	averager('DATA\Weight',AmmoWeight);
 	
-	LogMessage(1,'processing ammo value');
+	LogMessage(1,'processing ammo value',YggLogCurrentMessages);
 	averager('DATA\Weight',AmmoValue);
 	
 end;
@@ -389,7 +389,7 @@ begin
 		CompleteAverage := CompleteAverage / listcount
 	else begin
 		CompleteAverage := 0;
-		LogMessage(3, 'List contained no items, path: ' + path);
+		LogMessage(3, 'List contained no items, path: ' + path,YggLogCurrentMessages);
 	end;
 	List.AddObject('averageofall',CompleteAverage);
 	TempListA.free;
@@ -405,7 +405,7 @@ begin
 	for i := Armo.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Armo.objects[i]);
 		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
-		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem),YggLogCurrentMessages);
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
 			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
@@ -423,7 +423,7 @@ begin
 	for i := Weap.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Weap.Objects[i]);
 		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
-		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem),YggLogCurrentMessages);
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
 			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
@@ -441,7 +441,7 @@ begin
 	for i := Ammo.Count - 1 downto 0 do begin
 		CurrentItem := ObjectToElement(Ammo.Objects[i]);
 		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
-		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem),YggLogCurrentMessages);
 		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for j := ElementCount(Keywords) - 1 downto 0 do begin
 			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
@@ -462,7 +462,7 @@ var
 	temp,OriginalRating,AverageRating: double;
 	AddIndex:integer;
 begin
-	LogMessage(1,'Rating: ' + Name(item));
+	LogMessage(1,'Rating: ' + Name(item),YggLogCurrentMessages);
 	OriginalRating := TryStrToFloat(GetElementEditValues(item, 'DNAM'),0);
 	AddIndex := ArmoRating.IndexOf(address);
 	if not AddIndex < 0 then
@@ -480,7 +480,7 @@ var
 	temp: double;
 	AddIndex,VaritionDiff:integer;
 begin
-	LogMessage(1,'Weighing: ' + Name(item));
+	LogMessage(1,'Weighing: ' + Name(item),YggLogCurrentMessages);
 	//estimating weight
 	
 	if signature(item) = 'ARMO' then begin
@@ -505,7 +505,7 @@ begin
 	if not AddIndex < 0 then begin
 		cobj := Recipes.objects[AddIndex]
 		path := ElementByPath(cobj, 'Items');
-		LogMessage(1,'processing cobj for item: ' + name(item));
+		LogMessage(1,'processing cobj for item: ' + name(item),YggLogCurrentMessages);
 		l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
 		if assigned(ElementByPath(cobj, 'COCT')) then begin
 			for i := l downto 0 do begin
@@ -523,7 +523,7 @@ begin
 	end else WeightCobj := WeightExisting;
 	if WeightExisting = 0 then WeightExisting := WeightCobj;
 	weight := TryStrToFloat(GetElementEditValues(item, 'DATA\Weight'),0.0);
-	LogMessage(1, 'the estimated weight based on cobj is: ' + FloatToStr(WeightCobj) + ' the estimated weight based on included items is: ' + FloatToStr(WeightExisting) + 'the current weight is: ' + FloatToStr(weight));
+	LogMessage(1, 'the estimated weight based on cobj is: ' + FloatToStr(WeightCobj) + ' the estimated weight based on included items is: ' + FloatToStr(WeightExisting) + 'the current weight is: ' + FloatToStr(weight),YggLogCurrentMessages);
 	if signature(item) = 'AMMO' then weightedAverage := WeightCobj * 0.7 + WeightExisting * 0.3;
 	else weightedAverage := WeightCobj * 0.3 + WeightExisting * 0.7;
 	if weightedAverage = 0 then weightedAverage := weight;
@@ -558,7 +558,7 @@ var
 	temp: double;
 	AddIndex:integer;
 begin
-	LogMessage(1,'valuing: ' + Name(item));
+	LogMessage(1,'valuing: ' + Name(item),YggLogCurrentMessages);
 	
 	if signature(item) = 'ARMO' then begin
 		AddIndex := Armovalue.IndexOf(address);
@@ -582,7 +582,7 @@ begin
 	if not AddIndex < 0 then begin
 		cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
 		path := ElementByPath(cobj, 'Items');
-		LogMessage(1,'processing cobj for item: ' + name(item));
+		LogMessage(1,'processing cobj for item: ' + name(item),YggLogCurrentMessages);
 		l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
 		if assigned(ElementByPath(cobj, 'COCT')) then begin
 			for i := l downto 0 do begin
@@ -601,7 +601,7 @@ begin
 	if valueExisting = 0 then valueExisting := ValueCobj;
 	
 	Value := tryStrToInt(GetElementEditValues(item, 'DATA\Value'),0.0);
-	LogMessage(1, 'the estimated Value based on cobj is: ' + FloatToStr(ValueCobj) + ' the estimated Value based on included items is: ' + FloatToStr(ValueExisting) + 'the current Value is: ' + FloatToStr(Value));
+	LogMessage(1, 'the estimated Value based on cobj is: ' + FloatToStr(ValueCobj) + ' the estimated Value based on included items is: ' + FloatToStr(ValueExisting) + 'the current Value is: ' + FloatToStr(Value),YggLogCurrentMessages);
 	
 	if signature(item) = 'AMMO' then ValueAverage := ValueCobj * 0.7 + valueExisting * 0.3;
 	else ValueAverage := ValueCobj * 0.3 + valueExisting * 0.7;
@@ -617,7 +617,7 @@ var
 	originali,tempi: int;
 	AddIndex:integer;
 begin
-	LogMessage(1,'sharpening: ' + Name(item));
+	LogMessage(1,'sharpening: ' + Name(item),YggLogCurrentMessages);
 	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Speed'), 1.0);
 		AddIndex := WeapSpeed.IndexOf(address);
 		if not AddIndex < 0 then
@@ -674,7 +674,7 @@ var
 	originali,tempi: int;
 	AddIndex:integer;
 begin
-	LogMessage(1,'firing: ' + Name(item));
+	LogMessage(1,'firing: ' + Name(item),YggLogCurrentMessages);
 	original := tryStrToFloat(GetElementEditValues(item, 'DATA\Damage'), 1.0);
 		AddIndex := AMMODamage.IndexOf(address);
 		if not AddIndex < 0 then
