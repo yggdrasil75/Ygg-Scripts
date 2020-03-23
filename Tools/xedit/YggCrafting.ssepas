@@ -1,7 +1,7 @@
 unit YggCrafting;
 uses YggFunctions;
 var
-	Patch, itemRecord: IInterface;
+	Patch, CurrentItem: IInterface;
 	HashedList: THashedStringList;
 	Materials, MaterialList, Recipes, TempPerkListExtra: TStringList;
 	ArmoList,WeapList,AMMOList: TStringList;
@@ -13,7 +13,7 @@ var
 function Initialize: integer;
 begin
 	result := CraftingInit;
-	Processing;
+	CraftingProcessing;
 	CraftingFinal;
 end;
 
@@ -23,11 +23,10 @@ var
 	BeginTime, EndTime: TDateTime;
 begin
 	BeginTime := Time;
-	beginLog('Leveled List start');
+	beginLog('Crafter start');
 	PassTime(Time);
 	firstRun := false;
 	Patch := SelectPatch('Ygg_Crafting.esp');
-	PassFile(Patch);
 	BeginUpdate(Patch);
 	try
 		AddmasterBySignature('ARMO');
@@ -43,9 +42,9 @@ begin
 	Randomize;
 	InitializeRecipes;
 	tempPerkFunctionSetup;
-	LogMessage(0,'---Making Armor craftable---');
+	LogMessage(0,'---Making Armor craftable---',YggLogCurrentMessages);
 	AddMessage('---Making Armor craftable---');
-	LogMessage(1, 'Initialize');
+	LogMessage(1, 'Initialize',YggLogCurrentMessages);
 end;
 
 function IniProcess: integer;
@@ -59,8 +58,8 @@ begin
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if ini.ReadInteger('BaseData', 'FirstRun', 0) = 0 then 
 	begin
-	TalkToUser := MessageDlg('There will be a few settings options pop up on the first run, these settings will be saved to Ygg.ini in the folder that contains the script you are currently running. #13#10If you ever want to change them, you can delete the line from the ini, alter it manually, or just delete the ini file itself.', mtInformation, [mbOk], 0);
-	ini.WriteInteger('BaseData', 'FirstRun', TalkToUser);
+		TalkToUser := MessageDlg('There will be a few settings options pop up on the first run, these settings will be saved to Ygg.ini in the folder that contains the script you are currently running. #13#10If you ever want to change them, you can delete the line from the ini, alter it manually, or just delete the ini file itself.', mtInformation, [mbOk], 0);
+		ini.WriteInteger('BaseData', 'FirstRun', TalkToUser);
 	end;
 	if ini.ReadInteger('Crafting', 'bCraftOnly', 0) = 0 then
 	begin
@@ -179,7 +178,7 @@ begin
 	end;
 end;
 
-procedure processing;
+procedure CraftingProcessing;
 var
 	recordSignature: string;
 	recipeCraft: IInterface;
@@ -190,17 +189,17 @@ begin
 	GatherWeap;
 	GatherAMMO;
 	for i := ArmoList.count - 1 downto 0 do begin
-		ItemRecord := ObjectToElement(ArmoList.Objects[i]);
+		CurrentItem := ObjectToElement(ArmoList.Objects[i]);
 		MakeCraftable;
 	end;
 	ArmoList.free;
 	for i := WeapList.count - 1 downto 0 do begin
-		ItemRecord := ObjectToElement(WeapList.Objects[i]);
+		CurrentItem := ObjectToElement(WeapList.Objects[i]);
 		MakeCraftable;
 	end;
 	WeapList.Free;
 	for i := AMMOList.count - 1 downto 0 do begin
-		ItemRecord := ObjectToElement(AMMOList.Objects[i]);
+		CurrentItem := ObjectToElement(AMMOList.Objects[i]);
 		MakeCraftable;
 	end;
 	AMMOList.Free;
@@ -209,11 +208,11 @@ end;
 function CraftingFinal: integer;
 begin
 	CleanMasters(Patch);
-	LogMessage(1,'---Craftable process ended---');
+	LogMessage(1,'---Craftable process ended---',YggLogCurrentMessages);
 	AddMessage('---Craftable process ended---');
-	LogMessage(0, 'Ended');
+	LogMessage(0, 'Ended',YggLogCurrentMessages);
 	Sign;
-	LogMessage(0, 'Signed');
+	LogMessage(0, 'Signed',YggLogCurrentMessages);
 	Result := 0;
 end;
 
@@ -245,10 +244,10 @@ begin
 	end;
 	if not assigned(RecipeCraft) then begin
 		recipeCraft := createRecord('COBJ');
-		LogMessage(1,'No Recipe Found for: ' + Name(ItemRecord) + ' Generating new one');
+		LogMessage(1,'No Recipe Found for: ' + Name(CurrentItem) + ' Generating new one',YggLogCurrentMessages);
 
 		// add reference to the created object
-		SetElementEditValues(recipeCraft, 'CNAM', Name(itemRecord));
+		SetElementEditValues(recipeCraft, 'CNAM', Name(CurrentItem));
 		// set Created Object Count
 		SetElementEditValues(recipeCraft, 'NAM1', '1');
 	end;
@@ -263,21 +262,21 @@ begin
 	begin //if it is heavy armor, base the amount of materials on the weight
 		amountOfMainComponent := MaterialAmountHeavy(amountOfMainComponent, amountOfAdditionalComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
 		amountOfAdditionalComponent := ceil(2);
-		Keywords := ElementByPath(itemRecord, 'KWDA');
+		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for ki := 0 to ElementCount(Keywords) do
 		begin
 			MatByKYWD(EditorID(LinksTo(ElementByIndex(Keywords, ki))), RecipeItems, AmountOfMainComponent);
 		end;
 	end else if hasKeyword(CurrentRecord, 'ArmorLight') then 
 	begin //Light armor is based on rating
-		amountOfMainComponent := floor(StrToFloat(GetElementEditValues(itemRecord, 'DNAM - Armor Rating')) * 0.2);
+		amountOfMainComponent := floor(StrToFloat(GetElementEditValues(CurrentItem, 'DNAM - Armor Rating')) * 0.2);
 		amountOfAdditionalComponent := floor(amountOfMainComponent / 3);
 		if amountOfAdditionalComponent < 1 then amountOfAdditionalComponent := 1;
 		if amountOfMainComponent < 1 then amountOfMainComponent := 1;
 		if amountOfMainComponent > 10 then amountOfMainComponent := 10;
 		if amountOfAdditionalComponent > 15 then amountOfAdditionalComponent := 15;
 		addItem(recipeItems, getRecordByFormID('000800E4'), amountOfAdditionalComponent); // LeatherStrips
-		Keywords := ElementByPath(itemRecord, 'KWDA');
+		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for ki := 0 to ElementCount(Keywords) do
 		begin
 			MatByKYWD(EditorID(LinksTo(ElementByIndex(Keywords, ki))), RecipeItems, AmountOfMainComponent);
@@ -285,35 +284,35 @@ begin
 	end else if hasKeyword(CurrentRecord, 'ArmorClothing') then 
 	begin
 	//uses -1.4ln(x/10)+10 for value to get amount 
-		LogMessage(0,Name(itemRecord) + ' is Clothing');
-		if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 42 then 
+		LogMessage(0,Name(CurrentItem) + ' is Clothing',YggLogCurrentMessages);
+		if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 42 then 
 		begin
 			amountOfMainComponent := 5;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 173 then 
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 173 then 
 		begin 
 			amountOfMainComponent := 4;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 730 then
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 730 then
 		begin 
 			amountOfMainComponent := 3;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 3020 then 
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 3020 then 
 		begin
 			amountOfMainComponent := 2;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) > 3020 then amountOfMainComponent := 1;
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) > 3020 then amountOfMainComponent := 1;
 		
 		//uses -2.5ln(-x+51)+10 for weight to get a second amount and add to first. 
-		if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight')) >= 50 then
+		if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight')) >= 50 then
 		begin
 			amountOfMainComponent := amountOfMainComponent + 5;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight')) > 48 then
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 48 then
 		begin
 			amountOfMainComponent := amountOfMainComponent + 4;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight')) > 46 then 
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 46 then 
 		begin
 			amountOfMainComponent := amountOfMainComponent + 3;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight')) > 40 then
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 40 then
 		begin
 			amountOfMainComponent := amountOfMainComponent + 2;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight')) > 26 then
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight')) > 26 then
 		begin
 			amountOfMainComponent := amountOfMainComponent + 1;
 		end else amountOfMainComponent := amountOfMainComponent + 0;
@@ -325,26 +324,26 @@ begin
 	
 	end else if hasKeyword(CurrentRecord, 'ArmorJewelry') then
 	begin 
-		LogMessage(0,Name(itemRecord) + ' is Jewelry');
-		if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 42 then 
+		LogMessage(0,Name(CurrentItem) + ' is Jewelry',YggLogCurrentMessages);
+		if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 42 then 
 		begin
 			amountOfMainComponent := 5;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 173 then 
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 173 then 
 		begin 
 			amountOfMainComponent := 4;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 730 then
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 730 then
 		begin 
 			amountOfMainComponent := 3;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) < 3020 then 
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) < 3020 then 
 		begin
 			amountOfMainComponent := 2;
-		end else if StrToFloat(GetElementEditValues(itemRecord, 'DATA\Value')) > 3020 then amountOfMainComponent := 1;
-			amountOfAdditionalComponent := floor(StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight')) * 0.2 / 3);
+		end else if StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value')) > 3020 then amountOfMainComponent := 1;
+			amountOfAdditionalComponent := floor(StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight')) * 0.2 / 3);
 		if amountOfAdditionalComponent < 1 then amountOfAdditionalComponent := 1;
 		if amountOfMainComponent < 1 then amountOfMainComponent := 1;
 	
 		addItem(recipeItems, getRecordByFormID('0005AD9E'), amountOfMainComponent); // gold
-		Keywords := ElementByPath(itemRecord, 'KWDA');
+		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for ki := 0 to ElementCount(Keywords) do
 		begin
 			MatByKYWD(EditorID(LinksTo(ElementByIndex(Keywords, ki))), RecipeItems, AmountOfMainComponent);
@@ -352,10 +351,10 @@ begin
 	end else begin
 		AmountOfMainComponent := 3;
 		AmountOfAdditionalComponent := 2;
-		Keywords := ElementByPath(itemRecord, 'KWDA');
+		Keywords := ElementByPath(CurrentItem, 'KWDA');
 		for ki := 0 to ElementCount(Keywords) do
 		begin
-			LogMessage(0, GetEditValue(ElementByIndex(Keywords, ki)));
+			LogMessage(0, GetEditValue(ElementByIndex(Keywords, ki)),YggLogCurrentMessages);
 			MatByKYWD(EditorID(LinksTo(ElementByIndex(Keywords, ki))), RecipeItems, AmountOfMainComponent);
 		end;
 	end;
@@ -365,9 +364,9 @@ begin
 		Clothing(amountOfAdditionalComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
 	end;
 	// set EditorID for recipe
-	if pos('ARMO', signature(itemRecord)) > 0 then SetElementEditValues(recipeCraft, 'EDID', 'RecipeArmor' + GetElementEditValues(itemRecord, 'EDID'));
-	if pos('AMMO', signature(itemRecord)) > 0 then SetElementEditValues(recipeCraft, 'EDID', 'RecipeAmmo' + GetElementEditValues(itemRecord, 'EDID'));
-	if pos('WEAP', signature(itemRecord)) > 0 then SetElementEditValues(recipeCraft, 'EDID', 'RecipeWeapon' + GetElementEditValues(itemRecord, 'EDID'));
+	if pos('ARMO', signature(CurrentItem)) > 0 then SetElementEditValues(recipeCraft, 'EDID', 'RecipeArmor' + GetElementEditValues(CurrentItem, 'EDID'));
+	if pos('AMMO', signature(CurrentItem)) > 0 then SetElementEditValues(recipeCraft, 'EDID', 'RecipeAmmo' + GetElementEditValues(CurrentItem, 'EDID'));
+	if pos('WEAP', signature(CurrentItem)) > 0 then SetElementEditValues(recipeCraft, 'EDID', 'RecipeWeapon' + GetElementEditValues(CurrentItem, 'EDID'));
 
 	// add reference to the workbench keyword
 	Workbench(amountOfMainComponent, amountOfAdditionalComponent, recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems);
@@ -382,19 +381,19 @@ begin
 	removeInvalidEntries(recipeCraft);
 
 	if GetElementEditValues(recipeCraft, 'COCT') = '' then begin
-		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(CurrentItem),YggLogCurrentMessages);
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end	else if not assigned(ElementByPath(recipeCraft, 'COCT')) then begin
-		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(CurrentItem),YggLogCurrentMessages);
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end else if not assigned(ElementByPath(recipeCraft, 'Items')) then begin
-		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(CurrentItem),YggLogCurrentMessages);
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end else if ElementCount(ElementByPath(recipeCraft, 'Items')) < 1 then begin
-		LogMessage(2,'no item requirements was specified for - ' + Name(itemRecord));
+		LogMessage(2,'no item requirements was specified for - ' + Name(CurrentItem),YggLogCurrentMessages);
 		remove(recipeCraft);
 		//addItem(recipeItems, getRecordByFormID('0005AD9E'), 10); // gold
 	end;
@@ -406,7 +405,7 @@ function MaterialAmountHeavy(amountOfMainComponent, amountOfAdditionalComponent:
 var
 	temp: Double;
 begin
-	temp := StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight'));
+	temp := StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight'));
 	if hasKeyword(CurrentRecord, 'ArmorCuirass') then
 	begin
 		amountOfMainComponent := floor(temp * 0.3);
@@ -491,7 +490,7 @@ function MaterialAmountLight(amountOfMainComponent, amountOfAdditionalComponent:
 var
 	temp: double;
 begin
-	temp := StrToFloat(GetElementEditValues(itemRecord, 'DATA\Weight'));
+	temp := StrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight'));
 	if hasKeyword(CurrentRecord, 'ArmorCuirass') then
 	begin
 		amountOfMainComponent := floor(temp * 0.3);
@@ -591,15 +590,15 @@ begin
 		end;
 	end else
 	begin
-		if signature(ItemRecord) = 'ARMO' then
+		if signature(CurrentItem) = 'ARMO' then
 		begin
-			if HasKeyword(ItemRecord, 'ArmorClothing') then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('0007866A'))) //tanning rack for clothing
+			if HasKeyword(CurrentItem, 'ArmorClothing') then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('0007866A'))) //tanning rack for clothing
 			else SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
 		end;
-		if signature(ItemRecord) = 'AMMO' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088108'))); //Sharpening wheel
-		if signature(ItemRecord) = 'WEAP' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
+		if signature(CurrentItem) = 'AMMO' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088108'))); //Sharpening wheel
+		if signature(CurrentItem) = 'WEAP' then SetElementEditValues(recipeCraft, 'BNAM', GetEditValue(getRecordByFormID('00088105'))); //forge
 	end;
-	LogMessage(0, 'Finished Tailoring');
+	LogMessage(0, 'Finished Tailoring',YggLogCurrentMessages);
 end;
 
 function Clothing(amountOfMainComponent: integer; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
@@ -706,7 +705,7 @@ begin
 			addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMlinenTeal'), ccount); // Teal linens
 		end;
 	end;
-	LogMessage(0, 'Finished Clothing');
+	LogMessage(0, 'Finished Clothing',YggLogCurrentMessages);
 end;
 
 function Dyed(amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
@@ -755,15 +754,15 @@ begin
 	begin
 		addItem(recipeitems, MainRecordByEditorID(GroupBySignature(FileByName('Art Of Magicka Ygg Edition.esp'), 'MISC'),'AOMpigmentBLUlite'), amountOfAdditionalComponent); // light blue pigments
 	end;
-	LogMessage(0, 'Finished Dyeing');
+	LogMessage(0, 'Finished Dyeing',YggLogCurrentMessages);
 end;
 
 function Jeweled(amountOfMainComponent, amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
 begin
-	LogMessage(0,'jeweled stuff');
+	LogMessage(0,'jeweled stuff',YggLogCurrentMessages);
 	if hasKeyword(CurrentRecord, 'TGCMLGemstones') then
 	begin
-		//AddMasterIfMissing(GetFile(itemRecord), 'thegemstonecollector.esp');
+		//AddMasterIfMissing(GetFile(CurrentItem), 'thegemstonecollector.esp');
 		if hasKeyword(CurrentRecord, 'GemColorBlack') then
 		begin
 			AddMessage(Name(recipeCraft) + ' has black gemstones from TGCML adding master if missing');
@@ -1004,9 +1003,9 @@ begin
 	end;
 	if hasKeyword(CurrentRecord, 'GemColorYellow') then
 	begin
-		LogMessage(0,'Maybe I should just use gold?');
+		LogMessage(0,'Maybe I should just use gold?',YggLogCurrentMessages);
 	end;
-	LogMessage(0, 'Finished Jeweled Armor');
+	LogMessage(0, 'Finished Jeweled Armor',YggLogCurrentMessages);
 end;
 
 function Jewelry(amountOfMainComponent, amountOfAdditionalComponent: IInterface; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): IInterface;
@@ -1100,18 +1099,18 @@ function FindRecipe(Create: boolean): IInterface;
 var
 	recipeCraft: IInterface;
 begin
-	if HashedList.IndexOf(LowerCase(EditorID(WinningOverride(itemRecord)))) >= 0 then
+	if HashedList.IndexOf(LowerCase(EditorID(WinningOverride(CurrentItem)))) >= 0 then
 	begin
-		result := wbCopyElementToFile(ObjectToElement(HashedList.Objects[HashedList.IndexOf(EditorID(itemRecord))]), Patch, false, true);
+		result := wbCopyElementToFile(ObjectToElement(HashedList.Objects[HashedList.IndexOf(EditorID(CurrentItem))]), Patch, false, true);
 	end else
 	begin
 		if create then
 		begin
 			recipeCraft := createRecord('COBJ');
-			LogMessage(0, 'No Recipe Found');
+			LogMessage(0, 'No Recipe Found',YggLogCurrentMessages);
 
 			// add reference to the created object
-			SetElementEditValues(recipeCraft, 'CNAM', Name(itemRecord));
+			SetElementEditValues(recipeCraft, 'CNAM', Name(CurrentItem));
 			// set Created Object Count
 			SetElementEditValues(recipeCraft, 'NAM1', '1');
 			Result := recipeCraft;
@@ -1176,28 +1175,28 @@ begin
 	RecipeCount := 0;
 	for k := referencedByCount(CurrentKYWD) - 1 downto 0 do
 	begin
-		LogMessage(0, 'Cycle ' + IntToStr(k));
+		LogMessage(0, 'Cycle ' + IntToStr(k),YggLogCurrentMessages);
 		CurrentItem := ReferencedByIndex(CurrentKYWD, k);
 		TempSig := Signature(CurrentItem);
 		if ValidSignatures.IndexOf(TempSig) < 0 then continue;
-		if IntToStr(GetElementNativeValues(itemRecord, 'DATA\Flags\Non-Playable')) < 0 then continue;
-		if IntToStr(GetElementNativeValues(itemRecord, 'Record Header\Record Flags\Non-Playable')) < 0 then exit;
+		if IntToStr(GetElementNativeValues(CurrentItem, 'DATA\Flags\Non-Playable')) < 0 then continue;
+		if IntToStr(GetElementNativeValues(CurrentItem, 'Record Header\Record Flags\Non-Playable')) < 0 then exit;
 		if GetElementNativeValues(CurrentItem, 'EITM') > 0 then continue;
-		LogMessage(0, 'Passed Signature');
+		LogMessage(0, 'Passed Signature',YggLogCurrentMessages);
 		for a := ReferencedByCount(CurrentItem) - 1 downto 0 do
 		begin
-			LogMessage(0, 'Recipe Search ' + IntToStr(a));
+			LogMessage(0, 'Recipe Search ' + IntToStr(a),YggLogCurrentMessages);
 			CurrentReference := ReferencedByIndex(CurrentItem, a);
 			if not pos('COBJ', signature(CurrentReference)) > 0 then continue;
-			LogMessage(0, 'it is a recipe');
+			LogMessage(0, 'it is a recipe',YggLogCurrentMessages);
 			if not equals(CurrentItem, LinksTo(ElementByPath(CurrentReference, 'CNAM'))) then continue;
-			LogMessage(0, 'output is the same');
+			LogMessage(0, 'output is the same',YggLogCurrentMessages);
 			if GetLoadOrderFormID(LinksTo(ElementByPath(CurrentReference, 'BNAM'))) = $000ADB78 then continue;
 			if GetLoadOrderFormID(LinksTo(ElementByPath(CurrentReference, 'BNAM'))) = $00088108 then continue;
 			if not IsWinningOverride(CurrentReference) then continue;
 			if length(GetElementEditValues(CurrentReference, 'COCT')) = 0 then continue
 			else l := tryStrToInt(GetElementEditValues(CurrentReference, 'COCT'), 0) - 1;
-			LogMessage(0, 'standard recipe limitations');
+			LogMessage(0, 'standard recipe limitations',YggLogCurrentMessages);
 			for i := l downto 0 do
 			begin
 				TempList := TStringList.Create;
@@ -1205,7 +1204,7 @@ begin
 				if ValidSignatures.IndexOf(signature(item)) >= 0 then continue;
 				EDID := EditorID(item);
 				ItemIndex := Input.IndexOf(EDID);
-				LogMessage(0, IntToStr(TempList.Count));
+				LogMessage(0, IntToStr(TempList.Count),YggLogCurrentMessages);
 				if ItemIndex < 0 then 
 				begin
 					TempList.Add(EDID);
@@ -1223,7 +1222,7 @@ begin
 			for i := ElementCount(ConPath) downto 0 do
 			begin
 				cc := ElementByPath(ElementByIndex(ConPath, i), 'CTDA');
-				Logmessage(0,EditorID(LinksTo(ElementByPath(ElementByPath(ElementByIndex(ElementByPath(CurrentReference, 'Conditions'), 1), 'CTDA'), 'Perk'))));
+				Logmessage(0,EditorID(LinksTo(ElementByPath(ElementByPath(ElementByIndex(ElementByPath(CurrentReference, 'Conditions'), 1), 'CTDA'), 'Perk'))),YggLogCurrentMessages);
 				if not pos('HasPerk', GetEditValue(ElementByPath(CC, 'Function'))) > 0 then continue;
 				Perk := LinksTo(ElementByPath(cc, 'Perk'));
 				if not assigned(Perk) then continue;
@@ -1332,16 +1331,16 @@ begin
 				ce := copy(cs, f+1, as-f-1);
 				ca := copy(cs, as+1, length(cs) - as);
 				item := MainRecordByEditorID(GroupBySignature(FileByName(cf), cg), ce);
-				LogMessage(0, 'IniToMatList: ' + cg + ' ' + cf + ' ' + ce + ' ' + ca);
+				LogMessage(0, 'IniToMatList: ' + cg + ' ' + cf + ' ' + ce + ' ' + ca,YggLogCurrentMessages);
 				MaterialsSublist.AddObject(ca, item);
-				LogMessage(0, 'IniToMatList: ' + FloatToStr(ca) + EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])));
+				LogMessage(0, 'IniToMatList: ' + FloatToStr(ca) + EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])),YggLogCurrentMessages);
 			end else if pos('p', copy(cs, 0, 1)) = 0 then
 			begin
 				cf := copy(cs, t+1,f-1);
 				ce := copy(cs,f+1,length(cs) - 1);
 				//MaterialsSublist.AddObject('Perk', MainRecordByEditorID(GroupBySignature(FileByName(cf), 'PERK'), ce));
 				MaterialsSublist.AddObject('Perk', RecordByEDID(FileByName(cf), ce));
-				LogMessage(1, 'IniToMatList: ' + EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])));
+				LogMessage(1, 'IniToMatList: ' + EditorID(item) + ' ' + EditorID(ObjectToElement(MaterialsSublist.Objects[MaterialsSublist.IndexOf(ca)])),YggLogCurrentMessages);
 			end;
 		end;
 		MaterialList.objects[MLI] := MaterialsSublist;
@@ -1355,18 +1354,18 @@ var
 	a: integer;
 begin
 	if MaterialList.IndexOf(keyword) < 0 then exit;
-	LogMessage(0, 'work');
+	LogMessage(0, 'work',YggLogCurrentMessages);
 	CurrentMaterials := MaterialList.Objects[MaterialList.IndexOf(keyword)];
 	for a := CurrentMaterials.count - 1 downto 0 do
 	begin
-		LogMessage(0, 'work 2');
+		LogMessage(0, 'work 2',YggLogCurrentMessages);
 		if pos('Perk', CurrentMaterials.strings[a]) > 0 then
 		begin
-			LogMessage(0, 'work 3 perk');
+			LogMessage(0, 'work 3 perk',YggLogCurrentMessages);
 			//AddPerkCondition(recipeitems, ObjectToElement(CurrentMaterials.Objects[a]));
 		end else
 		begin
-			LogMessage(1,'MatByKYWD: '+Name(ObjectToElement(CurrentMaterials.objects[a])));
+			LogMessage(1,'MatByKYWD: '+Name(ObjectToElement(CurrentMaterials.objects[a])),YggLogCurrentMessages);
 			AddItem(RecipeItems, ObjectToElement(CurrentMaterials.objects[a]), ceil(StrToFloat(CurrentMaterials.strings[a]) * AmountOfMainComponent * (random(1) + CraftMult)));
 		end;
 		tempPerkFunction(Keyword, RecipeItems, AmountOfMainComponent);
