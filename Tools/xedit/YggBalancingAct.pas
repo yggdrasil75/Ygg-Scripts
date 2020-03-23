@@ -92,7 +92,7 @@ var
 	temp: integer;
 	bool:boolean;
 begin
-	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
+	YggIni := TIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if YggIni.ReadInteger('Balance', 'bAskEvery', 0) = 0 then
 	begin
 		temp := MessageDlg('Do you want to be asked every time for single mode?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
@@ -100,7 +100,7 @@ begin
 			exit
 		else YggIni.WriteInteger('Balance', 'bAskEvery', temp);
 	end else temp := YggIni.ReadInteger('Balance', 'bAskEvery', 0);
-	if temp = 6 then bool := true
+	if temp = 7 then bool := true
 	else bool := false;
 	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 OR 
 		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 6 OR 
@@ -194,7 +194,8 @@ begin
     btnCancel.TabOrder := 4;
 
     if frm.ShowModal = mrOk then
-      Result := FileByName(cbbPlugins.Text);
+		Result := FileByName(cbbPlugins.Text)
+	else result := 'abort'; 
   finally
     frm.Free;
   end;
@@ -208,7 +209,7 @@ begin
 	TrustedPlugins := TStringList.Create;
 	TrustedPlugins.Delimiter := ',';
 	TrustedPlugins.StrictDelimiter := True;
-	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
+	YggIni := TIniFile.Create(ScriptsPath + 'Ygg.ini');
 	TrustedPlugins.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', '.esp');
 	if not TrustedPlugins.count <= 1 then 
 		YggIni.WriteString('BaseData', 'sBaseMaster', 'Skyrim.esm,Dragonborn.esm,Update.esm,Dawnguard.esm,HearthFires.esm,SkyrimSE.exe,Unofficial Skyrim Special Edition Patch.esp');
@@ -376,39 +377,65 @@ begin
 					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
-						WeapDamage.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
-						WeapWeight.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
-						WeapValue.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Speed')) then
-						WeapSpeed.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Reach')) then
-						WeapReach.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
-						WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
-						WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
-						WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DATA\Damage'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
+							WeapDamage.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+							WeapWeight.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+							WeapValue.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Speed'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Speed')) then
+							WeapSpeed.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Reach'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Reach')) then
+							WeapReach.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'CRDT\Damage'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
+							WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Min'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
+							WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
+							WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
+					end;
 				end;
 				if ContainsText(CurrentKeyword, 'materiel') then begin
 					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing',YggLogCurrentMessages);
 					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
 					CurrentAddress := CurrentKeyword+CurrentBOD2;
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
-						WeapDamage.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
-						WeapWeight.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
-						WeapValue.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Speed')) then
-						WeapSpeed.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Reach')) then
-						WeapReach.AddObject(CurrentAddress, CurrentItem);
-					if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
-						WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DATA\Damage'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
+							WeapDamage.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DATA\Weight'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+							WeapWeight.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DATA\Value'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+							WeapValue.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Speed'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Speed')) then
+							WeapSpeed.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Reach'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Reach')) then
+							WeapReach.AddObject(CurrentAddress, CurrentItem);
+					end;
+					if not tryStrToFloat(GetElementEditValues(CurrentItem, 'CRDT\Damage'),0) = 0 then begin
+						if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
+							WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
+					end;
 					if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Min'),0) = 0 then begin
 						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
 							WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
