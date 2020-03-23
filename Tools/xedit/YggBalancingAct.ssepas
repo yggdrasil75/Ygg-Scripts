@@ -672,32 +672,45 @@ begin
 			end;
 		end;
 	end else WeightCobj := WeightExisting;
+	if Signature(item) = 'AMMO' then WeightCobj := WeightCobj / 24;
 	if WeightExisting = 0 then WeightExisting := WeightCobj;
 	weight := TryStrToFloat(GetElementEditValues(item, 'DATA\Weight'),0.0);
 	LogMessage(1, 'the estimated weight based on cobj is: ' + FloatToStr(WeightCobj) + ' the estimated weight based on included items is: ' + FloatToStr(WeightExisting) + 'the current weight is: ' + FloatToStr(weight),YggLogCurrentMessages);
 	if signature(item) = 'AMMO' then weightedAverage := WeightCobj * 0.7 + WeightExisting * 0.3
 	else weightedAverage := WeightCobj * 0.3 + WeightExisting * 0.7;
+	
 	if weightedAverage = 0 then weightedAverage := weight;
+	LogMessage(1,'averaged stuff out',YggLogCurrentMessages);
 	VaritionDiff := 7;
-		if weight > weightedAverage then
+	if weight > weightedAverage then
+	begin
+		temp := weightedAverage * (random(0.5) + 0.5);
+	end else if weight < weightedAverage then
+	begin
+		temp := weightedAverage * (random(0.3) + 0.5);
+	end else
+	begin
+		temp := weightedAverage * (random(0.4) + 0.5);
+	end;
+	while temp > weightedAverage + VaritionDiff do begin
+		if temp > weightedAverage then
 		begin
-			temp := weightedAverage * (random(0.5) + 0.5);
-		end else if weight < weightedAverage then
+			temp := temp - (VaritionDiff * (random(0.5) + 1));
+		end else if temp < weightedAverage then
 		begin
-			temp := weightedAverage * (random(0.3) + 0.5);
-		end else
-		begin
-			temp := weightedAverage * (random(0.4) + 0.5);
+			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
-		while temp > weightedAverage + VaritionDiff OR temp < weightedAverage - VaritionDiff do begin
-			if temp > weightedAverage then
-			begin
-				temp := temp - VaritionDiff * (random(0.5) + 1);
-			end else if temp < weightedAverage then
-			begin
-				temp := temp + VaritionDiff * (random(0.5) + 0.5);
-			end;
+	end;
+	while temp < weightedAverage - VaritionDiff do begin
+		if temp > weightedAverage then
+		begin
+			temp := temp - (VaritionDiff * (random(0.5) + 1));
+		end else if temp < weightedAverage then
+		begin
+			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
+	end;
+	LogMessage(1,'randomized weight',YggLogCurrentMessages);
 	SetElementEditValues(item, 'Data\Weight', FloatToStr(temp));
 end;
 
@@ -849,13 +862,22 @@ begin
 	begin
 		temp := existing * (random(0.4) + 0.8);
 	end;
-	while temp > existing + 0.5 OR temp < existing - 0.5 do begin
+	while temp > existing + VaritionDiff do begin
 		if temp > existing then
 		begin
-			temp := temp - 5 * (random(0.5) + 1);
+			temp := temp - (VaritionDiff * (random(0.5) + 1));
 		end else if temp < existing then
 		begin
-			temp := temp + 5 * (random(0.5) + 0.5);
+			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
+		end;
+	end;
+	while temp < existing - VaritionDiff do begin
+		if temp > existing then
+		begin
+			temp := temp - (VaritionDiff * (random(0.5) + 1));
+		end else if temp < existing then
+		begin
+			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
 	end;
 	result := floor(temp);
@@ -875,13 +897,22 @@ begin
 	begin
 		temp := existing * (random(0.4) + 0.8);
 	end;
-	while temp > existing + VaritionDiff OR temp < existing - VaritionDiff do begin
+	while temp > existing + VaritionDiff do begin
 		if temp > existing then
 		begin
-			temp := temp - VaritionDiff * (random(0.5) + 1);
+			temp := temp - (VaritionDiff * (random(0.5) + 1));
 		end else if temp < existing then
 		begin
-			temp := temp + VaritionDiff * (random(0.5) + 0.5);
+			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
+		end;
+	end;
+	while temp < existing - VaritionDiff do begin
+		if temp > existing then
+		begin
+			temp := temp - (VaritionDiff * (random(0.5) + 1));
+		end else if temp < existing then
+		begin
+			temp := temp + (VaritionDiff * (random(0.5) + 0.5));
 		end;
 	end;
 	result := temp;
