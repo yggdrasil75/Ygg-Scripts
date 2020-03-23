@@ -93,7 +93,7 @@ begin
 	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
 	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 then
 	begin
-		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted"', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
 		if temp = mrAbort then
 			exit
 		else YggIni.WriteInteger('Balance', 'bSingleMode', temp);
@@ -200,7 +200,7 @@ begin
 		YggIni.WriteString('BaseData', 'sBaseMaster', 'Skyrim.esm,Dragonborn.esm,Update.esm,Dawnguard.esm,HearthFires.esm,SkyrimSE.exe,Unofficial Skyrim Special Edition Patch.esp');
 	TrustedPlugins.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', '.esp');
 	YggIni.UpdateFile;
-	if SingleMode then begin
+	if SingleFile then begin
 		for i := 0 to Pred(FileCount) do
 		begin
 			kFile := FileByIndex(i);
