@@ -12,6 +12,11 @@ var
 	TimeBegin: TDateTime;
 	YggLogCurrentMessages: TStringList;
 	DebugLevel: integer;
+	SingleFile: boolean;
+	SinglePlugin: IInterface;
+	
+const
+	scaleFactor = Screen.PixelsPerInch / 96;
 
 Function Initialize: integer;
 begin
@@ -20,29 +25,50 @@ end;
 
 procedure Balancer;
 var
+	i: integer;
 	BeginTime, EndTime: TDateTime;
+	temp:string;
+	SPM: TStringList;
 begin
 	//"init"
 	YggLogCurrentMessages := TStringList.Create;
 	BeginTime := Time;
 	BeginLog('Balancing Act Start');
 	TimeBegin := PassTime(Time);
-	Patch := SelectPatch('Ygg_Rebalance.esp');
+	IniProcess;
+	SingleMode;
+	if not SingleFile then 
+		Patch := SelectPatch('Ygg_Rebalance.esp')
+	else begin
+		temp := GetFileName(SinglePlugin);
+		temp := StringReplace(temp, '.esp', '', [rfReplaceAll]);
+		temp := StringReplace(temp, '.esl', '', [rfReplaceAll]);
+		temp := StringReplace(temp, '.esm', '', [rfReplaceAll]);
+		Patch := SelectPatch(temp+'Ygg_Rebalance.esp');
+		LogMessage(2, 'Using ' + GetFileName(Patch) + ' due to single mode',YggLogCurrentMessages);
+	end;
 	BeginUpdate(Patch);
 	try
 		remove(GroupBySignature(Patch, 'WEAP'));
 		remove(GroupBySignature(Patch, 'ARMO'));
 		remove(GroupBySignature(Patch, 'AMMO'));
 		Cleanmasters(Patch);
-		AddMasterBySignature('ARMO');
-		AddMasterBySignature('WEAP');
-		AddMasterBySignature('AMMO');
-		AddMasterBySignature('KWDA');
-		AddMasterBySignature('ARMA');
+		if not SingleFile then begin
+			AddMasterBySignature('ARMO');
+			AddMasterBySignature('WEAP');
+			AddMasterBySignature('AMMO');
+			AddMasterBySignature('KWDA');
+			AddMasterBySignature('ARMA');
+		end else begin
+			SPM := TStringList.Create;
+			ReportRequiredMasters(SinglePlugin, SPM, true,true);
+			for i := length(SPM) - 1 downto 0 do begin
+				AddMasterIfMissing(Patch,SPM[i]);
+			end;
+		end;
 	finally EndUpdate(Patch);
 	end;
 	MasterLines;
-	IniProcess;
 	Randomize;
 	InitializeLists;
 	
@@ -59,7 +85,111 @@ begin
 	LogMessage(3,'Completed',YggLogCurrentMessages);
 end;
 
+procedure SingleMode;
+var
+	YggIni: TMemIniFile;
+	temp: integer;
+begin
+	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
+	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 then
+	begin
+		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted"', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
+		if temp = mrAbort then
+			exit
+		else YggIni.WriteInteger('Balance', 'bSingleMode', temp);
+	end else temp := YggIni.ReadInteger('Balance', 'bSingleMode', 0);
+	if temp = 6 then SingleFile := true
+	else SingleFile := false;
+	YggIni.UpdateFile;
+	if SingleFile then begin
+		SinglePlugin := Configure('Balance SinglePlugin mode');
+	end;
+end;
+
+function Configure(asCaption: String): IwbFile;
+var
+  frm: TForm;
+  lblPlugins: TLabel;
+  chkAddTags: TCheckBox;
+  chkLogging: TCheckBox;
+  cbbPlugins: TComboBox;
+  btnCancel: TButton;
+  btnOk: TButton;
+  i: Integer;
+  kFile: IwbFile;
+begin
+  Result := nil;
+
+  frm := TForm.Create(TForm(frmMain));
+
+  try
+    frm.Caption := asCaption;
+    frm.BorderStyle := bsToolWindow;
+    frm.ClientWidth := 234 * scaleFactor;
+    frm.ClientHeight := 90 * scaleFactor;
+    frm.Position := poScreenCenter;
+    frm.KeyPreview := True;
+
+    lblPlugins := TLabel.Create(frm);
+    lblPlugins.Parent := frm;
+    lblPlugins.Left := 16 * scaleFactor;
+    lblPlugins.Top := 10 * scaleFactor;
+    lblPlugins.Width := 200 * scaleFactor;
+    lblPlugins.Height := 16 * scaleFactor;
+    lblPlugins.Caption := 'Select file to balance:';
+    lblPlugins.AutoSize := False;
+
+    cbbPlugins := TComboBox.Create(frm);
+    cbbPlugins.Parent := frm;
+    cbbPlugins.Left := 16 * scaleFactor;
+    cbbPlugins.Top := 30 * scaleFactor;
+    cbbPlugins.Width := 200 * scaleFactor;
+    cbbPlugins.Height := 21 * scaleFactor;
+    cbbPlugins.Style := csDropDownList;
+    cbbPlugins.DoubleBuffered := True;
+    cbbPlugins.TabOrder := 2;
+
+	for i := 0 to Pred(FileCount) do
+	begin
+		kFile := FileByIndex(i);
+		if IsEditable(kFile) then
+			cbbPlugins.Items.Add(GetFileName(kFile));
+	end;
+
+    cbbPlugins.ItemIndex := Pred(cbbPlugins.Items.Count);
+
+    btnOk := TButton.Create(frm);
+    btnOk.Parent := frm;
+    btnOk.Left := 62 * scaleFactor;
+    btnOk.Top := 55 * scaleFactor;
+    btnOk.Width := 75 * scaleFactor;
+    btnOk.Height := 25 * scaleFactor;
+    btnOk.Caption := 'Run';
+    btnOk.Default := True;
+    btnOk.ModalResult := mrOk;
+    btnOk.TabOrder := 3;
+
+    btnCancel := TButton.Create(frm);
+    btnCancel.Parent := frm;
+    btnCancel.Left := 143 * scaleFactor;
+    btnCancel.Top := 55 * scaleFactor;
+    btnCancel.Width := 75 * scaleFactor;
+    btnCancel.Height := 25 * scaleFactor;
+    btnCancel.Caption := 'Abort';
+    btnCancel.ModalResult := mrAbort;
+    btnCancel.TabOrder := 4;
+
+    if frm.ShowModal = mrOk then
+      Result := FileByName(cbbPlugins.Text);
+  finally
+    frm.Free;
+  end;
+end;
+
 procedure IniProcess;
+var
+	kFile: IInterface;
+	i: integer;
 begin
 	TrustedPlugins := TStringList.Create;
 	TrustedPlugins.Delimiter := ',';
@@ -70,6 +200,14 @@ begin
 		YggIni.WriteString('BaseData', 'sBaseMaster', 'Skyrim.esm,Dragonborn.esm,Update.esm,Dawnguard.esm,HearthFires.esm,SkyrimSE.exe,Unofficial Skyrim Special Edition Patch.esp');
 	TrustedPlugins.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', '.esp');
 	YggIni.UpdateFile;
+	if SingleMode then begin
+		for i := 0 to Pred(FileCount) do
+		begin
+			kFile := FileByIndex(i);
+			if not equals(SinglePlugin,kFile) then
+				TrustedPlugins.Add(GetFileName(kFile));
+		end;
+	end;
 end;
 
 procedure InitializeLists;
@@ -158,7 +296,11 @@ begin
 		if IsWinningOverride(CurrentItem) then begin
 			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
 			//for processing
-			Armo.AddObject(EditorID(CurrentItem), CurrentItem);
+			if SingleFile then begin
+				if equals(getFile(CurrentItem), SinglePlugin) then begin
+					Armo.AddObject(EditorID(CurrentItem), CurrentItem);
+				end
+			end else Armo.AddObject(EditorID(CurrentItem), CurrentItem);
 			//for calculations
 			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 			Keywords := ElementByPath(CurrentItem, 'KWDA');
@@ -206,7 +348,11 @@ begin
 		if IsWinningOverride(CurrentItem) then begin
 			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
 			//for processing
-			Weap.AddObject(EditorID(CurrentItem), CurrentItem);
+			if SingleFile then begin
+				if equals(getFile(CurrentItem), SinglePlugin) then begin
+					Weap.AddObject(EditorID(CurrentItem), CurrentItem);
+				end
+			end else Weap.AddObject(EditorID(CurrentItem), CurrentItem);
 			//for calculations
 			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 			Keywords := ElementByPath(CurrentItem, 'KWDA');
@@ -274,7 +420,11 @@ begin
 		if IsWinningOverride(CurrentItem) then begin
 			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
 			//for processing
-			Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
+			if SingleFile then begin
+				if equals(getFile(CurrentItem), SinglePlugin) then begin
+					Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
+				end
+			end else Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
 			//for calculations
 			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 			Keywords := ElementByPath(CurrentItem, 'KWDA');
