@@ -1,304 +1,730 @@
-unit yggloadscreens;
-uses yggfunctions;
-
+unit YggBalancingAct;
+uses YggFunctions;
 var
-	ArtOut: TStringDynArray;
-	Screenshots: boolean;
-	
-function initialize: integer;
+	Recipes,Armo,ArmoRating,ArmoWeight : TStringList;
+	ArmoValue,Ammo,AMMODamage,AMMOValue : TStringList;
+	AMMOWeight,Weap,WeapValue,WeapWeight : TStringList;
+	WeapDamage,WeapSpeed : TStringList;
+	WeapReach,WeapCrdtDam,WeapRangeMin,TrustedPlugins,WeapRangeMax : TStringList;
+	YggIni: TMemIniFile;
+
+Function Initialize: integer;
 begin
-	result := LoadInit;
+	Balancer;
 end;
 
-function LoadInit: integer;
+procedure Balancer;
 var
-	f: integer;
 	BeginTime, EndTime: TDateTime;
-	TDirectory:TDirectory;
-	sDirPath,sGamePath:string;
 begin
+	//"init"
 	BeginTime := Time;
-	beginLog('YggLoading');
+	BeginLog('Balancing Act Start');
 	PassTime(Time);
-	Patch := SelectPatch('Ygg_Loading.esp');
+	Patch := SelectPatch('Ygg_Rebalance.esp');
 	PassFile(Patch);
-	AddmasterBySignature('LSCR');
-	remove(GroupBySignature(Patch, 'LSCR'));
-	remove(GroupBySignature(Patch, 'STAT'));
-	remove(GroupBySignature(Patch, 'TXST'));
-	LogMessage(0,'---Loading Is Fun---');
-	AddMessage('---Loading is fun---');
-	Screenshots := AskScreenshot;
-	//converted;
-	if Screenshots then
-	begin
-		sGamePath := Delete(DataPath,length(DataPath)-5, 5);
-		ArtIn := TDirectory.GetFiles(sGamePath, '*.jpg;*.png;*.bmp', soAllDirectories);
-		for i := length(ArtIn) - 1 downto 0 do begin
-		AddMessage(ArtIn);
-			CopyFile(ArtIn[i],DataPath+'\textures\ygg\loading\'+ArtIn[i]);
+	BeginUpdate(Patch);
+	try
+		AddMasterBySignature('ARMO');
+		AddMasterBySignature('WEAP');
+		AddMasterBySignature('AMMO');
+		remove(GroupBySignature(Patch, 'WEAP'));
+		remove(GroupBySignature(Patch, 'ARMO'));
+		remove(GroupBySignature(Patch, 'AMMO'));
+	finally EndUpdate(Patch);
+	end;
+	IniProcess;
+	Randomize;
+	InitializeLists;
+	
+	//processing
+	LogMessage(1,'Processing Section Start');
+	BalancingProcess;
+	LogMessage(1,'Processing Section Done');
+	
+	
+	//finalizing
+	AddMessage('---Balancing act ended---');
+	Sign;
+	AddMessage('---Tight rope removed---');
+	LogMessage(3,'Completed');
+end;
+
+procedure IniProcess;
+begin
+	TrustedPlugins := TStringList.Create;
+	TrustedPlugins.Delimiter := ',';
+	TrustedPlugins.StrictDelimiter := True;
+	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
+	TrustedPlugins.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', '.esp');
+	if not TrustedPlugins.count <= 1 then 
+		YggIni.WriteString('BaseData', 'sBaseMaster', 'Skyrim.esm,Dragonborn.esm,Update.esm,Dawnguard.esm,HearthFires.esm,SkyrimSE.exe,Unofficial Skyrim Special Edition Patch.esp');
+	TrustedPlugins.DelimitedText := YggIni.ReadString('BaseData', 'sBaseMaster', '.esp');
+	YggIni.UpdateFile;
+end;
+
+procedure InitializeLists;
+var
+	i,j:integer;
+	CurrentFile,CurrentGroup,CurrentItem:IInterface;
+	BNAM:IInterface;
+begin
+	LogMessage(1,'Gathering Lists');
+	
+	Recipes := TStringList.Create;
+	Recipes.Duplicates := DupIgnore;
+	Armo := TStringList.Create;
+	ArmoRating := TStringList.Create;
+	ArmoWeight := TStringList.Create;
+	ArmoValue := TStringList.Create;
+	Ammo := TStringList.Create;
+	AMMODamage := TStringList.Create;
+	AMMOValue := TStringList.Create;
+	AMMOWeight := TStringList.Create; //game doesnt use this unless you have survival mode
+	Weap := TStringList.Create;
+	WeapValue := TStringList.Create;
+	WeapWeight := TStringList.Create;
+	WeapDamage := TStringList.Create;
+	WeapSpeed := TStringList.Create;
+	WeapReach := TStringList.Create;
+	WeapCrdtDam := TStringList.Create;
+	WeapRangeMin := TStringList.Create;
+	WeapRangeMax := TStringList.Create;
+	for i := FileCount - 1 downto 0 do begin
+		CurrentFile := FileByIndex(i);
+		//recipes
+		if HasGroup(CurrentFile, 'COBJ') then begin
+			CurrentGroup := GroupBySignature(CurrentFile, 'COBJ');
+			for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+				CurrentItem := ElementByIndex(CurrentGroup,j);
+				if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+				BNAM := LinksTo(ElementByPath(CurrentItem, 'BNAM'));
+				if GetLoadOrderFormid(BNAM) = $000ADB78 then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'workbench') then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'armortable') then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'sharpeningwheel') then continue;
+				if ContainsText(LowerCase(Name(BNAM)), 'grindstone') then continue;
+				if ContainsText(LowerCase(Name(CurrentItem)), 'temper') then continue;
+				if IsWinningOverride(CurrentItem) then Recipes.AddObject(EditorID(WinningOverride(LinksTo(ElementByPath(CurrentItem, 'CNAM')))), CurrentItem);
+			end;
 		end;
-	end;
-	
-	ShellExecute(0,'open',DataPath+'\textures\ygg\loading\magick.bat',nil,DataPath+'\textures\ygg\loading\',1);
-	sDirPath := DataPath + 'Textures\Ygg\Loading\';
-	ArtOut := TDirectory.GetFiles(sDirPath, '*.dds', soAllDirectories);
-	AddLoadScreen;
-	result := 1;
-	sign;
-end;
-
-function AskScreenshot:boolean;
-var
-	optionAddScreenshot: integer;
-	ini:TMemIniFile;
-begin
-	ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
-	if ini.ReadInteger('Loading', 'screenshots', 0) = 0 then
-	begin
-		optionAddScreenshot := MessageDlg('Do you want to add screenshots from the game directory?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
-		if optionAddScreenshot = mrAbort then
-			exit
-		else ini.WriteInteger('Loading', 'screenshots', optionAddScreenshot);
-	end else optionAddScreenshot := ini.ReadInteger('Loading', 'Loading', 0);
-	
-	if optionAddScreenshot = 7 then result := true
-	else result := false;
-	
-	Ini.UpdateFile;
-end;
-
-procedure AddLoadScreen;
-var
-	j,i:integer;
-	TempInt: integer;
-	CurrentEDIDAddition:string;
-	foobar,CurrentRecord,CurrentStat,CurrentTXST,temp: IInterface;
-begin
-	for i := Length(ArtOut) - 1 downto 0 do begin
-		tempint := length(artout[i]) - pos('\', ReverseString(ArtOut[i]))+2;
-		CurrentEDIDAddition := copy(ArtOut[i], tempint, length(artout[i]));
-		CurrentEDIDAddition := StringReplace(CurrentEDIDAddition, '.dds', '',[rfReplaceAll]);
-		CurrentRecord := CreateRecord('LSCR');
-		CurrentStat := CreateRecord('STAT');
-		//CurrentTXST := CreateRecord('TXST');
-		SetEditorID(CurrentStat, 'YggLoadingSTAT'+CurrentEDIDAddition);
-		//SetEditorID(CurrentTXST, 'YggLoadingTXST'+CurrentEDIDAddition);
-		
-		SetEditorID(CurrentRecord, 'YggLoadingLSCR'+CurrentEDIDAddition);
-		CopyFile('1.nif',DataPath+'\meshes\ygg\loading\'+CurrentEDIDAddition+'.nif');
-		
-		replaceTextureInNif(DataPath+'ygg\loading\'+CurrentEDIDAddition+'.nif','ygg\loading\1.dds',DataPath+'\textures\ygg\loading\'+CurrentEDIDAddition+'.nif');
-		
-		Add(CurrentStat,'Model',false);
-		Add(CurrentStat,'Model\MODS',false);
-		foobar := ElementAssign(ElementByName(CurrentStat, 'Model'), 2, nil, False); 
-		//if assigned(foobar) then
-			//addmessage('foobar');
-		temp := ElementAssign(ElementByName(CurrentStat, 'Model\MODS'), 3, nil, False); 
-		temp := ElementByIndex(foobar, 0);
-		if not assigned(temp) then temp := ElementAssign(foobar, HighInteger, nil, false);
-		//if assigned(temp) then addmessage('temp');
-		//SetEditValue(ElementByPath(temp, 'New Texture'), Name(CurrentTXST));
-		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
-		SetEditValue(ElementByIndex(ElementByIndex(CurrentStat,4),0), '90');
-		//SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Name', 'CivilWarMap01');
-		//SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Index', '2');
-		//for j := elementcount(ElementByIndex(CurrentStat,4)) - 1 downto 0 do addmessage(name(ElementByIndex(ElementByIndex(CurrentStat, 4),0)));
-		
-		//Add(CurrentTXST,'Textures (RGB/A)', false);
-		//Add(CurrentTXST,'Textures', false);
-		//SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX00', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
-		//ElementAssign(CurrentTXST, 2, nil, false);
-		//SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX01', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
-		
-		
-		Add(CurrentRecord,'NNAM', false);
-		Add(CurrentRecord,'SNAM', false);
-		Add(CurrentRecord,'RNAM', false);
-		Add(CurrentRecord,'XNAM', false);
-		Add(CurrentRecord,'ONAM', false);
-		
-		SetElementEditValues(CurrentRecord,'NNAM', name(CurrentStat));
-		SetElementEditValues(CurrentRecord, 'SNAM', '2.0');
-		SetElementEditValues(CurrentRecord, 'RNAM\X', '-90');
-		SetElementEditValues(CurrentRecord, 'XNAM\X', '-45');
-		
-		AddCondition(CurrentRecord);
-	end;
-	
-end;
-
-procedure replaceTextureInNif(sourcenif,afind,areplace:string);
-var
-  TDirectory: TDirectory; // to access member functions
-  i, j, k, p, Processed, Updated: integer;
-  Elements: TList;
-  el: TdfElement;
-  Nif: TwbNifFile;
-  Block: TwbNifBlock;
-  BGSM: TwbBGSMFile;
-  BGEM: TwbBGEMFile;
-  files: TStringDynArray;
-  f, f2, ext: string;
-  s, s2: WideString;
-  bChanged: Boolean;
-begin
-	Elements := TList.Create;
-	Nif := TwbNifFile.Create;
-	BGSM := TwbBGSMFile.Create;
-	
-	if ExtractFileExt(sourcenif) = '.nif' then
-	begin
-		Nif.LoadFromFile(sourcenif);
-		for j := 0 to Nif.BlocksCount - 1 do begin
-		block := Nif.Blocks[j];
-		if bMaterial and (Nif.NifVersion = nfFO4) and (Block.BlockType = 'BSLightingShaderProperty') then
-			Elements.Add(Block.Elements['Name'])
-		else if Block.BlockType = 'BSShaderTextureSet' then begin
-			el := Block.Elements['Textures'];
-			for j := 0 to Pred(el.Count) do
-				Elements.Add(el[j]);
-		end else if Block.BlockType = 'BSEffectShaderProperty' then begin
-			Elements.Add(Block.Elements['Source Texture']);
-			Elements.Add(Block.Elements['Grayscale Texture']);
-			Elements.Add(Block.Elements['Env Map Texture']);
-			Elements.Add(Block.Elements['Normal Texture']);
-			Elements.Add(Block.Elements['Env Mask Texture']);
-			// BGSM/BGEM file in the Name field of FO4 meshes
-			if bMaterial and (Nif.NifVersion = nfFO4) then
-			Elements.Add(Block.Elements['Name']);
-			end else if (Block.BlockType = 'BSShaderNoLightingProperty') or
-				(Block.BlockType = 'TallGrassShaderProperty') or
-				(Block.BlockType = 'TileShaderProperty')
-				then
-					Elements.Add(Block.Elements['File Name'])
-
-			else if Block.BlockType = 'BSSkyShaderProperty' then
-				Elements.Add(Block.Elements['Source Texture'])
-
-			// any block inherited from NiTexture
-			else if Block.IsNiObject('NiTexture', True) then
-				Elements.Add(Block.Elements['File Name']);
-		end; 
-	end;
-		
-	if Elements.Count = 0 then exit;
-	
-	for j := 0 to Pred(Elements.Count) do begin
-		if not Assigned(Elements[j]) then
-			Continue
-		else
-			el := TdfElement(Elements[j]);
-
-		// getting file name stored in element
-		s := el.EditValue;
-		// skip to the next element if empty
-		if s = '' then Continue;
-
-		// perform replacements, trim whitespaces just in case
-		s2 := Trim(s);
-		for k := 0 to Pred(aFind.Count) do begin
-			if aFind[k] <> '' then// replace if text to find is not empty
-				s2 := StringReplace(s2, afind, aReplace, [rfIgnoreCase, rfReplaceAll])
-			else// prepend if empty
-				s2 := aReplace[k] + s2;
+		LogMessage(1, 'Checked COBJ In ' + GetFileName(CurrentFile));
+		//armo
+		if HasGroup(CurrentFile, 'ARMO') then begin
+			AddArmo(CurrentFile);
 		end;
+		LogMessage(1, 'Checked ARMO In ' + GetFileName(CurrentFile));
+		//weap
+		if HasGroup(CurrentFile, 'WEAP') then begin
+			AddWeap(CurrentFile);
+		end;
+		LogMessage(1, 'Checked WEAP In ' + GetFileName(CurrentFile));
+		//ammo
+		if HasGroup(CurrentFile, 'AMMO') then begin
+			AddAmmo(CurrentFile);
+		end;
+		LogMessage(1, 'Checked AMMO In ' + GetFileName(CurrentFile));
+	end;
+	
+	//finalize lists
+	//finalize armolists
+	FinalizeArmo;
+	FinalizeWeap;
+	FinalizeAmmo;
+end;
 
-		// detect an absolute path
-		if (Length(s2) > 2) and (Copy(s2, 2, 1) = ':') then begin
-			// remove path up to Data including it
-				p := Pos('\data\', LowerCase(s2));
-				if p <> 0 then
-					s2 := Copy(s2, p + 6, Length(s2));
-					// remove path up to Data Files including it for Morrowind
-				if p = 0 then begin
-					p := Pos('\data files\', LowerCase(s2));
-				if p <> 0 then
-					s2 := Copy(s, p + 12, Length(s2));
+procedure AddArmo(CurrentFile: IInterface);
+var
+	i,j,k:integer;
+	CurrentGroup,CurrentItem:IInterface;
+	Keywords:IInterface;
+	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'ARMO');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, j);
+		if GetIsDeleted(CurrentItem) then continue;
+		if ContainsText(LowerCase(Name(CurrentItem)), 'skin') then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		if IsWinningOverride(CurrentItem) then begin
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			//for processing
+			Armo.AddObject(EditorID(CurrentItem), CurrentItem);
+			//for calculations
+			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+			Keywords := ElementByPath(CurrentItem, 'KWDA');
+			for k := ElementCount(Keywords) - 1 downto 0 do begin
+				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+				if ContainsText(CurrentKeyword, 'material') then begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByIndex(ElementByPath(CurrentItem, 'BOD2\First Person Flags'),0));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM')) then
+						ArmoRating.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+						ArmoWeight.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+						ArmoValue.AddObject(CurrentAddress, CurrentItem);
 				end;
-
-			// if element's value has changed
-			if s <> s2 then begin// store it
-				el.EditValue := s2;
-
-			// report
-			if not bChanged then
-				logMessage(1,#13#10 + f);
-				logMessage(1,#9 + el.Path + #13#10#9#9'"' + s + '"'#13#10#9#9'"' + el.EditValue + '"');
-
-				// mark file to be saved
-				bChanged := True;
+				if ContainsText(CurrentKeyword, 'materiel') then begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByIndex(ElementByPath(CurrentItem, 'BOD2\First Person Flags'),0));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM')) then
+						ArmoRating.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+						ArmoWeight.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+						ArmoValue.AddObject(CurrentAddress, CurrentItem);
+				end;
 			end;
 		end;
-		// create the same folders structure as the source file in the destination folder
-		s := ExtractFilePath(f2);
-		if not DirectoryExists(s) then
-			if not ForceDirectories(s) then
-				raise Exception.Create('Can not create destination directory ' + s);
+	end;
+end;
 
-		// get the root of the last processed element (the file element itself) and save
-		el.Root.SaveToFile(f2);
-		Inc(Updated);
+procedure AddWeap(CurrentFile: IInterface);
+var
+	i,j,k:integer;
+	CurrentGroup,CurrentItem:IInterface;
+	Keywords:IInterface;
+	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'WEAP');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, j);
+		if GetIsDeleted(CurrentItem) then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		if IsWinningOverride(CurrentItem) then begin
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			//for processing
+			Weap.AddObject(EditorID(CurrentItem), CurrentItem);
+			//for calculations
+			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+			Keywords := ElementByPath(CurrentItem, 'KWDA');
+			for k := ElementCount(Keywords) - 1 downto 0 do begin
+				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+				if ContainsText(CurrentKeyword, 'material') then begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
+						WeapDamage.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+						WeapWeight.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+						WeapValue.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Speed')) then
+						WeapSpeed.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Reach')) then
+						WeapReach.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
+						WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
+						WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
+						WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
+				end;
+				if ContainsText(CurrentKeyword, 'materiel') then begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
+						WeapDamage.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+						WeapWeight.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+						WeapValue.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Speed')) then
+						WeapSpeed.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Reach')) then
+						WeapReach.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
+						WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
+						WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
+						WeapRangeMax.AddObject(CurrentAddress, CurrentItem);
+				end;
+			end;
+		end;
+	end;
+end;
+
+procedure AddAmmo(CurrentFile: IInterface);
+var
+	i,j,k:integer;
+	CurrentGroup,CurrentItem:IInterface;
+	Keywords:IInterface;
+	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'Ammo');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, j);
+		if GetIsDeleted(CurrentItem) then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		if IsWinningOverride(CurrentItem) then begin
+			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists');
+			//for processing
+			Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
+			//for calculations
+			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
+			Keywords := ElementByPath(CurrentItem, 'KWDA');
+			for k := ElementCount(Keywords) - 1 downto 0 do begin
+				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
+				if ContainsText(CurrentKeyword, 'material') then begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+						AmmoWeight.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
+						AmmoDamage.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+						AmmoValue.AddObject(CurrentAddress, CurrentItem);
+				end;
+				if ContainsText(CurrentKeyword, 'materiel') then begin
+					LogMessage(1, 'Adding ' + name(CurrentItem) + ' to calculations processing');
+					CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
+					CurrentAddress := CurrentKeyword+CurrentBOD2;
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Weight')) then
+						AmmoWeight.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Damage')) then
+						AmmoDamage.AddObject(CurrentAddress, CurrentItem);
+					if assigned(GetElementEditValues(CurrentItem, 'DATA\Value')) then
+						AmmoValue.AddObject(CurrentAddress, CurrentItem);
+				end;
+			end;
+		end;
+	end;
+end;
+
+procedure FinalizeArmo;
+begin
+	LogMessage(1,'processing ratings');
+	averager('DNAM',ArmoRating);
+	
+	LogMessage(1,'processing Armo Weight');
+	averager('DATA\Weight',ArmoWeight);
+	
+	LogMessage(1,'processing armo Value');
+	averager('DATA\Weight',ArmoValue);
+	
+end;
+
+procedure FinalizeWeap;
+begin
+	LogMessage(1,'processing weap Damage');
+	averager('DATA\Damage',WeapDamage);
+	LogMessage(1,'processing weap Weight');
+	averager('DATA\Weight',WeapWeight);
+	LogMessage(1,'processing weap Value');
+	averager('DATA\Value',WeapValue);
+	LogMessage(1,'processing weap speed');
+	averager('DNAM\Speed',WeapSpeed);
+	LogMessage(1,'processing weap reach');
+	averager('DNAM\Reach',WeapReach);
+	LogMessage(1,'processing weap critical damage');
+	averager('CRDT\Damage',WeapCrdtDam);
+	LogMessage(1,'processing weap minimum range');
+	averager('DNAM\Range Min',WeapRangeMin);
+	LogMessage(1,'processing weap maximum range');
+	averager('DNAM\Range Max',WeapRangeMax);
+end;
+
+procedure FinalizeAmmo;
+begin
+	LogMessage(1,'processing Damage of ammos');
+	averager('DATA\Damage',AmmoDamage);
+	
+	LogMessage(1,'processing Ammo Weight');
+	averager('DATA\Weight',AmmoWeight);
+	
+	LogMessage(1,'processing ammo value');
+	averager('DATA\Weight',AmmoValue);
+	
+end;
+
+procedure averager(Path:string; out List:TStringList);
+var
+	i,listcount,j:integer;
+	TempListA,TempListB:TStringList;
+	ratings,ara,inda:string;
+	rating:double;
+	CompleteAverage:double;
+begin
+	listcount := list.count;
+	TempListA := TStringList.Create;
+	for i := listcount - 1 downto 0 do begin
+		ara := List.Strings[i];
+		inda := TempListA.IndexOf(ara);
+		ratings := GetElementEditValues(ObjectToElement(List.objects[i]), Path);
+		if inda < 0 then
+			TempListB := TStringList.Create
+		else
+			TempListB := TempListA.objects[inda];
+		TempListB.Add(ratings);
+		TempListA.AddObject(ara,TempListB);
+	end;
+	List.clear;
+	for i := TempListA.Count - 1 downto 0 do begin
+		TempListB := TempListA.objects[i];
+		rating := 0;
+		for j := TempListB.count - 1 downto 0 do begin
+			rating := rating + TryStrToFloat(TempListB.strings[j],5.0);
+		end;
+		rating := rating / TempListB.count;
+		List.AddObject(TempListA.strings[i],rating);
+		completeAverage := CompleteAverage + Rating;
+	end;
+	if listcount > 0 then
+		CompleteAverage := CompleteAverage / listcount
+	else begin
+		CompleteAverage := 0;
+		LogMessage(3, 'List contained no items, path: ' + path);
+	end;
+	List.AddObject('averageofall',CompleteAverage);
+	TempListA.free;
+end;
+
+procedure BalancingProcess;
+var
+	i,j:integer;
+	CurrentItem:IInterface;
+	Keywords:IInterface;
+	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
+begin
+	for i := Armo.Count - 1 downto 0 do begin
+		CurrentItem := ObjectToElement(Armo.objects[i]);
+		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
+		Keywords := ElementByPath(CurrentItem, 'KWDA');
+		for j := ElementCount(Keywords) - 1 downto 0 do begin
+			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
+			if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+			begin
+				CurrentBOD2 := Name(ElementByIndex(ElementByPath(CurrentItem, 'BOD2\First Person Flags'),0));
+				CurrentAddress := CurrentKeyword+CurrentBOD2;
+			end;
+		end;
+		Ratings(CurrentItem,CurrentAddress);
+		Weight(CurrentItem,CurrentAddress);
+		Value(CurrentItem,CurrentAddress);
+	end;
+	Armo.Free;
+	for i := Weap.Count - 1 downto 0 do begin
+		CurrentItem := ObjectToElement(Weap.Objects[i]);
+		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
+		Keywords := ElementByPath(CurrentItem, 'KWDA');
+		for j := ElementCount(Keywords) - 1 downto 0 do begin
+			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
+			if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+			begin
+				CurrentBOD2 := Name(ElementByPath(CurrentItem, 'DNAM\Animation Type'));
+				CurrentAddress := CurrentKeyword+CurrentBOD2;
+			end;
+		end;
+		Weight(CurrentItem,CurrentAddress);
+		Value(CurrentItem,CurrentAddress);
+		WeapProcess(CurrentItem,CurrentAddress);
+	end;
+	Weap.Free;
+	for i := Ammo.Count - 1 downto 0 do begin
+		CurrentItem := ObjectToElement(Ammo.Objects[i]);
+		CurrentItem := wbCopyElementToFile(CurrentItem, Patch, false,true);
+		LogMessage(1,'Now Processing: ' + Name(CurrentItem));
+		Keywords := ElementByPath(CurrentItem, 'KWDA');
+		for j := ElementCount(Keywords) - 1 downto 0 do begin
+			CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,j)))));
+			if ContainsText(CurrentKeyword, 'material') OR ContainsText(CurrentKeyword, 'materiel') then
+			begin
+				CurrentBOD2 := Name(ElementByPath(CurrentItem, 'Data\Flags\Non-Bolt'));
+				CurrentAddress := CurrentKeyword+CurrentBOD2;
+			end;
+		end;
+		Weight(CurrentItem,CurrentAddress);
+		Value(CurrentItem,CurrentAddress);
+		AmmoProcess(CurrentItem,CurrentAddress);
+	end;
+end;
+
+procedure Ratings(item:IInterface;address:string);
+var
+	temp,OriginalRating,AverageRating: double;
+	AddIndex:integer;
+begin
+	LogMessage(1,'Rating: ' + Name(item));
+	OriginalRating := TryStrToFloat(GetElementEditValues(item, 'DNAM'),0);
+	AddIndex := ArmoRating.IndexOf(address);
+	if not AddIndex < 0 then
+		averageRating := ArmoRating.objects[AddIndex]
+	else AverageRating := ArmoRating.Objects[ArmoRating.IndexOf('averageofall')];
+	temp := BalanceRandomizerfloat(OriginalRating,averageRating,7);
+	SetElementEditValues(item, 'DNAM', FloatToStr(temp));
+end;
+
+Procedure Weight(item:IInterface;address:string);
+var
+	i,l,j:integer;
+	cobj: IInterface;
+	weightedAverage,WeightCobj,WeightExisting,Weight:double;
+	temp: double;
+	AddIndex,VaritionDiff:integer;
+begin
+	LogMessage(1,'Weighing: ' + Name(item));
+	//estimating weight
+	
+	if signature(item) = 'ARMO' then begin
+		AddIndex := ArmoWeight.IndexOf(address);
+		if not AddIndex < 0 then
+			WeightExisting := ArmoWeight.objects[AddIndex]
+		else ArmoWeight.Objects[ArmoWeight.IndexOf('averageofall')];
+	end else if signature(item) = 'WEAP' then begin
+		AddIndex := WeapWeight.IndexOf(address);
+		if not AddIndex < 0 then
+			WeightExisting := WeapWeight.objects[AddIndex]
+		else WeapWeight.Objects[WeapWeight.IndexOf('averageofall')];
+	end else begin
+		AddIndex := AmmoWeight.IndexOf(address);
+		if not AddIndex < 0 then
+			WeightExisting := AmmoWeight.objects[AddIndex]
+		else AmmoWeight.Objects[AmmoWeight.IndexOf('averageofall')];
 	end;
 	
-	Elements.Free;
-	Nif.Free;
-	BGSM.Free;
-	BGEM.Free;
-end;
-
-function AddCondition(list: IInterface): IInterface;
-var
-  newCondition, tmp: IInterface;
-begin
-	if not (Name(list) = 'Conditions') then begin
-		if Signature(list) = 'LSCR' then begin // record itself was provided
-			tmp := ElementByPath(list, 'Conditions');
-			if not Assigned(tmp) then begin
-				Add(list, 'Conditions', true);
-				list := ElementByPath(list, 'Conditions');
-				newCondition := ElementByIndex(list, 0); // xEdit will create dummy condition if new list was added
-			end else begin
-				list := tmp;
+	WeightCobj := 0;
+	AddIndex := Recipes.IndexOf(EditorID(item));
+	if not AddIndex < 0 then begin
+		cobj := Recipes.objects[AddIndex]
+		path := ElementByPath(cobj, 'Items');
+		LogMessage(1,'processing cobj for item: ' + name(item));
+		l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
+		if assigned(ElementByPath(cobj, 'COCT')) then begin
+			for i := l downto 0 do begin
+				cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
+				Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
+				if pos(signature(cobjitem), 'ALCH') > 0 then
+				begin
+					WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA - Weight'), weightOriginal) + WeightCobj;
+				end else
+				begin
+					WeightCobj := amount * tryStrToFloat(GetElementEditValues(cobjitem, 'DATA\Weight'), weightOriginal) + WeightCobj;
+				end;
 			end;
 		end;
-	end;
-
-	if not Assigned(newCondition) then begin
-	// create condition
-		newCondition := ElementAssign(list, HighInteger, nil, false);
-	end;
-
-	// set type to Equal to
-	SetElementEditValues(newCondition, 'CTDA\Type', '10100000');
-
-	// set some needed properties
-	SetElementEditValues(newCondition, 'CTDA\Comparison Value', '100');
-	SetElementEditValues(newCondition, 'CTDA\Function', 'GetRandomPercent');
-	SetElementEditValues(newCondition, 'CTDA\None', '00000000');
-	SetElementEditValues(newCondition, 'CTDA\Run On', 'Subject');
-	// don't know what is this, but it should be equal to -1, if Function Runs On Subject
-	SetElementEditValues(newCondition, 'CTDA\Parameter #3', '-1');
-
-	// remove nil records from list
-	removeInvalidEntries(list);
-
-	Result := newCondition;
+	end else WeightCobj := WeightExisting;
+	if WeightExisting = 0 then WeightExisting := WeightCobj;
+	weight := TryStrToFloat(GetElementEditValues(item, 'DATA\Weight'),0.0);
+	LogMessage(1, 'the estimated weight based on cobj is: ' + FloatToStr(WeightCobj) + ' the estimated weight based on included items is: ' + FloatToStr(WeightExisting) + 'the current weight is: ' + FloatToStr(weight));
+	if signature(item) = 'AMMO' then weightedAverage := WeightCobj * 0.7 + WeightExisting * 0.3;
+	else weightedAverage := WeightCobj * 0.3 + WeightExisting * 0.7;
+	if weightedAverage = 0 then weightedAverage := weight;
+	VaritionDiff := 7;
+		if weight > weightedAverage then
+		begin
+			temp := weightedAverage * (random(0.5) + 0.5);
+		end else if weight < weightedAverage then
+		begin
+			temp := weightedAverage * (random(0.3) + 0.5);
+		end else
+		begin
+			temp := weightedAverage * (random(0.4) + 0.5);
+		end;
+		while temp > weightedAverage + VaritionDiff OR temp < weightedAverage - VaritionDiff do begin
+			if temp > weightedAverage then
+			begin
+				temp := temp - VaritionDiff * (random(0.5) + 1);
+			end else if temp < weightedAverage then
+			begin
+				temp := temp + VaritionDiff * (random(0.5) + 0.5);
+			end;
+		end;
+	SetElementEditValues(item, 'Data\Weight', FloatToStr(temp));
 end;
 
-Function ReverseString(AText: string): string;
+procedure Value(item:IInterface;address:string);
 var
-    i,j:longint;
+	i,j,l:integer;
+	ValueAverage,ValueCobj,ValueExisting:double;
+	Value:int;
+	temp: double;
+	AddIndex:integer;
 begin
-  setlength(result,length(atext));
-  i:=1;
-  j:=length(atext);
-  while (i<=j) do
-    begin
-      result[i]:=atext[j-i+1];
-      inc(i);
-    end;
+	LogMessage(1,'valuing: ' + Name(item));
+	
+	if signature(item) = 'ARMO' then begin
+		AddIndex := Armovalue.IndexOf(address);
+		if not AddIndex < 0 then
+			valueExisting := Armovalue.objects[AddIndex]
+		else Armovalue.Objects[Armovalue.IndexOf('averageofall')];
+	end else if signature(item) = 'WEAP' then begin
+		AddIndex := Weapvalue.IndexOf(address);
+		if not AddIndex < 0 then
+			valueExisting := Weapvalue.objects[AddIndex]
+		else Weapvalue.Objects[Weapvalue.IndexOf('averageofall')];
+	end else begin 
+		AddIndex := Ammovalue.IndexOf(address);
+		if not AddIndex < 0 then
+			valueExisting := Ammovalue.objects[AddIndex]
+		else Ammovalue.Objects[Ammovalue.IndexOf('averageofall')];
+	end;
+	
+	ValueCobj := 0;
+	AddIndex := Recipes.IndexOf(EditorID(item));
+	if not AddIndex < 0 then begin
+		cobj := ObjectToElement(recipes.objects[Recipes.IndexOf(EditorID(item))]);
+		path := ElementByPath(cobj, 'Items');
+		LogMessage(1,'processing cobj for item: ' + name(item));
+		l := pred(tryStrToInt(GetElementEditValues(cobj, 'COCT'), 1));
+		if assigned(ElementByPath(cobj, 'COCT')) then begin
+			for i := l downto 0 do begin
+				cobjitem := LinksTo(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 0));
+				Amount := tryStrToInt(GetEditValue(ElementByIndex(ElementByIndex(ElementByIndex(path, i), 0), 1)), 1);
+				if pos(signature(cobjitem), 'ALCH') > 0 then
+				begin
+					ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'ENIT\Value'), Value) + ValueCobj;
+				end else
+				begin
+					ValueCobj := amount * tryStrToInt(GetElementEditValues(cobjitem, 'DATA\Value'), Value) + ValueCobj;
+				end;
+			end;
+		end;
+	end else ValueCobj := valueExisting;
+	if valueExisting = 0 then valueExisting := ValueCobj;
+	
+	Value := tryStrToInt(GetElementEditValues(item, 'DATA\Value'),0.0);
+	LogMessage(1, 'the estimated Value based on cobj is: ' + FloatToStr(ValueCobj) + ' the estimated Value based on included items is: ' + FloatToStr(ValueExisting) + 'the current Value is: ' + FloatToStr(Value));
+	
+	if signature(item) = 'AMMO' then ValueAverage := ValueCobj * 0.7 + valueExisting * 0.3;
+	else ValueAverage := ValueCobj * 0.3 + valueExisting * 0.7;
+	if ValueAverage = 0 then ValueAverage := Value;
+	
+	temp := BalanceRandomizerInt(Value,ValueAverage,500);
+	SetElementEditValues(item, 'Data\Value', IntToStr(floor(temp)));
+end;
+
+procedure WeapProcess(item:IInterface;address:string);
+var
+	original,temp,existing: double;
+	originali,tempi: int;
+	AddIndex:integer;
+begin
+	LogMessage(1,'sharpening: ' + Name(item));
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Speed'), 1.0);
+		AddIndex := WeapSpeed.IndexOf(address);
+		if not AddIndex < 0 then
+			existing := WeapSpeed.objects[AddIndex]
+		else WeapSpeed.Objects[WeapSpeed.IndexOf('averageofall')];
+	existing := WeapSpeed.objects[WeapSpeed.IndexOf(address)];
+	temp := BalanceRandomizerfloat(original,existing,0.5);
+	SetElementEditValues(item, 'DNAM\Speed', FloatToStr(temp));
+	
+	originali := tryStrToInt(GetElementEditValues(item, 'DATA\Damage'), 1);
+		AddIndex := WeapDamage.IndexOf(address);
+		if not AddIndex < 0 then
+			existing := WeapDamage.objects[AddIndex]
+		else WeapDamage.Objects[WeapDamage.IndexOf('averageofall')];
+	tempi := BalanceRandomizerInt(original,existing,5);
+	SetElementEditValues(item, 'DATA\Damage', IntToStr(temp));
+	
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Reach'), 1.0);
+		AddIndex := WeapReach.IndexOf(address);
+		if not AddIndex < 0 then
+			existing := WeapReach.objects[AddIndex]
+		else WeapReach.Objects[WeapReach.IndexOf('averageofall')];
+	temp := BalanceRandomizerfloat(original,existing,0.5);
+	SetElementEditValues(item, 'DNAM\Reach', FloatToStr(temp));
+	
+	originali := tryStrToInt(GetElementEditValues(item, 'CRDT\Damage'), 1);
+		AddIndex := WeapCrdtDam.IndexOf(address);
+		if not AddIndex < 0 then
+			existing := WeapCrdtDam.objects[AddIndex]
+		else WeapCrdtDam.Objects[WeapCrdtDam.IndexOf('averageofall')];
+	tempi := BalanceRandomizerInt(original,existing,5);
+	SetElementEditValues(item, 'CRDT\Damage', IntToStr(temp));
+	
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Min'), 1.0);
+		AddIndex := WeapRangeMin.IndexOf(address);
+		if not AddIndex < 0 then
+			existing := WeapRangeMin.objects[AddIndex]
+		else WeapRangeMin.Objects[WeapRangeMin.IndexOf('averageofall')];
+	temp := BalanceRandomizerfloat(original,existing,500);
+	SetElementEditValues(item, 'DNAM\Range Min', FloatToStr(temp));
+	
+	original := tryStrToFloat(GetElementEditValues(item, 'DNAM\Range Max'), 1.0);
+		AddIndex := WeapRangeMax.IndexOf(address);
+		if not AddIndex < 0 then
+			existing := WeapRangeMax.objects[AddIndex]
+		else WeapRangeMax.Objects[WeapRangeMax.IndexOf('averageofall')];
+	temp := BalanceRandomizerfloat(original,existing,500);
+	SetElementEditValues(item, 'DNAM\Range Max', FloatToStr(temp));
+end;
+
+procedure AmmoProcess(item:IInterface;address:string);
+var
+	original,temp,existing: double;
+	originali,tempi: int;
+	AddIndex:integer;
+begin
+	LogMessage(1,'firing: ' + Name(item));
+	original := tryStrToFloat(GetElementEditValues(item, 'DATA\Damage'), 1.0);
+		AddIndex := AMMODamage.IndexOf(address);
+		if not AddIndex < 0 then
+			existing := AMMODamage.objects[AddIndex]
+		else AMMODamage.Objects[AMMODamage.IndexOf('averageofall')];
+	temp := BalanceRandomizerfloat(original,existing,5);
+	SetElementEditValues(item, 'DATA\Damage', IntToStr(floor(temp)));
+end;
+
+function BalanceRandomizerInt(original:int;existing:float;VaritionDiff:float):int;
+var
+	temp:double;
+begin
+	if Original > existing then
+	begin
+		temp := existing * (random(0.5) + 1);
+	end else if Original < existing then
+	begin
+		temp := existing * (random(0.5) + 0.5);
+	end else
+	begin
+		temp := existing * (random(0.4) + 0.8);
+	end;
+	while temp > existing + 0.5 OR temp < existing - 0.5 do begin
+		if temp > existing then
+		begin
+			temp := temp - 5 * (random(0.5) + 1);
+		end else if temp < existing then
+		begin
+			temp := temp + 5 * (random(0.5) + 0.5);
+		end;
+	end;
+	result := floor(temp);
+end;
+
+function BalanceRandomizerfloat(original,existing:float;VaritionDiff:float):float;
+var
+	temp: double;
+begin
+	if Original > existing then
+	begin
+		temp := existing * (random(0.5) + 1);
+	end else if Original < existing then
+	begin
+		temp := existing * (random(0.5) + 0.5);
+	end else
+	begin
+		temp := existing * (random(0.4) + 0.8);
+	end;
+	while temp > existing + VaritionDiff OR temp < existing - VaritionDiff do begin
+		if temp > existing then
+		begin
+			temp := temp - VaritionDiff * (random(0.5) + 1);
+		end else if temp < existing then
+		begin
+			temp := temp + VaritionDiff * (random(0.5) + 0.5);
+		end;
+	end;
+	result := temp;
 end;
 
 end.
