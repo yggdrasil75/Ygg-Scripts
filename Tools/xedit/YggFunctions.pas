@@ -15,7 +15,6 @@ function tryStrToFloat(item: string; default: double): double;
 begin
 	if length(item) = 0 then
 	begin
-		elementassign(copyRecord, -1, Nil, false);
 		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data',YggLogCurrentMessages);
 		result := default;
 	end else result := StrToFloat(item);
@@ -25,7 +24,6 @@ function tryStrToInt(item: string; default: integer): integer;
 begin
 	if length(item) = 0 then
 	begin
-		elementassign(copyRecord, -1, Nil, false);
 		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data',YggLogCurrentMessages);
 		result := default;
 	end else result := StrToFloat(item);
