@@ -12,6 +12,8 @@ var
 	sBaseMaster: string;
 	SingleFile: boolean;
 	SinglePlugin: IInterface;
+	TimeBegin: TDateTime;
+	YggLogCurrentMessages: TStringList;
 	
 const
 	scaleFactor = Screen.PixelsPerInch / 96;
@@ -28,6 +30,7 @@ var
 	f: integer;
 	BeginTime, EndTime: TDateTime;
 begin
+	YggLogCurrentMessages := TStringList.Create;
 	BeginTime := Time;
 	beginLog('Crafter start');
 	PassTime(Time);
@@ -109,30 +112,30 @@ var
 	bool:boolean;
 begin
 	YggIni := TIniFile.Create(ScriptsPath + 'YggIni.ini');
-	if YggIni.ReadInteger('Balance', 'bAskEvery', 0) = 0 then
+	if YggIni.ReadInteger('Crafting', 'bAskEvery', 0) = 0 then
 	begin
 		temp := MessageDlg('Do you want to be asked every time for single mode?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
 		if temp = mrAbort then
 			exit
-		else YggIni.WriteInteger('Balance', 'bAskEvery', temp);
-	end else temp := YggIni.ReadInteger('Balance', 'bAskEvery', 0);
+		else YggIni.WriteInteger('Crafting', 'bAskEvery', temp);
+	end else temp := YggIni.ReadInteger('Crafting', 'bAskEvery', 0);
 	if temp = 6 then bool := true
 	else bool := false;
-	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0 OR 
-		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 6 OR 
-		not YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 7 OR 
+	if YggIni.ReadInteger('Crafting', 'bSingleMode', 0) = 0 OR 
+		not YggIni.ReadInteger('Crafting', 'bSingleMode', 0) = 6 OR 
+		not YggIni.ReadInteger('Crafting', 'bSingleMode', 0) = 7 OR 
 		bool then
 	begin
 		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
 		if temp = mrAbort then
 			exit
-		else YggIni.WriteInteger('Balance', 'bSingleMode', temp);
-	end else temp := YggIni.ReadInteger('Balance', 'bSingleMode', 0);
+		else YggIni.WriteInteger('Crafting', 'bSingleMode', temp);
+	end else temp := YggIni.ReadInteger('Crafting', 'bSingleMode', 0);
 	if temp = 6 then SingleFile := true
 	else SingleFile := false;
 	YggIni.UpdateFile;
 	if SingleFile then begin
-		SinglePlugin := Configure('Balance SinglePlugin mode');
+		SinglePlugin := Configure('Crafting SinglePlugin mode');
 	end;
 end;
 
@@ -166,7 +169,7 @@ begin
     lblPlugins.Top := 10 * scaleFactor;
     lblPlugins.Width := 200 * scaleFactor;
     lblPlugins.Height := 16 * scaleFactor;
-    lblPlugins.Caption := 'Select file to balance:';
+    lblPlugins.Caption := 'Select file to Craft:';
     lblPlugins.AutoSize := False;
 
     cbbPlugins := TComboBox.Create(frm);
@@ -362,7 +365,7 @@ var
   recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems, keywords: IInterface;
   amountOfMainComponent, ki, amountOfAdditionalComponent, e: integer;
 begin
-	recipeCraft := FindRecipe(false);
+	recipeCraft := FindRecipe(false,HashedList);
 	if assigned(recipeCraft) then begin
 		if optionAddOnly = 6 then begin
 			remove(recipeCraft);
@@ -540,6 +543,19 @@ begin
 	end;
 
   
+end;
+
+procedure makeBreakdown;
+begin
+	//make stuff uncraftable
+	recipeCraft := FindRecipe(false,Breakdown);
+	
+end;
+
+procedure makeTemper;
+begin
+	//make stuff temperable
+	recipeCraft := FindRecipe(false,Temper);
 end;
 
 function MaterialAmountHeavy(amountOfMainComponent, amountOfAdditionalComponent: integer; recipeCraft, recipeCondition, recipeConditions, recipeItem, recipeItems: IInterface): integer;
@@ -1236,13 +1252,13 @@ begin
 	result := count;
 end;
 
-function FindRecipe(Create: boolean): IInterface;
+function FindRecipe(Create: boolean, List:TStringList): IInterface;
 var
 	recipeCraft: IInterface;
 begin
-	if HashedList.IndexOf(LowerCase(EditorID(WinningOverride(CurrentItem)))) >= 0 then
+	if List.IndexOf(LowerCase(EditorID(WinningOverride(CurrentItem)))) >= 0 then
 	begin
-		result := wbCopyElementToFile(ObjectToElement(HashedList.Objects[HashedList.IndexOf(EditorID(CurrentItem))]), Patch, false, true);
+		result := wbCopyElementToFile(ObjectToElement(List.Objects[List.IndexOf(EditorID(CurrentItem))]), Patch, false, true);
 	end else
 	begin
 		if create then
@@ -1263,11 +1279,18 @@ function InitializeRecipes: integer;
 var
 	f, r: integer;
 	BNAM, currentFile, CurrentGroup, CurrentRecord: IInterface;
-	temp: string;
+	StationEDID,temp: string;
 begin
 	Recipes := TStringList.Create;
 	Recipes.Duplicates := dupIgnore;
 	Recipes.Sorted;
+	Temper := TStringList.Create;
+	Temper.Duplicates := dupIgnore;
+	Temper.Sorted;
+	Breakdown := TStringList.Create;
+	Breakdown.Duplicates := dupIgnore;
+	Breakdown.Sorted;
+	
 	for f := FileCount - 1 downto 0 do
 	begin
 		currentFile := FileByIndex(f);
@@ -1278,12 +1301,27 @@ begin
 			begin
 				CurrentRecord := ElementByIndex(CurrentGroup, r);
 				BNAM := LinksTo(ElementByPath(CurrentRecord, 'BNAM'));
-				if GetLoadOrderFormID(BNAM) = $000ADb78 then continue;
-				if GetLoadOrderFormID(BNAM) = $00088108 then continue;
 				temp := LowerCase(EditorID(WinningOverride(LinksTo(ElementByPath(CurrentRecord, 'CNAM')))));
+				StationEDID := LowerCase(EditorID(BNAM));
 				if IsWinningOverride(CurrentRecord) then
 				begin
-					Recipes.AddObject(temp, CurrentRecord);
+					if not (ContainsText(StationEDID,'armortable')) and 
+						not (ContainsText(StationEDID,'sharpening')) and 
+						(not (ContainsText(StationEDID,'forge')) 
+							OR (ContainsText(StationEDID,'skyforge'))) and 
+						not (ContainsText(StationEDID,'cook')) then 
+							Recipes.AddObject(temp, CurrentRecord)
+					else if (ContainsText(StationEDID, 'sharpening')) or (ContainsText(StationEDID, 'armortable'))
+						Temper.AddObject(temp, CurrentRecord)
+					else if (StationEDID = 'Smelter') then begin
+						Items := ElementByPath(CurrentRecord, 'Items');
+						for i := ElementCount(Items) - 1 downto 0 do begin
+							Item := WinningOverride(LinksTo(ElementByPath(ElementByIndex(Items, i), 'CNTO\Item')));
+							sigItem := Signature(Item);
+							if sigItem = 'ARMO' or sigItem = 'WEAP' or sigItem = 'AMMO' then
+								Breakdown.AddObject(LowerCase(EditorID(Item)), CurrentRecord);
+						end;
+					end;
 				end;
 			end;
 		end else
