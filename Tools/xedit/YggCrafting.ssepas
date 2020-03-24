@@ -80,7 +80,7 @@ begin
 	Ini := TMemIniFile.Create(ScriptsPath + 'Ygg.ini');
 	if ini.ReadInteger('BaseData', 'FirstRun', 0) = 0 then 
 	begin
-		TalkToUser := MessageDlg('There will be a few settings options pop up on the first run, these settings will be saved to Ygg.ini in the folder that contains the script you are currently running. #13#10If you ever want to change them, you can delete the line from the ini, alter it manually, or just delete the ini file itself.', mtInformation, [mbOk], 0);
+		TalkToUser := MessageDlg('There will be a few settings options pop up on the first run, these settings will be saved to Ygg.ini in the folder that contains the script you are currently running. If you ever want to change them, you can delete the line from the ini, alter it manually, or just delete the ini file itself.', mtInformation, [mbOk], 0);
 		ini.WriteInteger('BaseData', 'FirstRun', TalkToUser);
 	end;
 	if ini.ReadInteger('Crafting', 'bCraftOnly', 0) = 0 then
