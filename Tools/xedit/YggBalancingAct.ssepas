@@ -280,23 +280,23 @@ begin
 				if ContainsText(LowerCase(Name(CurrentItem)), 'temper') then continue;
 				if IsWinningOverride(CurrentItem) then Recipes.AddObject(EditorID(WinningOverride(LinksTo(ElementByPath(CurrentItem, 'CNAM')))), CurrentItem);
 			end;
+			LogMessage(1, 'Checked COBJ In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		end;
-		LogMessage(1, 'Checked COBJ In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		//armo
 		if HasGroup(CurrentFile, 'ARMO') then begin
 			AddArmo(CurrentFile);
+			LogMessage(1, 'Checked ARMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		end;
-		LogMessage(1, 'Checked ARMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		//weap
 		if HasGroup(CurrentFile, 'WEAP') then begin
 			AddWeap(CurrentFile);
+			LogMessage(1, 'Checked WEAP In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		end;
-		LogMessage(1, 'Checked WEAP In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		//ammo
 		if HasGroup(CurrentFile, 'AMMO') then begin
 			AddAmmo(CurrentFile);
+			LogMessage(1, 'Checked AMMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 		end;
-		LogMessage(1, 'Checked AMMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
 	end;
 	
 	//finalize lists
@@ -360,7 +360,7 @@ end;
 
 procedure AddWeap(CurrentFile: IInterface);
 var
-	i,j,k:integer;
+	i,j,k,code:integer;
 	CurrentGroup,CurrentItem:IInterface;
 	Keywords:IInterface;
 	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
@@ -399,7 +399,7 @@ begin
 							WeapReach.AddObject(CurrentAddress, CurrentItem);
 						if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
 							WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
-					if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Max'),0) = 0 then begin
+					if not StrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) = 0 then begin
 						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
 							WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
 						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
@@ -422,7 +422,7 @@ begin
 							WeapReach.AddObject(CurrentAddress, CurrentItem);
 						if assigned(GetElementEditValues(CurrentItem, 'CRDT\Damage')) then
 							WeapCrdtDam.AddObject(CurrentAddress, CurrentItem);
-					if not TryStrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Min'),0) = 0 then begin
+					if not StrToFloat(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) = 0 then begin
 						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Min')) then
 							WeapRangeMin.AddObject(CurrentAddress, CurrentItem);
 						if assigned(GetElementEditValues(CurrentItem, 'DNAM\Range Max')) then
@@ -441,8 +441,10 @@ var
 	Keywords:IInterface;
 	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
 begin
-	CurrentGroup := GroupBySignature(CurrentFile, 'Ammo');
+		LogMessage(0, 'ammoprocessing',YggLogCurrentMessages);
+	CurrentGroup := GroupBySignature(CurrentFile, 'AMMO');
 	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		LogMessage(1, 'Adding ' + GetFileName(CurrentGroup) + ' to ammo lists',YggLogCurrentMessages);
 		CurrentItem := ElementByIndex(CurrentGroup, j);
 		if GetIsDeleted(CurrentItem) then continue;
 		if hasKeyword(CurrentItem, 'Dummy') then continue;
@@ -523,7 +525,7 @@ procedure averager(Path:string; out List:TStringList;backup: TStringList);
 var
 	i,listcount,j:integer;
 	TempListA,TempListB:TStringList;
-	backupcount,j:integer;
+	backupcount:integer;
 	TempbackupA,TempbackupB:TStringList;
 	ratings,ara,inda:string;
 	rating:double;
@@ -557,13 +559,13 @@ begin
 		CompleteAverage := CompleteAverage / listcount
 	else begin
 		backupcount := backup.count;
-		TempbackupA := TStringbackup.Create;
+		TempbackupA := TStringList.Create;
 		for i := backupcount - 1 downto 0 do begin
 			ara := backup.Strings[i];
 			inda := TempbackupA.IndexOf(ara);
 			ratings := GetElementEditValues(ObjectToElement(backup.objects[i]), Path);
 			if inda < 0 then
-				TempbackupB := TStringbackup.Create
+				TempbackupB := TStringList.Create
 			else
 				TempbackupB := TempbackupA.objects[inda];
 			TempbackupB.Add(ratings);
