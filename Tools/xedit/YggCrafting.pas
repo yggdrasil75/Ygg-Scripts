@@ -249,10 +249,13 @@ begin
 			if hasKeyword(CurrentItem, 'Dummy') then continue;
 			if GetElementNativeValues(CurrentItem, 'EITM') > 0 then continue;
 			if ISWinningOverride(CurrentItem) then 
-			if SingleFile then 
-				if equals(GetFile(CurrentItem), SinglePlugin) then 
-					ArmoList.AddObject(EditorID(CurrentItem), CurrentItem)
-			else ArmoList.AddObject(EditorID(CurrentItem), CurrentItem);
+			if SingleFile then begin
+				if equals(GetFile(CurrentItem), SinglePlugin) then begin
+					ArmoList.AddObject(EditorID(CurrentItem), CurrentItem);
+					continue;
+				end;
+			end;
+			ArmoList.AddObject(EditorID(CurrentItem), CurrentItem);
 		end;
 	end;
 end;
@@ -283,10 +286,13 @@ begin
 			if GetElementNativeValues(CurrentItem, 'EITM') > 0 then continue;
 			if hasKeyword(CurrentItem, 'Dummy') then continue;
 			if ISWinningOverride(CurrentItem) then 
-			if SingleFile then 
-				if equals(GetFile(CurrentItem), SinglePlugin) then 
-					WeapList.AddObject(EditorID(CurrentItem), CurrentItem)
-			else WeapList.AddObject(EditorID(CurrentItem), CurrentItem);
+			if SingleFile then begin
+				if equals(GetFile(CurrentItem), SinglePlugin) then begin
+					WeapList.AddObject(EditorID(CurrentItem), CurrentItem);
+					continue;
+				end;
+			end;
+			WeapList.AddObject(EditorID(CurrentItem), CurrentItem);
 		end;
 	end;
 end;
@@ -317,10 +323,13 @@ begin
 			if hasKeyword(CurrentItem, 'Dummy') then continue;
 			if GetElementNativeValues(CurrentItem, 'EITM') > 0 then continue;
 			if ISWinningOverride(CurrentItem) then 
-			if SingleFile then 
-				if equals(GetFile(CurrentItem), SinglePlugin) then 
-					AMMOList.AddObject(EditorID(CurrentItem), CurrentItem)
-			else AMMOList.AddObject(EditorID(CurrentItem), CurrentItem);
+			if SingleFile then begin
+				if equals(GetFile(CurrentItem), SinglePlugin) then begin
+					AMMOList.AddObject(EditorID(CurrentItem), CurrentItem);
+					continue;
+				end;
+			end;
+			AMMOList.AddObject(EditorID(CurrentItem), CurrentItem);
 		end;
 	end;
 end;

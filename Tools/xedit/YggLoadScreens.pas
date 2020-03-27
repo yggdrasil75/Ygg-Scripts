@@ -33,7 +33,7 @@ begin
 	if Screenshots then
 	begin
 		sGamePath := Delete(DataPath,length(DataPath)-5, 5);
-		ArtIn := TDirectory.GetFiles(sDirPath, '*.jpg;*.png;*.bmp', soAllDirectories);
+		ArtIn := TDirectory.GetFiles(sGamePath, '*.jpg;*.png;*.bmp', soAllDirectories);
 		for i := length(ArtIn) - 1 downto 0 do begin
 		AddMessage(ArtIn);
 			CopyFile(ArtIn[i],DataPath+'\textures\ygg\loading\'+ArtIn[i]);
@@ -81,11 +81,14 @@ begin
 		CurrentEDIDAddition := StringReplace(CurrentEDIDAddition, '.dds', '',[rfReplaceAll]);
 		CurrentRecord := CreateRecord('LSCR');
 		CurrentStat := CreateRecord('STAT');
-		CurrentTXST := CreateRecord('TXST');
+		//CurrentTXST := CreateRecord('TXST');
 		SetEditorID(CurrentStat, 'YggLoadingSTAT'+CurrentEDIDAddition);
-		SetEditorID(CurrentTXST, 'YggLoadingTXST'+CurrentEDIDAddition);
+		//SetEditorID(CurrentTXST, 'YggLoadingTXST'+CurrentEDIDAddition);
 		
 		SetEditorID(CurrentRecord, 'YggLoadingLSCR'+CurrentEDIDAddition);
+		CopyFile('1.nif',DataPath+'\meshes\ygg\loading\'+CurrentEDIDAddition+'.nif');
+		
+		replaceTextureInNif(DataPath+'ygg\loading\'+CurrentEDIDAddition+'.nif','ygg\loading\1.dds',DataPath+'\textures\ygg\loading\'+CurrentEDIDAddition+'.nif');
 		
 		Add(CurrentStat,'Model',false);
 		Add(CurrentStat,'Model\MODS',false);
@@ -96,18 +99,18 @@ begin
 		temp := ElementByIndex(foobar, 0);
 		if not assigned(temp) then temp := ElementAssign(foobar, HighInteger, nil, false);
 		//if assigned(temp) then addmessage('temp');
-		SetEditValue(ElementByPath(temp, 'New Texture'), Name(CurrentTXST));
+		//SetEditValue(ElementByPath(temp, 'New Texture'), Name(CurrentTXST));
 		SetElementEditValues(CurrentStat, 'Model\MODL', 'ygg\loading\Loader.nif');
 		SetEditValue(ElementByIndex(ElementByIndex(CurrentStat,4),0), '90');
-		SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Name', 'CivilWarMap01');
+		//SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Name', 'CivilWarMap01');
 		//SetElementEditValues(CurrentStat, 'Model\MODS\Alternate Texture\3D Index', '2');
 		//for j := elementcount(ElementByIndex(CurrentStat,4)) - 1 downto 0 do addmessage(name(ElementByIndex(ElementByIndex(CurrentStat, 4),0)));
 		
-		Add(CurrentTXST,'Textures (RGB/A)', false);
-		Add(CurrentTXST,'Textures', false);
-		SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX00', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
-		ElementAssign(CurrentTXST, 2, nil, false);
-		SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX01', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
+		//Add(CurrentTXST,'Textures (RGB/A)', false);
+		//Add(CurrentTXST,'Textures', false);
+		//SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX00', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
+		//ElementAssign(CurrentTXST, 2, nil, false);
+		//SetElementEditValues(CurrentTXST, 'Textures (RGB/A)\TX01', 'Ygg\Loading\'+CurrentEDIDAddition+'.dds');
 		
 		
 		Add(CurrentRecord,'NNAM', false);
@@ -123,6 +126,126 @@ begin
 		
 		AddCondition(CurrentRecord);
 	end;
+	
+end;
+
+procedure replaceTextureInNif(sourcenif,afind,areplace:string);
+var
+  TDirectory: TDirectory; // to access member functions
+  i, j, k, p, Processed, Updated: integer;
+  Elements: TList;
+  el: TdfElement;
+  Nif: TwbNifFile;
+  Block: TwbNifBlock;
+  BGSM: TwbBGSMFile;
+  BGEM: TwbBGEMFile;
+  files: TStringDynArray;
+  f, f2, ext: string;
+  s, s2: WideString;
+  bChanged: Boolean;
+begin
+	Elements := TList.Create;
+	Nif := TwbNifFile.Create;
+	BGSM := TwbBGSMFile.Create;
+	
+	if ExtractFileExt(sourcenif) = '.nif' then
+	begin
+		Nif.LoadFromFile(sourcenif);
+		for j := 0 to Nif.BlocksCount - 1 do begin
+		block := Nif.Blocks[j];
+		if bMaterial and (Nif.NifVersion = nfFO4) and (Block.BlockType = 'BSLightingShaderProperty') then
+			Elements.Add(Block.Elements['Name'])
+		else if Block.BlockType = 'BSShaderTextureSet' then begin
+			el := Block.Elements['Textures'];
+			for j := 0 to Pred(el.Count) do
+				Elements.Add(el[j]);
+		end else if Block.BlockType = 'BSEffectShaderProperty' then begin
+			Elements.Add(Block.Elements['Source Texture']);
+			Elements.Add(Block.Elements['Grayscale Texture']);
+			Elements.Add(Block.Elements['Env Map Texture']);
+			Elements.Add(Block.Elements['Normal Texture']);
+			Elements.Add(Block.Elements['Env Mask Texture']);
+			// BGSM/BGEM file in the Name field of FO4 meshes
+			if bMaterial and (Nif.NifVersion = nfFO4) then
+			Elements.Add(Block.Elements['Name']);
+			end else if (Block.BlockType = 'BSShaderNoLightingProperty') or
+				(Block.BlockType = 'TallGrassShaderProperty') or
+				(Block.BlockType = 'TileShaderProperty')
+				then
+					Elements.Add(Block.Elements['File Name'])
+
+			else if Block.BlockType = 'BSSkyShaderProperty' then
+				Elements.Add(Block.Elements['Source Texture'])
+
+			// any block inherited from NiTexture
+			else if Block.IsNiObject('NiTexture', True) then
+				Elements.Add(Block.Elements['File Name']);
+		end; 
+	end;
+		
+	if Elements.Count = 0 then exit;
+	
+	for j := 0 to Pred(Elements.Count) do begin
+		if not Assigned(Elements[j]) then
+			Continue
+		else
+			el := TdfElement(Elements[j]);
+
+		// getting file name stored in element
+		s := el.EditValue;
+		// skip to the next element if empty
+		if s = '' then Continue;
+
+		// perform replacements, trim whitespaces just in case
+		s2 := Trim(s);
+		for k := 0 to Pred(aFind.Count) do begin
+			if aFind[k] <> '' then// replace if text to find is not empty
+				s2 := StringReplace(s2, afind, aReplace, [rfIgnoreCase, rfReplaceAll])
+			else// prepend if empty
+				s2 := aReplace[k] + s2;
+		end;
+
+		// detect an absolute path
+		if (Length(s2) > 2) and (Copy(s2, 2, 1) = ':') then begin
+			// remove path up to Data including it
+				p := Pos('\data\', LowerCase(s2));
+				if p <> 0 then
+					s2 := Copy(s2, p + 6, Length(s2));
+					// remove path up to Data Files including it for Morrowind
+				if p = 0 then begin
+					p := Pos('\data files\', LowerCase(s2));
+				if p <> 0 then
+					s2 := Copy(s, p + 12, Length(s2));
+				end;
+
+			// if element's value has changed
+			if s <> s2 then begin// store it
+				el.EditValue := s2;
+
+			// report
+			if not bChanged then
+				logMessage(1,#13#10 + f);
+				logMessage(1,#9 + el.Path + #13#10#9#9'"' + s + '"'#13#10#9#9'"' + el.EditValue + '"');
+
+				// mark file to be saved
+				bChanged := True;
+			end;
+		end;
+		// create the same folders structure as the source file in the destination folder
+		s := ExtractFilePath(f2);
+		if not DirectoryExists(s) then
+			if not ForceDirectories(s) then
+				raise Exception.Create('Can not create destination directory ' + s);
+
+		// get the root of the last processed element (the file element itself) and save
+		el.Root.SaveToFile(f2);
+		Inc(Updated);
+	end;
+	
+	Elements.Free;
+	Nif.Free;
+	BGSM.Free;
+	BGEM.Free;
 end;
 
 function AddCondition(list: IInterface): IInterface;

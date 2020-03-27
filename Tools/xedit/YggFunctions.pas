@@ -13,6 +13,8 @@ end;
 
 function tryStrToFloat(item: string; default: double): double;
 begin
+	//result := StrToFloat(item);
+	LogMessage(1, 'string ' + item + ' is being processed',YggLogCurrentMessages);
 	if length(item) = 0 then
 	begin
 		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data',YggLogCurrentMessages);
@@ -22,6 +24,7 @@ end;
 
 function tryStrToInt(item: string; default: integer): integer;
 begin
+	//result := StrToInt(item);
 	if length(item) = 0 then
 	begin
 		LogMessage(1, 'item ' + name(CurrentItem) + ' is missing required data',YggLogCurrentMessages);

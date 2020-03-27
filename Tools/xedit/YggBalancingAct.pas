@@ -7,7 +7,7 @@ var
 	WeapReach,WeapDamage,WeapSpeed : TStringList;
 	WeapCrdtDam,WeapRangeMin,TrustedPlugins,WeapRangeMax : TStringList;
 	YggIni: TMemIniFile;
-	C_FName:string;
+	Mode,C_FName:string;
 	Patch,CurrentItem: IInterface;
 	TimeBegin: TDateTime;
 	YggLogCurrentMessages: TStringList;
@@ -36,42 +36,13 @@ begin
 	BeginLog('Balancing Act Start');
 	TimeBegin := PassTime(Time);
 	IniProcess;
-	SingleMode;
-	if not SingleFile then 
-		Patch := SelectPatch('Ygg_Rebalance.esp')
-	else begin
-		temp := GetFileName(SinglePlugin);
-		temp := StringReplace(temp, '.esp', '', [rfReplaceAll]);
-		temp := StringReplace(temp, '.esl', '', [rfReplaceAll]);
-		temp := StringReplace(temp, '.esm', '', [rfReplaceAll]);
-		Patch := SelectPatch(temp+' Ygg_Rebalance.esp');
-		LogMessage(2, 'Using ' + GetFileName(Patch) + ' due to single mode',YggLogCurrentMessages);
-	end;
-	BeginUpdate(Patch);
-	try
-		remove(GroupBySignature(Patch, 'WEAP'));
-		remove(GroupBySignature(Patch, 'ARMO'));
-		remove(GroupBySignature(Patch, 'AMMO'));
-		Cleanmasters(Patch);
-		//if not SingleFile then begin
-			AddMasterBySignature('ARMO');
-			AddMasterBySignature('WEAP');
-			AddMasterBySignature('AMMO');
-			AddMasterBySignature('KWDA');
-			AddMasterBySignature('ARMA');
-		{end else begin
-			SPM := TStringList.Create;
-			ReportRequiredMasters(SinglePlugin, SPM, true,true);
-			for i := length(SPM) - 1 downto 0 do begin
-				AddMasterIfMissing(Patch,SPM[i]);
-			end;
-			AddMasterIfMissing(Patch, GetFileName(SinglePlugin));
-		end;}
-	finally EndUpdate(Patch);
-	end;
+	Mode := SetMode;
+	InitializeCalcLists;
+	if Mode = 'Fixed' then 
+		FixedSettings;
+	InitializeProcLists;
 	MasterLines;
 	Randomize;
-	InitializeLists;
 	
 	//processing
 	LogMessage(1,'Processing Section Start',YggLogCurrentMessages);
@@ -96,120 +67,328 @@ begin
 	//similar to single mode, except instead of making a patch, it directly edits the plugin. needs to confirm editability of plugin before processing.
 end;
 
-procedure SingleMode;
+function SetMode(asCaption: String): string;
 var
-	YggIni: TMemIniFile;
-	temp,tempEvery: integer;
-	bEvery:boolean;
+	frm: TForm;
+	lblModes: TLabel;
+	chkAddTags,chkLogging,cbbModes: TComboBox;
+	btnCancel,btnOk: TButton;
+	i: Integer;
 begin
 	YggIni := TIniFile.Create(ScriptsPath + 'Ygg.ini');
-	if YggIni.ReadInteger('Balance', 'bAskEvery', 0) = 0 then
-	begin
-		tempEvery := MessageDlg('Do you want to be asked every time for single mode?', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
-		if tempEvery = mrAbort then
-			exit
-		else YggIni.WriteInteger('Balance', 'bAskEvery', tempEvery);
-	end else tempEvery := YggIni.ReadInteger('Balance', 'bAskEvery', 0);
-	if tempEvery = 7 then bEvery := false
-	else bEvery := true;
-	if YggIni.ReadInteger('Balance', 'bSingleMode', 0) = 0  then begin
-		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
-		if temp = mrAbort then
-			exit
-		else YggIni.WriteInteger('Balance', 'bSingleMode', temp);
-	end else if bEvery then begin
-		temp := MessageDlg('I have added a "single plugin" mode which uses all plugins to calculate the contents of only 1 of those plugins, instead of all requisite plugins. WARNING: this assumes all loaded plugins are "trusted", DO NOT USE IF YOU HAVEN''T WATCH THE TUTORIAL!', mtConfirmation, [mbYes, mbNo, mbAbort], 0);
-		if temp = mrAbort then
-			exit
-		else YggIni.WriteInteger('Balance', 'bSingleMode', temp);
-	end else temp := YggIni.ReadInteger('Balance', 'bSingleMode', 0);
-	if temp = 6 then SingleFile := true
-	else SingleFile := false;
-	YggIni.UpdateFile;
-	if SingleFile then begin
-		SinglePlugin := Configure('Balance SinglePlugin mode');
+	Result := nil;
+
+	frm := TForm.Create(TForm(frmMain));
+
+	try
+		frm.Caption := asCaption;
+		frm.BorderStyle := bsToolWindow;
+		frm.ClientWidth := 234 * scaleFactor;
+		frm.ClientHeight := 90 * scaleFactor;
+		frm.Position := poScreenCenter;
+		frm.KeyPreview := True;
+
+		lblModes := TLabel.Create(frm);
+		lblModes.Parent := frm;
+		lblModes.Left := 16 * scaleFactor;
+		lblModes.Top := 10 * scaleFactor;
+		lblModes.Width := 200 * scaleFactor;
+		lblModes.Height := 16 * scaleFactor;
+		lblModes.Caption := 'Select mode:';
+		lblModes.AutoSize := False;
+
+		cbbModes := TComboBox.Create(frm);
+		cbbModes.Parent := frm;
+		cbbModes.Left := 16 * scaleFactor;
+		cbbModes.Top := 30 * scaleFactor;
+		cbbModes.Width := 200 * scaleFactor;
+		cbbModes.Height := 21 * scaleFactor;
+		cbbModes.Style := csDropDownList;
+		cbbModes.DoubleBuffered := True;
+		cbbModes.TabOrder := 2;
+
+		cbbModes.Items.Add('Default');
+		cbbModes.Items.Add('Single');
+		cbbModes.Items.Add('Fixed');
+		cbbModes.Items.Add('Direct');
+
+		cbbModes.ItemIndex := Pred(cbbModes.Items.Count);
+		
+		btnOk := TButton.Create(frm);
+		btnOk.Parent := frm;
+		btnOk.Left := 1 * scaleFactor;
+		btnOk.Top := 55 * scaleFactor;
+		btnOk.Width := 75 * scaleFactor;
+		btnOk.Height := 25 * scaleFactor;
+		btnOk.Caption := 'Save';
+		btnOk.Default := True;
+		btnOk.ModalResult := mbYes;
+		btnOk.TabOrder := 3;
+		
+		btnOk := TButton.Create(frm);
+		btnOk.Parent := frm;
+		btnOk.Left := 62 * scaleFactor;
+		btnOk.Top := 55 * scaleFactor;
+		btnOk.Width := 75 * scaleFactor;
+		btnOk.Height := 25 * scaleFactor;
+		btnOk.Caption := 'Run';
+		btnOk.Default := True;
+		btnOk.ModalResult := mrOk;
+		btnOk.TabOrder := 3;
+
+		btnCancel := TButton.Create(frm);
+		btnCancel.Parent := frm;
+		btnCancel.Left := 143 * scaleFactor;
+		btnCancel.Top := 55 * scaleFactor;
+		btnCancel.Width := 75 * scaleFactor;
+		btnCancel.Height := 25 * scaleFactor;
+		btnCancel.Caption := 'Abort';
+		btnCancel.ModalResult := mrAbort;
+		btnCancel.TabOrder := 4;
+		
+		if cbbModes.Text = 'Single' OR cbbModes.Text = 'Direct' then begin
+			frm.ClientHeight := 150 * scaleFactor;
+			
+			lblPlugins := TLabel.Create(frm);
+			lblPlugins.Parent := frm;
+			lblPlugins.Left := 16 * scaleFactor;
+			lblPlugins.Top := 55 * scaleFactor;
+			lblPlugins.Width := 200 * scaleFactor;
+			lblPlugins.Height := 16 * scaleFactor;
+			lblPlugins.Caption := 'Select file to balance for single and direct modes:';
+			lblPlugins.AutoSize := False;
+
+			cbbPlugins := TComboBox.Create(frm);
+			cbbPlugins.Parent := frm;
+			cbbPlugins.Left := 16 * scaleFactor;
+			cbbPlugins.Top := 75 * scaleFactor;
+			cbbPlugins.Width := 200 * scaleFactor;
+			cbbPlugins.Height := 21 * scaleFactor;
+			cbbPlugins.Style := csDropDownList;
+			cbbPlugins.DoubleBuffered := True;
+			cbbPlugins.TabOrder := 2;
+
+			for i := 0 to Pred(FileCount) do
+			begin
+				kFile := FileByIndex(i);
+				if IsEditable(kFile) then
+					cbbPlugins.Items.Add(GetFileName(kFile));
+			end;
+
+			cbbPlugins.ItemIndex := Pred(cbbPlugins.Items.Count);
+			
+			btnOk := TButton.Create(frm);
+			btnOk.Parent := frm;
+			btnOk.Left := 1 * scaleFactor;
+			btnOk.Top := 100 * scaleFactor;
+			btnOk.Width := 75 * scaleFactor;
+			btnOk.Height := 25 * scaleFactor;
+			btnOk.Caption := 'Save';
+			btnOk.Default := True;
+			btnOk.ModalResult := mbYes;
+			btnOk.TabOrder := 3;
+			
+			btnOk := TButton.Create(frm);
+			btnOk.Parent := frm;
+			btnOk.Left := 62 * scaleFactor;
+			btnOk.Top := 100 * scaleFactor;
+			btnOk.Width := 75 * scaleFactor;
+			btnOk.Height := 25 * scaleFactor;
+			btnOk.Caption := 'Run';
+			btnOk.Default := True;
+			btnOk.ModalResult := mrOk;
+			btnOk.TabOrder := 3;
+
+			btnCancel := TButton.Create(frm);
+			btnCancel.Parent := frm;
+			btnCancel.Left := 143 * scaleFactor;
+			btnCancel.Top := 100 * scaleFactor;
+			btnCancel.Width := 75 * scaleFactor;
+			btnCancel.Height := 25 * scaleFactor;
+			btnCancel.Caption := 'Abort';
+			btnCancel.ModalResult := mrAbort;
+			btnCancel.TabOrder := 4;
+			
+		end else begin
+			btnOk.Top := 55 * scaleFactor;
+			btnCancel.Top := 55 * scaleFactor;
+			btnOk.Top := 55 * scaleFactor;
+		end;
+		
+		if frm.ShowModal = mbYes then begin
+			YggIni.WriteString('Balance', 'Mode', cbbModes.Text);
+			YggIni.UpdateFile;
+		end;
+		
+		if frm.ShowModal = mrOk then begin
+			Result := cbbModes.Text;
+			
+			if cbbModes.Text = 'Default' then begin
+				Patch := SelectPatch('Ygg_Rebalance.esp')
+				BeginUpdate(Patch);
+				try
+					remove(GroupBySignature(Patch, 'WEAP'));
+					remove(GroupBySignature(Patch, 'ARMO'));
+					remove(GroupBySignature(Patch, 'AMMO'));
+					Cleanmasters(Patch);
+					AddMasterBySignature('ARMO');
+					AddMasterBySignature('WEAP');
+					AddMasterBySignature('AMMO');
+					AddMasterBySignature('KWDA');
+					AddMasterBySignature('ARMA');
+				finally EndUpdate(Patch);
+				end;
+				LogMessage(2, 'Using ' + GetFileName(Patch) + ' due to Default mode',YggLogCurrentMessages);
+			end else if cbbModes.Text = 'Single' then begin
+				temp := GetFileName(SinglePlugin);
+				temp := StringReplace(temp, '.esp', '', [rfReplaceAll]);
+				temp := StringReplace(temp, '.esl', '', [rfReplaceAll]);
+				temp := StringReplace(temp, '.esm', '', [rfReplaceAll]);
+				Patch := SelectPatch(temp+' Ygg_Rebalance.esp');
+				LogMessage(2, 'Using ' + GetFileName(Patch) + ' due to single mode',YggLogCurrentMessages);
+				Patch := SelectPatch('Ygg_Rebalance.esp')
+				BeginUpdate(Patch);
+				try
+					remove(GroupBySignature(Patch, 'WEAP'));
+					remove(GroupBySignature(Patch, 'ARMO'));
+					remove(GroupBySignature(Patch, 'AMMO'));
+					Cleanmasters(Patch);
+					AddMasterBySignature('ARMO');
+					AddMasterBySignature('WEAP');
+					AddMasterBySignature('AMMO');
+					AddMasterBySignature('KWDA');
+					AddMasterBySignature('ARMA');
+				finally EndUpdate(Patch);
+				end;
+			end else if cbbModes = 'Direct' then 
+				Patch := SelectPatch(cbbPlugins.Text);
+			else begin	//fixed
+				//check ini to see if settings are already saved
+				//patch is from ini
+				
+			end;
+			
+		end else result := 'abort';
+	finally
+		frm.Free;
 	end;
+	YggIni.Update;
 end;
 
-function Configure(asCaption: String): IwbFile;
+Procedure TrustSelection(Sender: TObject);
 var
-  frm: TForm;
-  lblPlugins: TLabel;
-  chkAddTags: TCheckBox;
-  chkLogging: TCheckBox;
-  cbbPlugins: TComboBox;
-  btnCancel: TButton;
-  btnOk: TButton;
-  i: Integer;
-  kFile: IwbFile;
+	lblAddPlugin: TLabel;
+	btnAdd, btnOk, btnCancel, btnRemove: TButton;	
+	ddAddPlugin, ddDetectedFile: TComboBox;
+	slTemp, slFiles: TStringList;
+	ALLAfile, tempFile, tempRecord: IInterface;
+	frm: TForm;
+	i, x, y: Integer;
 begin
-  Result := nil;
-
-  frm := TForm.Create(TForm(frmMain));
-
-  try
-    frm.Caption := asCaption;
-    frm.BorderStyle := bsToolWindow;
-    frm.ClientWidth := 234 * scaleFactor;
-    frm.ClientHeight := 90 * scaleFactor;
-    frm.Position := poScreenCenter;
-    frm.KeyPreview := True;
-
-    lblPlugins := TLabel.Create(frm);
-    lblPlugins.Parent := frm;
-    lblPlugins.Left := 16 * scaleFactor;
-    lblPlugins.Top := 10 * scaleFactor;
-    lblPlugins.Width := 200 * scaleFactor;
-    lblPlugins.Height := 16 * scaleFactor;
-    lblPlugins.Caption := 'Select file to balance:';
-    lblPlugins.AutoSize := False;
-
-    cbbPlugins := TComboBox.Create(frm);
-    cbbPlugins.Parent := frm;
-    cbbPlugins.Left := 16 * scaleFactor;
-    cbbPlugins.Top := 30 * scaleFactor;
-    cbbPlugins.Width := 200 * scaleFactor;
-    cbbPlugins.Height := 21 * scaleFactor;
-    cbbPlugins.Style := csDropDownList;
-    cbbPlugins.DoubleBuffered := True;
-    cbbPlugins.TabOrder := 2;
-
+	
+	slFiles := TStringList.Create;
+	slTemp := TStringList.Create;
+	
 	for i := 0 to Pred(FileCount) do
 	begin
 		kFile := FileByIndex(i);
 		if IsEditable(kFile) then
 			cbbPlugins.Items.Add(GetFileName(kFile));
 	end;
+	
+	frm := TForm.Create(nil);
+	try	
+		btnOK := nil;
+		btnCancel := nil;
+			
+		frm.Width := 200 * scaleFactor;
+		frm.Height := 75 * scaleFactor;
+		frm.Position := poScreenCenter;
+		frm.Caption := 'Add Trusted Plugins here';
+		
+		ScrollFrm := TScrollBox.Create(frm);
+		ScrollFrm.Parent := frm;
+		ScrollFrm.Height := 25 * scaleFactor;
+		ScrollFrm.Top := 25 * scaleFactor;
+		ScrollFrm.Left := 20 * scaleFactor;
+		
+		lblAddPlugin := TLabel.Create(ScrollFrm);
+		lblAddPlugin.Parent := frm;
+		lblAddPlugin.Height := 24;
+		lblAddPlugin.Top := 68+24+24;
+		lblAddPlugin.Left := 60;
+		lblAddPlugin.Caption := 'Add Plugin: ';
+		if frm.Height > 500 then begin
+			frm.Height := frm.Height+lblAddPlugin.Height+12;
+			ScrollFrm.Height := lblAddPlugin.Height;
+		end else begin
+			frm.Height := 500;
+		end;
+		
+		// Add Plugin Drop Down
+		ddAddPlugin := TComboBox.Create(frm);
+		ddAddPlugin.Parent := frm;
+		ddAddPlugin.Height := lblAddPlugin.Height;
+		ddAddPlugin.Top := lblAddPlugin.Top - 2;		
+		ddAddPlugin.Left := ddDetectedFile.Left;
+		ddAddPlugin.Width := 480;
+		for i := 0 to FileCount-1 do
+			if not (StrEndsWith(GetFileName(FileByIndex(i)), '.exe') or slContains(slGlobal, GetFileName(FileByIndex(i)))) then
+				ddAddPlugin.Items.Add(GetFileName(FileByIndex(i)));
+		ddAddPlugin.AutoComplete := True;
 
-    cbbPlugins.ItemIndex := Pred(cbbPlugins.Items.Count);
+		// Add Button
+		btnAdd := TButton.Create(frm);
+		btnAdd.Parent := frm;
+		btnAdd.Caption := 'Add';
+		btnAdd.Left := ddAddPlugin.Left+ddAddPlugin.Width+8;
+		btnAdd.Top := lblAddPlugin.Top;
+		btnAdd.Width := 100;
+		btnAdd.OnClick := Btn_AddOrRemove_OnClick;
+		
+		// Ok Button
+		btnOk := TButton.Create(frm);
+		btnOk.Parent := frm;
+		btnOk.Caption := 'Ok';		
+		btnOk.Left := (frm.Width div 2)-btnOk.Width-8;
+		btnOk.Top := frm.Height-80;
+		btnOk.ModalResult := mrOk;
+	
+		// Cancel Button
+		btnCancel := TButton.Create(frm);
+		btnCancel.Parent := frm;
+		btnCancel.Caption := 'Cancel';	
+		btnCancel.Left := btnOk.Left+btnOk.Width+16;
+		btnCancel.Top := btnOk.Top;	
+		btnCancel.ModalResult := mrCancel;
+		
+		frm.ShowModal;
+		if frm.ModalResult = mrOk then begin
+			
+		end else begin
+			
+		end;
+	finally
+		frm.Free;
+	end;
+	
+	// Finalize
+	slFiles.Free;
+	slTemp.Free;
 
-    btnOk := TButton.Create(frm);
-    btnOk.Parent := frm;
-    btnOk.Left := 62 * scaleFactor;
-    btnOk.Top := 55 * scaleFactor;
-    btnOk.Width := 75 * scaleFactor;
-    btnOk.Height := 25 * scaleFactor;
-    btnOk.Caption := 'Run';
-    btnOk.Default := True;
-    btnOk.ModalResult := mrOk;
-    btnOk.TabOrder := 3;
+end;
 
-    btnCancel := TButton.Create(frm);
-    btnCancel.Parent := frm;
-    btnCancel.Left := 143 * scaleFactor;
-    btnCancel.Top := 55 * scaleFactor;
-    btnCancel.Width := 75 * scaleFactor;
-    btnCancel.Height := 25 * scaleFactor;
-    btnCancel.Caption := 'Abort';
-    btnCancel.ModalResult := mrAbort;
-    btnCancel.TabOrder := 4;
-
-    if frm.ShowModal = mrOk then
-		Result := FileByName(cbbPlugins.Text)
-	else result := 'abort'; 
-  finally
-    frm.Free;
-  end;
+Procedure FixedSettings;
+var
+    FixedSetting: TLabel;
+    FixedScrollBox: TScrollBox;
+    Save: TButton;
+    Finish: TButton;
+    ArmoWeapAmmoSelect: TComboBox;
+    AddressValue: TListView;
+    Reset: TButton;
+begin
+	
 end;
 
 procedure IniProcess;
@@ -236,7 +415,7 @@ begin
 	end;
 end;
 
-procedure InitializeLists;
+procedure InitializeCalcLists;
 var
 	i,j:integer;
 	CurrentFile,CurrentGroup,CurrentItem:IInterface;
@@ -246,15 +425,12 @@ begin
 	
 	Recipes := TStringList.Create;
 	Recipes.Duplicates := DupIgnore;
-	Armo := TStringList.Create;
 	ArmoRating := TStringList.Create;
 	ArmoWeight := TStringList.Create;
 	ArmoValue := TStringList.Create;
-	Ammo := TStringList.Create;
 	AMMODamage := TStringList.Create;
 	AMMOValue := TStringList.Create;
 	AMMOWeight := TStringList.Create; //game doesnt use this unless you have survival mode
-	Weap := TStringList.Create;
 	WeapValue := TStringList.Create;
 	WeapWeight := TStringList.Create;
 	WeapDamage := TStringList.Create;
@@ -305,11 +481,42 @@ begin
 	FinalizeAmmo;
 end;
 
+procedure InitializeProcLists;
+var
+	i,j:integer;
+	CurrentFile,CurrentGroup,CurrentItem:IInterface;
+	BNAM:IInterface;
+begin
+	LogMessage(1,'Gathering Lists',YggLogCurrentMessages);
+	
+	Armo := TStringList.Create;
+	Ammo := TStringList.Create;
+	Weap := TStringList.Create;
+	for i := FileCount - 1 downto 0 do begin
+		CurrentFile := FileByIndex(i);
+		//armo
+		if HasGroup(CurrentFile, 'ARMO') then begin
+			AddProcArmo(CurrentFile);
+			LogMessage(1, 'Checked ARMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
+		end;
+		//weap
+		if HasGroup(CurrentFile, 'WEAP') then begin
+			AddProcWeap(CurrentFile);
+			LogMessage(1, 'Checked WEAP In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
+		end;
+		//ammo
+		if HasGroup(CurrentFile, 'AMMO') then begin
+			AddProcAmmo(CurrentFile);
+			LogMessage(1, 'Checked AMMO In ' + GetFileName(CurrentFile),YggLogCurrentMessages);
+		end;
+	end;
+end;
+
 procedure AddArmo(CurrentFile: IInterface);
 var
 	i,j,k:integer;
 	CurrentGroup,CurrentItem:IInterface;
-	Keywords:IInterface;
+	wo,Keywords:IInterface;
 	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
 begin
 	CurrentGroup := GroupBySignature(CurrentFile, 'ARMO');
@@ -318,16 +525,9 @@ begin
 		if GetIsDeleted(CurrentItem) then continue;
 		if ContainsText(LowerCase(Name(CurrentItem)), 'skin') then continue;
 		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);//for calculations
+		if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 		if IsWinningOverride(CurrentItem) then begin
-			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
-			//for processing
-			if SingleFile then begin
-				if equals(getFile(CurrentItem), SinglePlugin) then begin
-					Armo.AddObject(EditorID(CurrentItem), CurrentItem);
-				end
-			end else Armo.AddObject(EditorID(CurrentItem), CurrentItem);
-			//for calculations
-			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 			Keywords := ElementByPath(CurrentItem, 'KWDA');
 			for k := ElementCount(Keywords) - 1 downto 0 do begin
 				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
@@ -362,7 +562,7 @@ procedure AddWeap(CurrentFile: IInterface);
 var
 	i,j,k,code:integer;
 	CurrentGroup,CurrentItem:IInterface;
-	Keywords:IInterface;
+	wo,Keywords:IInterface;
 	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
 begin
 	CurrentGroup := GroupBySignature(CurrentFile, 'WEAP');
@@ -370,16 +570,10 @@ begin
 		CurrentItem := ElementByIndex(CurrentGroup, j);
 		if GetIsDeleted(CurrentItem) then continue;
 		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
+		//for processing
+		if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 		if IsWinningOverride(CurrentItem) then begin
-			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
-			//for processing
-			if SingleFile then begin
-				if equals(getFile(CurrentItem), SinglePlugin) then begin
-					Weap.AddObject(EditorID(CurrentItem), CurrentItem);
-				end
-			end else Weap.AddObject(EditorID(CurrentItem), CurrentItem);
-			//for calculations
-			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 			Keywords := ElementByPath(CurrentItem, 'KWDA');
 			for k := ElementCount(Keywords) - 1 downto 0 do begin
 				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
@@ -438,26 +632,20 @@ procedure AddAmmo(CurrentFile: IInterface);
 var
 	i,j,k:integer;
 	CurrentGroup,CurrentItem:IInterface;
-	Keywords:IInterface;
+	wo,Keywords:IInterface;
 	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
 begin
-		LogMessage(0, 'ammoprocessing',YggLogCurrentMessages);
+	LogMessage(0, 'ammoprocessing',YggLogCurrentMessages);
 	CurrentGroup := GroupBySignature(CurrentFile, 'AMMO');
 	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
 		LogMessage(1, 'Adding ' + GetFileName(CurrentGroup) + ' to ammo lists',YggLogCurrentMessages);
 		CurrentItem := ElementByIndex(CurrentGroup, j);
 		if GetIsDeleted(CurrentItem) then continue;
 		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
+		//for calculations
+		if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 		if IsWinningOverride(CurrentItem) then begin
-			LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
-			//for processing
-			if SingleFile then begin
-				if equals(getFile(CurrentItem), SinglePlugin) then begin
-					Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
-				end
-			end else Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
-			//for calculations
-			if TrustedPlugins.IndexOf(GetFileName(GetFile(MasterOrSelf(CurrentItem)))) < 0 then continue;
 			Keywords := ElementByPath(CurrentItem, 'KWDA');
 			for k := ElementCount(Keywords) - 1 downto 0 do begin
 				CurrentKeyword := LowerCase(EditorID(WinningOverride(LinksTo(ElementByIndex(Keywords,k)))));
@@ -472,6 +660,78 @@ begin
 					AmmoValue.AddObject(CurrentAddress, CurrentItem);
 			end;
 		end;
+	end;
+end;
+
+procedure AddProcArmo(CurrentFile: IInterface);
+var
+	i,j,k:integer;
+	CurrentGroup,CurrentItem:IInterface;
+	wo,Keywords:IInterface;
+	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'ARMO');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, j);
+		if GetIsDeleted(CurrentItem) then continue;
+		if ContainsText(LowerCase(Name(CurrentItem)), 'skin') then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
+		//for processing
+		if mode = 'Single' or mode = 'Direct' then begin
+			if equals(getFile(CurrentItem), SinglePlugin) then begin
+				wo := WinningOverride(CurrentItem);
+				Armo.AddObject(EditorID(wo), wo);
+			end
+		end else if IsWinningOverride(CurrentItem) then Armo.AddObject(EditorID(CurrentItem), CurrentItem);
+	end;
+end;
+
+procedure AddProcWeap(CurrentFile: IInterface);
+var
+	i,j,k,code:integer;
+	CurrentGroup,CurrentItem:IInterface;
+	wo,Keywords:IInterface;
+	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
+begin
+	CurrentGroup := GroupBySignature(CurrentFile, 'WEAP');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		CurrentItem := ElementByIndex(CurrentGroup, j);
+		if GetIsDeleted(CurrentItem) then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
+		//for processing
+		if mode = 'Single' or mode = 'Direct' then begin
+			if equals(getFile(CurrentItem), SinglePlugin) then begin
+				wo := WinningOverride(CurrentItem);
+				Weap.AddObject(EditorID(wo), wo);
+			end
+		end else if IsWinningOverride(CurrentItem) then Weap.AddObject(EditorID(CurrentItem), CurrentItem);
+	end;
+end;
+
+procedure AddProcAmmo(CurrentFile: IInterface);
+var
+	i,j,k:integer;
+	CurrentGroup,CurrentItem:IInterface;
+	wo,Keywords:IInterface;
+	CurrentKeyword,CurrentAddress,CurrentBOD2:string;
+begin
+	LogMessage(0, 'ammoprocessing',YggLogCurrentMessages);
+	CurrentGroup := GroupBySignature(CurrentFile, 'AMMO');
+	for j := ElementCount(CurrentGroup) - 1 downto 0 do begin
+		LogMessage(1, 'Adding ' + GetFileName(CurrentGroup) + ' to ammo lists',YggLogCurrentMessages);
+		CurrentItem := ElementByIndex(CurrentGroup, j);
+		if GetIsDeleted(CurrentItem) then continue;
+		if hasKeyword(CurrentItem, 'Dummy') then continue;
+		LogMessage(1, 'Adding ' + name(CurrentItem) + ' to lists',YggLogCurrentMessages);
+		//for processing
+		if mode = 'Single' or mode = 'Direct' then begin
+			if equals(getFile(CurrentItem), SinglePlugin) then begin
+				WO := WinningOverride(CurrentItem);
+				Ammo.AddObject(EditorID(WO), WO);
+			end
+		end else if IsWinningOverride(CurrentItem) then Ammo.AddObject(EditorID(CurrentItem), CurrentItem);
 	end;
 end;
 

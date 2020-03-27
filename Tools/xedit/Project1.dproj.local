@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2020/02/05 13:31:17.000.840,=C:\Users\yggdrasil75\Documents\Embarcadero\Studio\Projects\GridPaneView1.pas</Transaction>
+    <Transaction>2020/02/05 13:31:18.000.734,=C:\Users\yggdrasil75\Documents\Embarcadero\Studio\Projects\SplitPaneView1.pas</Transaction>
+    <Transaction>2020/02/05 13:32:41.000.227,=C:\Users\yggdrasil75\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2020/03/26 09:17:38.000.360,=C:\Users\yggdrasil75\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2020/03/26 09:45:56.000.614,C:\Users\yggdrasil75\Documents\Embarcadero\Studio\Projects\Unit1.dfm=D:\temp mod downloads\gui\Unit1.dfm</Transaction>
+    <Transaction>2020/03/26 09:45:56.000.614,C:\Users\yggdrasil75\Documents\Embarcadero\Studio\Projects\Unit1.pas=D:\temp mod downloads\gui\Unit1.pas</Transaction>
+    <Transaction>2020/03/26 10:37:13.000.432,C:\Users\yggdrasil75\Documents\Embarcadero\Studio\Projects\Project1.dproj=D:\temp mod downloads\gui\Project1.dproj</Transaction>
+  </Transactions>  <ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="Unit1.pas"/>
+    <File Path="Unit1.dfm"/>
+  </ProjectSortOrder>
+</BorlandProject>
